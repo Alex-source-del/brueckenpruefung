@@ -110,9 +110,10 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
 <header>
   <div style="width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;flex-shrink:0;">BP</div>
   <h1>Brückenprüfung</h1>
+  <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
-<div class="kopf">
+<div class="kopf" id="kopfBox">
   <div class="fl"><label>Strecke</label><input id="f_str" placeholder="z.B. 5900"></div>
   <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092"></div>
   <div class="fl full"><label>Brückenname</label><input id="f_br" placeholder="z.B. EÜ Musterstraße"></div>
@@ -246,6 +247,7 @@ var UT = {'Widerlager Beton':'Beton','Widerlager Mauerwerk':'Mauerwerk','Flügel
 
 // STATE
 var stbs=[], nxtId=1, dat={};
+var bauwerkLocked=false;
 var curKey=null, curBauKey=null, curBauTitle='', curSchTitle='', lastUgr=[];
 var curTyp='Beton', curArt='', curVorl=null;
 var fotoCounter=0, curFotoIdx=-1;
@@ -263,6 +265,7 @@ function autoSave(){
     localStorage.setItem('bp_stbs',JSON.stringify(stbs));
     localStorage.setItem('bp_nxtId',''+nxtId);
     localStorage.setItem('bp_fc',''+fotoCounter);
+    localStorage.setItem('bp_locked',bauwerkLocked?'1':'0');
     var k={str:g('f_str').value,km:g('f_km').value,br:g('f_br').value,dat:g('f_dat').value,pr:g('f_pr').value};
     localStorage.setItem('bp_kopf',JSON.stringify(k));
   }catch(e){}
@@ -273,6 +276,7 @@ function loadSaved(){
     var s=localStorage.getItem('bp_stbs');if(s)stbs=JSON.parse(s);
     var n=localStorage.getItem('bp_nxtId');if(n)nxtId=parseInt(n);
     var fc=localStorage.getItem('bp_fc');if(fc)fotoCounter=parseInt(fc);
+    var lk=localStorage.getItem('bp_locked');if(lk!==null)bauwerkLocked=(lk==='1');
     var k=localStorage.getItem('bp_kopf');
     if(k){k=JSON.parse(k);
       if(k.str)g('f_str').value=k.str;if(k.km)g('f_km').value=k.km;
@@ -300,10 +304,10 @@ function render(){
     var tot=cntStb(stb);
     var hdr=document.createElement('div');hdr.className='col-hdr';
     hdr.innerHTML='STB '+(si+1)+(tot>0?' <span class="sc">'+tot+'</span>':'')
-      +(stbs.length>1?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
+      +((!bauwerkLocked&&stbs.length>1)?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
     col.appendChild(hdr);
     var row=document.createElement('div');row.className='stb-row';
-    if(stb.oeff<5){
+    if(!bauwerkLocked&&stb.oeff<5){
       var ab=document.createElement('button');ab.className='add-oe';ab.textContent='+Öff';
       (function(sid){ab.onclick=function(){addOeff(sid);};})(stb.id);
       row.appendChild(ab);
@@ -318,8 +322,43 @@ function render(){
     row.appendChild(inner);col.appendChild(row);grid.appendChild(col);
   });
   var sa=g('stbBtnArea');if(sa){sa.innerHTML='';
-    if(stbs.length<5){var ab=document.createElement('button');ab.className='as';ab.textContent='+ STB';ab.onclick=addStb;sa.appendChild(ab);}
+    if(!bauwerkLocked){
+      if(stbs.length<5){var ab=document.createElement('button');ab.className='as';ab.textContent='+ STB';ab.onclick=addStb;sa.appendChild(ab);}
+      var lockBtn=document.createElement('button');
+      lockBtn.className='ps';
+      lockBtn.style.cssText='margin-top:10px;width:100%;padding:12px;font-size:14px;';
+      lockBtn.textContent='✓ Bauwerk fertig — Speichern';
+      lockBtn.onclick=lockBauwerk;
+      sa.appendChild(lockBtn);
+    } else {
+      var editLink=document.createElement('button');
+      editLink.textContent='✏️ Bauwerksstruktur bearbeiten';
+      editLink.style.cssText='border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:6px 0;';
+      editLink.onclick=unlockBauwerk;
+      sa.appendChild(editLink);
+    }
   }
+}
+
+function lockBauwerk(){
+  bauwerkLocked=true;autoSave();render();
+  toast('Bauwerk übernommen — bereit zum Prüfen ✓');
+  setKopfCollapsed(true);
+}
+function unlockBauwerk(){
+  bauwerkLocked=false;render();
+  setKopfCollapsed(false);
+}
+function setKopfCollapsed(collapsed){
+  var box=g('kopfBox'),btn=g('kopfToggleBtn');
+  if(!box||!btn)return;
+  box.style.display=collapsed?'none':'';
+  btn.textContent=collapsed?'▸':'▾';
+  try{localStorage.setItem('bp_kopfCollapsed',collapsed?'1':'0');}catch(e){}
+}
+function toggleKopf(){
+  var box=g('kopfBox');
+  setKopfCollapsed(box.style.display!=='none');
 }
 
 function cntKey(key,ugr){var n=0;ugr.forEach(function(u){n+=(dat[key+'___'+u]||[]).length;});return n;}
@@ -369,8 +408,8 @@ function mkOe(stb,i){
 }
 
 function startBauwerk(){
-  stbs=[{id:1,oeff:1}];nxtId=2;
-  render();toast('Bauwerk erstellt ✓');
+  stbs=[{id:1,oeff:1}];nxtId=2;bauwerkLocked=false;
+  render();toast('Bauwerk erstellt — jetzt Struktur festlegen');
 }
 
 function addOeff(sid){stbs.forEach(function(s){if(s.id===sid&&s.oeff<5)s.oeff++;});render();}
@@ -1068,11 +1107,11 @@ history.pushState(null,null,location.href);
 // ============================================================
 function doNew(){
   if(!confirm('Neues Protokoll? Alle Daten werden gelöscht!'))return;
-  dat={};stbs=[];nxtId=1;fotoCounter=0;
+  dat={};stbs=[];nxtId=1;fotoCounter=0;bauwerkLocked=false;
   ['f_str','f_km','f_br','f_pr'].forEach(function(id){var el=g(id);if(el)el.value='';});
   g('f_dat').value=new Date().toISOString().split('T')[0];
-  try{['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
-  render();toast('Neues Protokoll gestartet');
+  try{['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
+  render();setKopfCollapsed(false);toast('Neues Protokoll gestartet');
 }
 
 // Return key in description
@@ -1103,6 +1142,7 @@ g('f_dat').value=new Date().toISOString().split('T')[0];
 loadSaved();
 render();
 tryResume();
+try{setKopfCollapsed(localStorage.getItem('bp_kopfCollapsed')==='1');}catch(e){}
 
 // Minimal ZIP creator (pure JS, no dependencies)
 function PureZip(){
