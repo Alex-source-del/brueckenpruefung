@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -19,15 +19,15 @@ header h1{font-size:15px;font-weight:700;flex:1;}
 .fl input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;}
 .fl input:focus{border-color:var(--acc);}
 /* GRID */
-.wrap{overflow-x:auto;padding:12px 12px 0;}
-.grid{display:flex;gap:8px;align-items:flex-start;min-width:min-content;}
+.wrap{overflow-x:auto;padding:8px 8px 0;}
+.grid{display:flex;gap:5px;align-items:flex-start;min-width:min-content;}
 /* STB SPALTE */
-.stb{display:flex;flex-direction:column;gap:0;width:150px;flex-shrink:0;}
-.stb-hdr{background:var(--acc);color:#fff;border-radius:8px 8px 0 0;padding:8px 10px;font-size:13px;font-weight:700;display:flex;align-items:center;}
-.stb-hdr .sc{font-size:10px;background:rgba(255,255,255,.25);border-radius:10px;padding:1px 6px;margin-left:6px;}
-.stb-hdr .dx{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px;margin-left:auto;}
+.stb{display:flex;flex-direction:column;gap:0;width:118px;flex-shrink:0;}
+.stb-hdr{background:var(--acc);color:#fff;border-radius:7px 7px 0 0;padding:6px 8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;}
+.stb-hdr .sc{font-size:9px;background:rgba(255,255,255,.25);border-radius:9px;padding:1px 5px;margin-left:5px;}
+.stb-hdr .dx{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px;margin-left:auto;}
 /* KACHEL */
-.ka{background:var(--sur);border:2px solid var(--line);cursor:pointer;transition:border-color .15s;flex:1;}
+.ka{background:var(--sur);border:1.5px solid var(--line);cursor:pointer;transition:border-color .15s;flex:1;}
 .ka.wid{background:#e8f5e9;border-color:#4caf50;}
 .ka.wid .ka-name{color:#2e7d32;}
 .ka.wid .ka-cnt{border-color:#4caf50;color:#2e7d32;}
@@ -40,22 +40,22 @@ body.dark .ka.wid{background:#1b3a1f;border-color:#4caf50;}
 body.dark .ka.pf{background:#0d2137;border-color:#1e88e5;}
 .ka:hover{border-color:var(--acc);}
 .ka.hat{border-color:var(--acc);background:var(--accs);}
-.ka-inner{padding:10px;display:flex;align-items:center;justify-content:space-between;}
-.ka-name{font-size:12px;font-weight:700;color:var(--soft);}
+.ka-inner{padding:6px 8px;display:flex;align-items:center;justify-content:space-between;}
+.ka-name{font-size:10.5px;font-weight:700;color:var(--soft);}
 .ka.hat .ka-name{color:var(--acc);}
-.ka-cnt{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--faint);}
+.ka-cnt{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--faint);}
 .ka.hat .ka-cnt{background:var(--acc);color:#fff;border-color:var(--acc);}
 /* ÖFFNUNG KACHEL */
-.oeka{background:#fff;border:2px solid #999;border-radius:8px;cursor:pointer;transition:border-color .15s;min-height:60px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.oeka{background:#fff;border:1.5px solid #999;border-radius:7px;cursor:pointer;transition:border-color .15s;min-height:44px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .oeka:hover{border-color:var(--acc);}
 .oeka.hat{border-color:var(--acc);background:var(--accs);}
 body.dark .oeka{background:var(--sur);border-color:#555;}
 .oeka:hover{border-color:var(--acc);}
 .oeka.hat{border-color:var(--acc);background:var(--accs);}
-.oe-hdr{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;}
-.oe-name{font-size:12px;font-weight:700;color:var(--soft);}
+.oe-hdr{padding:5px 8px;display:flex;align-items:center;justify-content:space-between;}
+.oe-name{font-size:10.5px;font-weight:700;color:var(--soft);}
 .oeka.hat .oe-name{color:var(--acc);}
-.oe-cnt{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--faint);}
+.oe-cnt{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--faint);}
 .oeka.hat .oe-cnt{background:var(--acc);color:#fff;border-color:var(--acc);}
 
 /* ADD ÖFFNUNG */
@@ -161,13 +161,13 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
     </div>
     <div id="mTyp"></div>
     <div id="mArt" style="display:none;margin-top:10px;"></div>
-    <div style="margin-top:10px;">
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:8px;"></div>
-      <label style="font-size:12px;color:var(--soft);font-weight:600;">Beschreibung</label>
+      <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
       <textarea id="mDesc" placeholder="Beschreibung..."></textarea>
     </div>
-    <div style="margin-top:10px;">
-      <label style="font-size:12px;color:var(--soft);font-weight:600;">Foto</label>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+      <label style="font-size:12px;color:var(--soft);font-weight:600;">📷 Foto</label>
       <div onclick="takeMFoto()"  style="border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;margin-top:5px;">📷 Foto aufnehmen</div>
       <input type="file" id="mFoto" accept="image/*" capture="environment" style="display:none">
       <div id="mFotoLeiste" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
@@ -502,7 +502,7 @@ function renderMFotoLeiste(){
   mPendingFotos.forEach(function(f,fi){
     var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block;';
     var img=document.createElement('img');img.src=f.data;
-    img.style.cssText='height:70px;border-radius:7px;border:2px solid var(--acc);display:block;';
+    img.style.cssText='height:60px;border-radius:6px;border:2px solid var(--acc);display:block;';
     var lbl=document.createElement('div');lbl.style.cssText='text-align:center;font-size:10px;color:var(--soft);margin-top:2px;';lbl.textContent='Foto '+f.nr;
     var del=document.createElement('button');
     del.style.cssText='position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;border:0;background:#e53935;color:#fff;font-size:11px;cursor:pointer;line-height:20px;padding:0;';
@@ -533,7 +533,7 @@ function renderFotoLeiste(it){
   (it.fotos||[]).forEach(function(f,fi){
     var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block;';
     var img=document.createElement('img');img.src=f.data;
-    img.style.cssText='height:90px;border-radius:7px;cursor:pointer;border:2px solid var(--acc);display:block;';
+    img.style.cssText='height:60px;border-radius:6px;cursor:pointer;border:2px solid var(--acc);display:block;';
     (function(fi2){img.onclick=function(){openGallery(curFotoIdx,fi2);};})(fi);
     var lbl=document.createElement('div');lbl.style.cssText='text-align:center;font-size:10px;color:var(--soft);margin-top:2px;';lbl.textContent='Foto '+f.nr;
     var del=document.createElement('button');
@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded',function(){
           var tw=ctx.measureText(label).width,pad=8;
           ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
           ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
-          it.fotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:loc});
+          it.fotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:loc,w:cv.width,h:cv.height});
         }catch(err){
           toast('Foto konnte nicht verarbeitet werden');
         }
@@ -694,7 +694,7 @@ document.addEventListener('DOMContentLoaded',function(){
           var tw=ctx.measureText(label).width,pad=8;
           ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
           ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
-          mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:loc});
+          mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:loc,w:cv.width,h:cv.height});
         }catch(err){
           toast('Foto konnte nicht verarbeitet werden');
         }
@@ -807,7 +807,20 @@ function bldTyp(){
 
 function bldArt(){
   var arts=SC[curTyp]||[];
-  g('mArt').innerHTML='<label style="font-size:12px;color:var(--soft);font-weight:600;display:block;margin-bottom:8px;">Schadensart</label>';
+  g('mArt').innerHTML='';
+  var chip=document.createElement('div');
+  chip.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;';
+  chip.innerHTML='<span style="background:var(--accs);color:var(--acc);font-weight:700;font-size:12px;padding:4px 10px;border-radius:12px;">'+curTyp+'</span>';
+  var chg=document.createElement('button');
+  chg.textContent='ändern';
+  chg.style.cssText='border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;';
+  chg.onclick=function(){g('mArt').style.display='none';g('mTyp').style.display='block';};
+  chip.appendChild(chg);
+  g('mArt').appendChild(chip);
+  var lbl=document.createElement('label');
+  lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;display:block;margin-bottom:8px;';
+  lbl.textContent='Schadensart';
+  g('mArt').appendChild(lbl);
   arts.forEach(function(a){
     var b=document.createElement('button');b.className='sb';b.textContent=a;
     (function(art){b.onclick=function(){selArt(art,this);};})(a);
@@ -1037,7 +1050,19 @@ PureZip.prototype.generateAsync=function(opts){
 };
 function strToBytes(s){
   var bytes=[];
-  for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c<128)bytes.push(c);else{bytes.push(0xc0|(c>>6));bytes.push(0x80|(c&0x3f));}}
+  for(var i=0;i<s.length;i++){
+    var c=s.codePointAt(i);
+    if(c>0xFFFF)i++; // consumed a surrogate pair
+    if(c<0x80){
+      bytes.push(c);
+    } else if(c<0x800){
+      bytes.push(0xc0|(c>>6), 0x80|(c&0x3f));
+    } else if(c<0x10000){
+      bytes.push(0xe0|(c>>12), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    } else {
+      bytes.push(0xf0|(c>>18), 0x80|((c>>12)&0x3f), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    }
+  }
   return new Uint8Array(bytes);
 }
 function base64ToBytes(b64){
@@ -1055,7 +1080,7 @@ function crc32(data){
 function u16(n){return [n&0xff,(n>>8)&0xff];}
 function u32(n){return [n&0xff,(n>>8)&0xff,(n>>16)&0xff,(n>>24)&0xff];}
 function makeLocalHeader(name,data,crc){
-  var h=[0x50,0x4b,0x03,0x04,0x14,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00];
+  var h=[0x50,0x4b,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
   h=h.concat(u32(crc));
   h=h.concat(u32(data.length));
   h=h.concat(u32(data.length));
@@ -1064,7 +1089,7 @@ function makeLocalHeader(name,data,crc){
   return new Uint8Array(h.concat(Array.from(name)));
 }
 function makeCentralDir(name,data,crc,offset){
-  var h=[0x50,0x4b,0x01,0x02,0x14,0x00,0x14,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00];
+  var h=[0x50,0x4b,0x01,0x02,0x14,0x00,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
   h=h.concat(u32(crc));
   h=h.concat(u32(data.length));
   h=h.concat(u32(data.length));
@@ -1120,29 +1145,41 @@ function downloadFotos(){
 
 
 
+function xmlEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function docxPara(text,style){
+  return '<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>':'')+'<w:r><w:t xml:space="preserve">'+xmlEsc(text)+'</w:t></w:r></w:p>';
+}
+function docxImagePara(rId,widthPx,heightPx,caption){
+  var maxCx=5029200; // ~5.5in max width so photos fit the printed page
+  var cx=Math.round((widthPx||900)*9525),cy=Math.round((heightPx||600)*9525);
+  if(cx>maxCx){var sc=maxCx/cx;cx=maxCx;cy=Math.round(cy*sc);}
+  var picId=rId.replace('rId','');
+  var drawing='<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'+
+    '<wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+    '<wp:docPr id="'+picId+'" name="Bild'+picId+'"/>'+
+    '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Bild'+picId+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="'+rId+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+    '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  return drawing+(caption?docxPara(caption,null):'');
+}
+
 function doExport(){
   var str=g('f_str').value||'—',km=g('f_km').value||'—',br=g('f_br').value||'—',dt=g('f_dat').value||'—',pr=g('f_pr').value||'—';
 
-  var doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>';
-  doc+='body{font-family:Arial;font-size:11pt;margin:2cm;}';
-  doc+='h1{font-size:18pt;color:#0e7c66;border-bottom:2pt solid #0e7c66;padding-bottom:4pt;}';
-  doc+='h2{font-size:14pt;color:#0e7c66;margin-top:16pt;border-bottom:1pt solid #ccc;padding-bottom:3pt;}';
-  doc+='h3{font-size:12pt;color:#444;margin-top:10pt;}';
-  doc+='h4{font-size:11pt;color:#5b6b7c;margin-top:8pt;font-weight:bold;}';
-  doc+='.s{margin:4pt 0 4pt 12pt;line-height:1.8;}';
-  doc+='.foto{margin:8pt 0;page-break-inside:avoid;}';
-  doc+='.kopf{background:#f0f4f8;border:1pt solid #dde;padding:10pt;margin-bottom:14pt;}';
-  doc+='</style></head><body>';
+  var body='';
+  body+=docxPara('Brückenprüfungsprotokoll','Title');
+  body+=docxPara('Strecke: '+str+'    Kilometer: '+km,null);
+  body+=docxPara('Brücke: '+br,null);
+  body+=docxPara('Datum: '+dt+'    Prüfer: '+pr,null);
 
-  doc+='<h1>Brückenprüfungsprotokoll</h1>';
-  doc+='<div class="kopf">';
-  doc+='<table width="100%"><tr><td><b>Strecke:</b> '+str+'</td><td><b>Kilometer:</b> '+km+'</td></tr>';
-  doc+='<tr><td><b>Brücke:</b> '+br+'</td><td></td></tr>';
-  doc+='<tr><td><b>Datum:</b> '+dt+'</td><td><b>Prüfer:</b> '+pr+'</td></tr></table>';
-  doc+='</div>';
+  var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],mediaFiles=[],relCounter=1;
 
   stbs.forEach(function(stb,si){
-    doc+='<h2>STB '+(si+1)+'</h2>';
+    body+=docxPara('STB '+(si+1),'Heading1');
     var blist=[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:W_UGR}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
@@ -1156,31 +1193,98 @@ function doExport(){
       var hasItems=false;
       b.u.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
       if(!hasItems)return;
-      doc+='<h3>'+b.l+'</h3>';
+      body+=docxPara(b.l,'Heading2');
       b.u.forEach(function(u){
         var items=dat[b.k+'___'+u]||[];
         if(!items.length)return;
-        doc+='<h4>'+u+'</h4>';
+        body+=docxPara(u,'Heading3');
         items.forEach(function(it){
           var parts=it.d.split(/,\s*/);
-          doc+='<div class="s">';
-          parts.forEach(function(p){doc+='- '+p.trim()+'<br>';});
-          doc+='</div>';
+          parts.forEach(function(p){body+=docxPara('- '+p.trim(),null);});
           (it.fotos||[]).forEach(function(foto){
-            doc+='<div class="foto"><img src="'+foto.data+'" style="max-width:14cm;max-height:10cm;"><br>';
-            doc+='<small>Foto '+(foto.nr||'')+'</small></div>';
+            relCounter++;
+            var rId='rId'+relCounter;
+            var mediaName='image'+relCounter+'.jpg';
+            var b64=(foto.data.split(',')[1])||'';
+            mediaFiles.push({name:mediaName,base64:b64});
+            rels.push({id:rId,target:'media/'+mediaName,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
+            body+=docxImagePara(rId,foto.w,foto.h,'Foto '+(foto.nr||''));
           });
         });
       });
     });
   });
 
-  doc+='</body></html>';
+  body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
 
-  var blob=new Blob(['﻿',doc],{type:'application/msword'});
+  var documentXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '+
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<w:body>'+body+'</w:body></w:document>';
+
+  var contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="jpg" ContentType="image/jpeg"/>'+
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+    '</Types>';
+
+  var rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+    '</Relationships>';
+
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="'+r.type+'" Target="'+r.target+'"/>';}).join('')+
+    '</Relationships>';
+
+  var stylesXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="444444"/></w:rPr></w:style>'+
+    '</w:styles>';
+
+  var zip=new PureZip();
+  zip.file('[Content_Types].xml',contentTypes);
+  zip.file('_rels/.rels',rootRels);
+  zip.file('word/document.xml',documentXml);
+  zip.file('word/styles.xml',stylesXml);
+  zip.file('word/_rels/document.xml.rels',docRels);
+  mediaFiles.forEach(function(m){zip.file('word/media/'+m.name,m.base64,{base64:true});});
+
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var docxBlob=new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    var filename='Pruefprotokoll_'+str+'_'+km+'_'+dt+'.docx';
+    var file;
+    try{ file=new File([docxBlob],filename,{type:docxBlob.type}); }catch(e){ file=null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).then(function(){
+        toast('Protokoll geteilt ✓');
+      }).catch(function(err){
+        // User cancelled the share sheet, or it failed — fall back to a normal download
+        if(err && err.name==='AbortError')return;
+        triggerDownload(docxBlob,filename);
+      });
+    } else {
+      triggerDownload(docxBlob,filename);
+    }
+  }).catch(function(){
+    toast('Export fehlgeschlagen — bitte erneut versuchen');
+  });
+}
+function triggerDownload(blob,filename){
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='Pruefprotokoll_'+str+'_'+km+'_'+dt+'.doc';
+  a.download=filename;
   a.click();
   toast('Protokoll wird heruntergeladen ✓');
 }
