@@ -237,13 +237,13 @@ var VL = {
   'Abnutzung':[{l:'Festgestellt',t:'Abnutzung festgestellt',i:[]}],
   'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}]
 };
-var W_UGR = ['Widerlager Beton','Widerlager Mauerwerk','Flügel Beton li','Flügel Beton re','Flügel Mauerwk li','Flügel Mauerwk re','Kammerwand vorne','Kammerwand sl li','Kammerwand sl re','Kammerwand hinten','Auflagerbank'];
-var OE_B = ['Fahrbahnplatte Beton','Fahrbahnplatte Beton Untersicht','Untersicht','Kappe li','Kappe re','Radweg li','Radweg re','Schotterwand li','Schotterwand re','Geländer li','Geländer re','Entwässerung','Lager','Fugen'];
-var OE_S = ['Fahrbahnplatte Stahl','Fahrbahnplatte Stahl Untersicht','Hauptträger','Querträger','Längsträger','Längsrippen','Querrippen','Beulstreifen','Konsole','Untersicht','Randweg','Geländer li','Geländer re','Entwässerung','Lager','Fugen'];
-var OE_GB = ['Gewölbe Beton Untersicht','Stirnwand li','Stirnwand re','Kappe li','Kappe re','Radweg li','Radweg re','Schotterwand li','Schotterwand re','Geländer li','Geländer re','Entwässerung','Lager','Fugen'];
-var OE_GM = ['Gewölbe Mauerwerk Untersicht','Stirnmauer li','Stirnmauer re','Kappe li','Kappe re','Radweg li','Radweg re','Schotterwand li','Schotterwand re','Geländer li','Geländer re','Entwässerung','Lager','Fugen'];
+var W_UGR = ['Widerlager Beton','Widerlager Mauerwerk','Flügel Beton links','Flügel Beton rechts','Flügel Mauerwerk links','Flügel Mauerwerk rechts','Kammerwand vorne','Kammerwand links','Kammerwand rechts','Kammerwand hinten','Auflagerbank'];
+var OE_B = ['Fahrbahnplatte Beton','Fahrbahnplatte Beton Untersicht','Untersicht','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
+var OE_S = ['Fahrbahnplatte Stahl','Fahrbahnplatte Stahl Untersicht','Hauptträger','Querträger','Längsträger','Längsrippen','Querrippen','Beulstreifen','Konsole','Untersicht','Randweg','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
+var OE_GB = ['Gewölbe Beton Untersicht','Stirnwand links','Stirnwand rechts','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
+var OE_GM = ['Gewölbe Mauerwerk Untersicht','Stirnmauer links','Stirnmauer rechts','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
 var PF_UGR = ['Pfeilerschaft','Pfeilerköpfe','Auflagerbank'];
-var UT = {'Widerlager Beton':'Beton','Widerlager Mauerwerk':'Mauerwerk','Flügel Beton li':'Beton','Flügel Beton re':'Beton','Flügel Mauerwk li':'Mauerwerk','Flügel Mauerwk re':'Mauerwerk'};
+var UT = {'Widerlager Beton':'Beton','Widerlager Mauerwerk':'Mauerwerk','Flügel Beton links':'Beton','Flügel Beton rechts':'Beton','Flügel Mauerwerk links':'Mauerwerk','Flügel Mauerwerk rechts':'Mauerwerk'};
 
 // STATE
 var stbs=[], nxtId=1, dat={};
@@ -291,14 +291,17 @@ function loadSaved(){
 // ============================================================
 function render(){
   var grid=g('mainGrid');grid.innerHTML='';
+  var sa0=g('stbBtnArea');if(sa0)sa0.innerHTML='';
   if(!stbs.length){
+    grid.style.cssText='display:flex;justify-content:center;width:100%;';
     var empty=document.createElement('div');
-    empty.style.cssText='padding:30px 20px;text-align:center;color:var(--soft);';
-    empty.innerHTML='<div style="font-size:14px;margin-bottom:14px;">Noch kein Bauwerk angelegt.</div>'+
-      '<button class="ps" style="padding:12px 22px;font-size:14px;" onclick="startBauwerk()">🏗 Bauwerk erstellen</button>';
+    empty.style.cssText='padding:60px 20px;text-align:center;color:var(--soft);width:100%;';
+    empty.innerHTML='<div style="font-size:16px;margin-bottom:20px;">Noch kein Bauwerk angelegt.</div>'+
+      '<button class="ps" style="padding:18px 32px;font-size:17px;font-weight:700;border-radius:10px;" onclick="startBauwerk()">🏗 Bauwerk erstellen</button>';
     grid.appendChild(empty);
     return;
   }
+  grid.style.cssText='';
   stbs.forEach(function(stb,si){
     var col=document.createElement('div');col.className='col';
     var tot=cntStb(stb);
@@ -475,12 +478,12 @@ function openBau(key,title,ugr){
   }
   var shown={};
   ugr.forEach(function(u){
-    var isRL=/ (li|re)$/.test(u);var base=isRL?u.replace(/ (li|re)$/,''):null;
+    var isRL=/ (links|rechts)$/.test(u);var base=isRL?u.replace(/ (links|rechts)$/,''):null;
     if(isRL){
       if(shown[base])return;shown[base]=true;
-      var c=(dat[key+'___'+base+' li']||[]).length+(dat[key+'___'+base+' re']||[]).length;
+      var c=(dat[key+'___'+base+' links']||[]).length+(dat[key+'___'+base+' rechts']||[]).length;
       var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
-      b.innerHTML=base+' li/re'+(c>0?'<span class="uc">'+c+'</span>':'');
+      b.innerHTML=base+' links/rechts'+(c>0?'<span class="uc">'+c+'</span>':'');
       (function(bk,bn,t){b.onclick=function(){openReliSel(bk,bn,t);};})(key,base,title);
       g('bauList').appendChild(b);
     } else {
@@ -498,12 +501,12 @@ function openReliSel(baseKey,baseName,bereich){
   g('bauTitle').textContent=bereich+' / '+baseName;
   g('bauList').innerHTML='';
   var wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:10px;';
-  ['li','re'].forEach(function(side){
+  ['links','rechts'].forEach(function(side){
     var fk=baseKey+'___'+baseName+' '+side;
     var c=(dat[fk]||[]).length;
     var b=document.createElement('button');
     b.style.cssText='flex:1;padding:20px 10px;border:2px solid '+(c>0?'var(--acc)':'var(--line)')+';border-radius:10px;background:'+(c>0?'var(--accs)':'var(--s2)')+';cursor:pointer;font-size:16px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
-    b.innerHTML=(side==='li'?'← Links':'Rechts →')+(c>0?'<br><span style="font-size:12px;color:var(--acc);">'+c+' Schäden</span>':'');
+    b.innerHTML=(side==='links'?'← Links':'Rechts →')+(c>0?'<br><span style="font-size:12px;color:var(--acc);">'+c+' Schäden</span>':'');
     (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,baseName+' '+side,bereich);
     wrap.appendChild(b);
   });
