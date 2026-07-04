@@ -27,6 +27,9 @@ header h1{font-size:15px;font-weight:700;flex:1;}
 .col-hdr .sc{font-size:9.5px;background:rgba(255,255,255,.25);border-radius:9px;padding:1px 6px;}
 .col-hdr .dx{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px;margin-left:auto;}
 .dx{border:0;background:#ffebee;color:#c62828;border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;}
+.col-table{border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex:1;}
+.col-table>div{border-top:1.5px solid var(--line);}
+.col-table>div:first-child{border-top:0;}
 .stb{display:flex;flex-direction:column;gap:0;width:118px;flex-shrink:0;}
 .stb-hdr{background:var(--acc);color:#fff;border-radius:7px 7px 0 0;padding:6px 8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;}
 .stb-hdr .sc{font-size:9px;background:rgba(255,255,255,.25);border-radius:9px;padding:1px 5px;margin-left:5px;}
@@ -309,24 +312,36 @@ function render(){
     hdr.innerHTML='STB '+(si+1)+(tot>0?' <span class="sc">'+tot+'</span>':'')
       +((!bauwerkLocked&&stbs.length>1)?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
     col.appendChild(hdr);
-    var row=document.createElement('div');row.className='stb-row';
-    if(!bauwerkLocked&&stb.oeff<5){
-      var ab=document.createElement('button');ab.className='add-oe';ab.textContent='+Öff';
-      (function(sid){ab.onclick=function(){addOeff(sid);};})(stb.id);
-      row.appendChild(ab);
-    }
-    var inner=document.createElement('div');inner.style.cssText='display:flex;flex-direction:column;gap:6px;flex:1;';
+    var inner=document.createElement('div');inner.className='col-table';
     inner.appendChild(mkKa('stb'+stb.id+'_w2','W2',W_UGR,'wid',stb.id));
     for(var i=stb.oeff;i>=1;i--){
-      inner.appendChild(mkOe(stb,i));
+      if(i===stb.oeff&&!bauwerkLocked&&stb.oeff<5){
+        var pairRow=document.createElement('div');pairRow.style.cssText='display:flex;';
+        var addOeTile=document.createElement('div');
+        addOeTile.style.cssText='width:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1.5px solid var(--line);background:var(--accs);color:var(--acc);font-size:15px;font-weight:700;cursor:pointer;';
+        addOeTile.textContent='+';
+        (function(sid){addOeTile.onclick=function(){addOeff(sid);};})(stb.id);
+        var oeTile=mkOe(stb,i);oeTile.style.flex='1';
+        pairRow.appendChild(addOeTile);pairRow.appendChild(oeTile);
+        inner.appendChild(pairRow);
+      } else {
+        inner.appendChild(mkOe(stb,i));
+      }
       if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),PF_UGR,'pf',stb.id));
     }
     inner.appendChild(mkKa('stb'+stb.id+'_w1','W1',W_UGR,'wid',stb.id));
-    row.appendChild(inner);col.appendChild(row);grid.appendChild(col);
+    col.appendChild(inner);
+    if(si===stbs.length-1&&!bauwerkLocked&&stbs.length<5){
+      var addStbTile=document.createElement('div');
+      addStbTile.style.cssText='margin-top:6px;border:1.5px solid var(--acc);border-radius:7px;background:var(--accs);color:var(--acc);text-align:center;padding:8px;font-size:12px;font-weight:700;cursor:pointer;';
+      addStbTile.textContent='+ STB';
+      addStbTile.onclick=addStb;
+      col.appendChild(addStbTile);
+    }
+    grid.appendChild(col);
   });
   var sa=g('stbBtnArea');if(sa){sa.innerHTML='';
     if(!bauwerkLocked){
-      if(stbs.length<5){var ab=document.createElement('button');ab.className='as';ab.textContent='+ STB';ab.onclick=addStb;sa.appendChild(ab);}
       var lockBtn=document.createElement('button');
       lockBtn.className='ps';
       lockBtn.style.cssText='margin-top:10px;width:100%;padding:12px;font-size:14px;';
@@ -374,18 +389,15 @@ function getUgr(k){var t=dat['__t_'+k]||'';return t==='Stahl'?OE_S:t==='Gew.Beto
 
 function mkKa(key,label,ugr,typ){
   var tot=cntKey(key,ugr);
-  var bc=typ==='wid'?'#4caf50':typ==='pf'?'#1e88e5':'#9e9e9e';
   var bg=typ==='wid'?'#e8f5e9':typ==='pf'?'#e3f2fd':'#fff';
   var tc=typ==='wid'?'#2e7d32':typ==='pf'?'#1565c0':'#444';
-  var d=document.createElement('div');
-  d.style.cssText='background:'+bg+';border:1.5px solid '+bc+';border-radius:7px;min-height:40px;box-shadow:0 1px 2px rgba(0,0,0,.08);cursor:pointer;';
-  d.innerHTML='<div style="padding:6px 8px;display:flex;align-items:center;justify-content:space-between;">'
-    +'<span style="font-size:11.5px;font-weight:700;color:'+tc+';">'+label+'</span>'
-    +'<div style="width:24px;height:24px;border-radius:50%;border:1.5px solid '+bc+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+(tot>0?'#fff':tc)+';background:'+(tot>0?bc:'transparent')+'">'+(tot>0?tot:'+')+'</div>'
-    +'</div>';
-  d.setAttribute('data-key',key);d.setAttribute('data-label',label);d.setAttribute('data-ugr',typ);
-  d.onclick=function(){openBau(this.getAttribute('data-key'),this.getAttribute('data-label'),ugr);};
-  return d;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:'+bg+';min-height:36px;';
+  row.innerHTML='<span style="font-size:11.5px;font-weight:700;color:'+tc+';">'+label+'</span>'
+    +(tot>0?'<span style="background:'+tc+';color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;">'+tot+'</span>':'');
+  row.setAttribute('data-key',key);row.setAttribute('data-label',label);
+  row.onclick=function(){openBau(this.getAttribute('data-key'),this.getAttribute('data-label'),ugr);};
+  return row;
 }
 
 function mkOe(stb,i){
@@ -393,21 +405,27 @@ function mkOe(stb,i){
   var ot=dat['__t_'+key]||'';
   var ugr=getUgr(key);
   var tot=cntKey(key,ugr);
-  var d=document.createElement('div');
-  d.style.cssText='background:#fff;border:1.5px solid '+(tot>0?'var(--acc)':'#9e9e9e')+';border-radius:7px;min-height:40px;box-shadow:0 1px 2px rgba(0,0,0,.08);';
-  var hdr=document.createElement('div');
-  hdr.style.cssText='padding:6px 8px;display:flex;align-items:center;gap:5px;';
-  var main=document.createElement('div');
-  main.style.cssText='display:flex;align-items:center;flex:1;cursor:pointer;';
-  main.innerHTML='<span style="font-size:11.5px;font-weight:700;color:#444;">Ö'+i+(ot?' <small style="color:var(--acc);font-size:9px;margin-left:3px;">'+ot+'</small>':'')+'</span>'
-    +'<div style="margin-left:auto;width:24px;height:24px;border-radius:50%;border:1.5px solid '+(tot>0?'var(--acc)':'#9e9e9e')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+(tot>0?'#fff':'#757575')+';background:'+(tot>0?'var(--acc)':'transparent')+'">'+(tot>0?tot:'+')+'</div>';
-  main.setAttribute('data-key',key);main.setAttribute('data-i',i);
-  main.onclick=function(){openBau(this.getAttribute('data-key'),'Öffnung '+this.getAttribute('data-i'),getUgr(this.getAttribute('data-key')));};
-  var del=document.createElement('button');del.textContent='✕';
-  del.style.cssText='border:0;background:#ffebee;color:#c62828;border-radius:5px;padding:3px 6px;font-size:10px;cursor:pointer;';
-  (function(sid,ii){del.onclick=function(e){e.stopPropagation();if(!confirm('Öffnung löschen?'))return;delOeff(sid,ii);};})(stb.id,i);
-  hdr.appendChild(main);hdr.appendChild(del);d.appendChild(hdr);
-  return d;
+  var showDel=!bauwerkLocked&&stb.oeff>1;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:#fff;min-height:36px;gap:8px;';
+  var lbl=document.createElement('span');
+  lbl.style.cssText='font-size:11.5px;font-weight:700;color:#444;flex:1;';
+  lbl.innerHTML='Ö'+i+(ot?' <small style="color:var(--acc);font-size:9px;margin-left:3px;">'+ot+'</small>':'');
+  row.appendChild(lbl);
+  if(tot>0){
+    var badge=document.createElement('span');
+    badge.style.cssText='background:var(--acc);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;';
+    badge.textContent=tot;
+    row.appendChild(badge);
+  }
+  row.onclick=function(){openBau(key,'Öffnung '+i,ugr);};
+  if(showDel){
+    var del=document.createElement('button');del.textContent='✕';
+    del.style.cssText='border:0;background:#ffebee;color:#c62828;border-radius:5px;padding:3px 6px;font-size:10px;cursor:pointer;flex-shrink:0;';
+    (function(sid,ii){del.onclick=function(e){e.stopPropagation();if(!confirm('Öffnung löschen?'))return;delOeff(sid,ii);};})(stb.id,i);
+    row.appendChild(del);
+  }
+  return row;
 }
 
 function startBauwerk(){
