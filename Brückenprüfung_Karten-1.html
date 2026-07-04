@@ -145,6 +145,7 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
       <button class="bback" onclick="g('ovSch').classList.remove('open');if(curBauKey)openBau(curBauKey,curBauTitle,lastUgr);">← Zurück</button>
       <h3 id="schTitle">Schäden</h3>
     </div>
+    <div id="schUgrSwitch" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
     <div id="schList"></div>
     <button onclick="openMod()" style="width:100%;padding:9px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">+ Schaden hinzufügen</button>
     <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none">
@@ -441,8 +442,29 @@ function openReliSel(baseKey,baseName,bereich){
 function openSch(key,ugr,bereich){
   curKey=key;curSchTitle=bereich+' / '+ugr;
   g('schTitle').textContent=curSchTitle;
+  renderUgrSwitch(ugr);
   renderSch();
   showPanel('ovSch');
+}
+
+function renderUgrSwitch(activeUgr){
+  var box=g('schUgrSwitch');if(!box)return;
+  box.innerHTML='';
+  if(!curBauKey||!lastUgr||lastUgr.length<2)return;
+  // Flatten li/re pairs into individual chips so switching is a single tap
+  lastUgr.forEach(function(u){
+    var chip=document.createElement('button');
+    chip.textContent=u;
+    var isActive=(u===activeUgr);
+    chip.style.cssText='border:1.5px solid '+(isActive?'var(--acc)':'var(--line)')+';background:'+(isActive?'var(--acc)':'var(--s2)')+';color:'+(isActive?'#fff':'var(--soft)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;';
+    (function(uu){chip.onclick=function(){if(uu===activeUgr)return;switchUgr(uu);};})(u);
+    box.appendChild(chip);
+  });
+}
+
+function switchUgr(u){
+  var key=curBauKey+'___'+u;
+  openSch(key,u,curBauTitle);
 }
 
 function renderSch(){
