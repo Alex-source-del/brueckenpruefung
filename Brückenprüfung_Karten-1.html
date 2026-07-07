@@ -124,9 +124,24 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
   <div class="fl"><label>Datum</label><input id="f_dat" type="date"></div>
   <div class="fl"><label>Prüfer</label><input id="f_pr" placeholder="Name"></div>
 </div>
-<div style="padding:10px 12px 0;position:relative;">
-  <input id="bauSearch" placeholder="🔍 Bauteil suchen (z.B. STB 2 Ö3)" style="width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 12px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;">
-  <div id="bauSearchResults" style="position:absolute;left:12px;right:12px;top:100%;background:var(--sur);border:1px solid var(--line);border-radius:0 0 7px 7px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:40;display:none;max-height:220px;overflow-y:auto;"></div>
+<div style="padding:10px 12px 0;position:relative;display:flex;gap:8px;align-items:flex-start;">
+  <div style="flex:1;position:relative;">
+    <input id="bauSearch" placeholder="🔍 Bauteil suchen (z.B. STB 2 Ö3)" style="width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 12px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;">
+    <div id="bauSearchResults" style="position:absolute;left:0;right:0;top:100%;background:var(--sur);border:1px solid var(--line);border-radius:0 0 7px 7px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:40;display:none;max-height:220px;overflow-y:auto;"></div>
+  </div>
+  <button onclick="openGesamtschaeden()" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">📋 Gesamtschäden</button>
+</div>
+
+<!-- GESAMTSCHÄDEN PANEL -->
+<div class="ov" id="ovGesamt">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="g('ovGesamt').classList.remove('open');">← Zurück</button>
+      <h3>Gesamtschäden</h3>
+    </div>
+    <div id="gesamtList"></div>
+  </div>
 </div>
 <div class="wrap"><div class="grid" id="mainGrid"></div></div>
 <div id="stbBtnArea" style="padding:0 12px 12px;"></div>
@@ -177,15 +192,20 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:8px;"></div>
       <div id="mBauteilNrRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
-        <label style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
+        <label id="mBauteilNrLabel" style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
         <input id="mBauteilNr" type="text" placeholder="z.B. 3 oder 1,2,3,4" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
         <button type="button" onclick="g('mBauteilNr').value='Alle';" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
+      </div>
+      <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+        <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
+        <input id="mBauteilRef" type="text" placeholder="z.B. 2" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
         <button type="button" onclick="if(g('mDesc').value&&!confirm('Beschreibung wirklich löschen?'))return;g('mDesc').value='';" style="border:0;background:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 4px;">🗑 Löschen</button>
       </div>
       <textarea id="mDesc" placeholder="Beschreibung..."></textarea>
+      <div id="mVbsRow" style="display:flex;gap:6px;margin-top:8px;"></div>
     </div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
       <label style="font-size:12px;color:var(--soft);font-weight:600;">📷 Foto</label>
@@ -261,15 +281,15 @@ var VL = {
   'Abplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Steinausbrüche':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Steinausbrüche',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Korrosion':[
-    {l:'Vereinzelt: angerostet',t:'Korrosion vereinzelt, angerostet',i:[]},
-    {l:'Vereinzelt: Plattenrost',t:'Korrosion vereinzelt, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
-    {l:'Vereinzelt: Korrosionsschutzschäden',t:'Korrosion vereinzelt, Korrosionsschutzschäden',i:[]},
-    {l:'Stellenweise: angerostet',t:'Korrosion stellenweise, angerostet',i:[]},
-    {l:'Stellenweise: Plattenrost',t:'Korrosion stellenweise, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
-    {l:'Stellenweise: Korrosionsschutzschäden',t:'Korrosion stellenweise, Korrosionsschutzschäden',i:[]},
-    {l:'Mehrfach: angerostet',t:'Korrosion mehrfach, angerostet',i:[]},
-    {l:'Mehrfach: Plattenrost',t:'Korrosion mehrfach, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
-    {l:'Mehrfach: Korrosionsschutzschäden',t:'Korrosion mehrfach, Korrosionsschutzschäden',i:[]}
+    {l:'Vereinzelt angerostet',t:'Korrosion vereinzelt, angerostet',i:[]},
+    {l:'Vereinzelt Plattenrost',t:'Korrosion vereinzelt, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Vereinzelt Korrosionsschutzschäden',t:'Korrosion vereinzelt, Korrosionsschutzschäden',i:[]},
+    {l:'Stellenweise angerostet',t:'Korrosion stellenweise, angerostet',i:[]},
+    {l:'Stellenweise Plattenrost',t:'Korrosion stellenweise, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Stellenweise Korrosionsschutzschäden',t:'Korrosion stellenweise, Korrosionsschutzschäden',i:[]},
+    {l:'Mehrfach angerostet',t:'Korrosion mehrfach, angerostet',i:[]},
+    {l:'Mehrfach Plattenrost',t:'Korrosion mehrfach, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Mehrfach Korrosionsschutzschäden',t:'Korrosion mehrfach, Korrosionsschutzschäden',i:[]}
   ],
   'Korrosionsschutzschäden':[{l:'Vereinzelt',t:'Korrosionsschutzschaden vereinzelt',i:[]},{l:'Stellenweise',t:'Korrosionsschutzschaden stellenweise',i:[]},{l:'Mehrfach',t:'Korrosionsschutzschaden mehrfach',i:[]}],
   'Verformung/Verschiebung/Verkippung':[{l:'Verformung',t:'Verformung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verschiebung',t:'Verschiebung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verkippung',t:'Verkippung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]}],
@@ -298,6 +318,10 @@ var VL = {
   'Wandung brüchig':[{l:'Bestätigen',t:'Wandung brüchig',i:[]}],
   'Teilzerstört':[{l:'Bestätigen',t:'Teilzerstört',i:[]}],
   'Mörtelfugenschäden/offene Fugen':[{l:'Bestätigen',t:'Mörtelfugenschäden/offene Fugen',i:[]}],
+  'Verformt/beschädigt':[{l:'Bestätigen',t:'Verformt/beschädigt',i:[]}],
+  'Abgenutzt':[{l:'Bestätigen',t:'Abgenutzt',i:[]}],
+  'Risse/Versprödung':[{l:'Bestätigen',t:'Risse/Versprödung festgestellt',i:[]}],
+  'Fehlt/unleserlich':[{l:'Bestätigen',t:'Fehlt/unleserlich',i:[]}],
   'Temperaturen':[{l:'Angeben',t:'Oberflächentemperatur {0}°C, Lufttemperatur {1}°C',i:[{l:'Oberflächentemp.',u:'°C'},{l:'Lufttemp.',u:'°C'}]}],
   'Leicht verschmutzt':[{l:'Bestätigen',t:'Leicht verschmutzt',i:[]}],
   'Vergussmörtel/Lagersockel rissig':[{l:'Maß',t:'Vergussmörtel/Lagersockel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
@@ -323,8 +347,8 @@ var VL = {
 // ============================================================
 // BAUTEIL-GLIEDERUNG (Neustrukturierung)
 // ============================================================
-var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
-var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
 var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank'];
 var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht'];
 var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht','Walzträgerunterflansch'];
@@ -332,6 +356,11 @@ var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträge
 // Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
 // Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger'];
+// Bauteile mit zwei Nummern (eigene Nr. + Bezugs-Nr.), z.B. "Beulsteife Nr. 3 an Hauptträger Nr. 2"
+// Auf weitere Stahlbauteile erweiterbar, einfach hier ergänzen
+var DOPPEL_NR_BAUTEILE={
+  'Beulsteife an Hauptträger':{compLabel:'Beulsteife Nr.:',refLabel:'an Hauptträger Nr.:',refWord:'Hauptträger'}
+};
 var OE_GB=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnwand links','Stirnwand rechts','Abdeckung Stirnwand links','Abdeckung Stirnwand rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal'];
 var OE_GM=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnmauer links','Stirnmauer rechts','Abdeckung Stirnmauer links','Abdeckung Stirnmauer rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal'];
 
@@ -343,6 +372,20 @@ var LAGER_SC={
   'Linienkipplager quer verschieblich':['Lager Nr./Achse','Temperaturen','Spaltmaß an Knagge','Korrosionsbeginn','Leicht verschmutzt','Vergussmörtel rissig','Verbindungsmittel'],
   'Elastomerlager':['Lager Nr./Achse','Temperaturen','Elastomer-Zustand','Verschiebung Richtung W','Verschiebung 0mm links/rechts','Korrosionsbeginn','Leicht verschmutzt','Vergussmörtel rissig','Verbindungsmittel']
 };
+// Lagerbauteile (Unterpunkte) je Lagertyp - reduzierte, praxisrelevante Auswahl (Quelle: KIB-Referenz, gekürzt)
+var LAGER_BAUTEILE={
+  'Rollenlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Rolle','Führungsleiste','Gleitplatte','Gleitteil (PTFE)','Typenschild'],
+  'Linienkipplager Festlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Druckstück','Typenschild'],
+  'Linienkipplager quer verschieblich':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Druckstück','Gleitplatte','Gleitteil (PTFE)','Führungskonstruktion','Festhaltekonstruktion','Typenschild'],
+  'Elastomerlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Elastomerkissen','Festhaltekonstruktion','Typenschild']
+};
+// Automatische Schadenszuordnung je Bauteilbezeichnung (eigene Einschätzung, keine Norm)
+function lagerBauteilSchaeden(bauteil){
+  if(/Elastomerkissen/.test(bauteil))return ['Verformt/beschädigt','Risse/Versprödung','Verschmutzung'];
+  if(/Typenschild/.test(bauteil))return ['Fehlt/unleserlich'];
+  if(/Gleit|Rolle/.test(bauteil))return ['Abgenutzt','Verschmutzung','Verformt/beschädigt'];
+  return ['Korrosion','Verschmutzung','Verformt/beschädigt'];
+}
 var FUGEN_SC={
   'Lamellenübergang':['Höhenversatz','Dichtprofil rissig/beschädigt','Dichtprofil fehlend','Lamelle verformt/beschädigt','Korrosion','Lose/fehlende Verbindungsmittel','Verschmutzt/verstopft'],
   'Fingerkonstruktion':['Finger verformt/verbogen','Finger gebrochen/fehlend','Höhenversatz','Korrosion','Verschmutzt/verstopft'],
@@ -370,6 +413,7 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
 
 // STATE
 var stbs=[], nxtId=1, dat={};
+function isDurchgehendW(){return !!dat['__durchgehendW'];}
 var bauwerkLocked=false;
 var curKey=null, curBauKey=null, curBauTitle='', curSchTitle='', curUgr='', lastUgr=[], curEditIdx=-1;
 var curTyp='Beton', curArt='', curVorl=null;
@@ -440,13 +484,14 @@ function render(){
   grid.style.cssText='';
   stbs.forEach(function(stb,si){
     var col=document.createElement('div');col.className='col';
-    var tot=cntStb(stb);
     var hdr=document.createElement('div');hdr.className='col-hdr';
-    hdr.innerHTML='STB '+(si+1)+(tot>0?' <span class="sc">'+tot+'</span>':'')
+    hdr.innerHTML='STB '+(si+1)
       +((!bauwerkLocked&&stbs.length>1)?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
     col.appendChild(hdr);
     var inner=document.createElement('div');inner.className='col-table';
-    inner.appendChild(mkKa('stb'+stb.id+'_w2','W2','wid'));
+    var w2Key=isDurchgehendW()?'wg_w2':('stb'+stb.id+'_w2');
+    var w1Key=isDurchgehendW()?'wg_w1':('stb'+stb.id+'_w1');
+    inner.appendChild(mkKa(w2Key,isDurchgehendW()?'W2 (durchgehend)':'W2','wid'));
     for(var i=stb.oeff;i>=1;i--){
       if(i===stb.oeff&&!bauwerkLocked&&stb.oeff<5){
         var pairRow=document.createElement('div');pairRow.style.cssText='display:flex;';
@@ -462,7 +507,7 @@ function render(){
       }
       if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),'pf'));
     }
-    inner.appendChild(mkKa('stb'+stb.id+'_w1','W1','wid'));
+    inner.appendChild(mkKa(w1Key,isDurchgehendW()?'W1 (durchgehend)':'W1','wid'));
     col.appendChild(inner);
     if(si===stbs.length-1&&!bauwerkLocked&&stbs.length<5){
       var addStbTile=document.createElement('div');
@@ -474,6 +519,17 @@ function render(){
     grid.appendChild(col);
   });
   var sa=g('stbBtnArea');if(sa){sa.innerHTML='';
+    if(stbs.length>1){
+      var dgBtn=document.createElement('button');
+      dgBtn.textContent=isDurchgehendW()?'🔗 Widerlager getrennt anzeigen':'🔗 Widerlager durchgehend (mehrere Überbauten, ein Widerlager)';
+      dgBtn.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid var(--acc);border-radius:7px;background:'+(isDurchgehendW()?'var(--acc)':'var(--accs)')+';color:'+(isDurchgehendW()?'#fff':'var(--acc)')+';font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+      dgBtn.onclick=function(){
+        dat['__durchgehendW']=!dat['__durchgehendW'];
+        autoSave();render();
+        toast(isDurchgehendW()?'Widerlager sind jetzt durchgehend (STB-übergreifend)':'Widerlager sind jetzt wieder getrennt je STB');
+      };
+      sa.appendChild(dgBtn);
+    }
     if(!bauwerkLocked){
       var lockBtn=document.createElement('button');
       lockBtn.className='ps';
@@ -516,7 +572,10 @@ function cntKey(key,ugr){var n=0;ugr.forEach(function(u){n+=(dat[key+'___'+u]||[
 function cntExtra(key){
   if(!/_oe\d+$/.test(key))return 0;
   var n=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
-  LAGER_TYPES.forEach(function(t){n+=(dat[key+'___Lager: '+t]||[]).length;});
+  LAGER_TYPES.forEach(function(t){
+    n+=(dat[key+'___Lager: '+t]||[]).length;
+    (LAGER_BAUTEILE[t]||[]).forEach(function(teil){n+=(dat[key+'___Lager: '+t+' - '+teil]||[]).length;});
+  });
   FUGEN_TYPES.forEach(function(t){n+=(dat[key+'___Fugen: '+t]||[]).length;});
   return n;
 }
@@ -547,9 +606,9 @@ function mkKa(key,label,typ){
   var bg=typ==='wid'?'#e8f5e9':typ==='pf'?'#e3f2fd':'#fff';
   var tc=typ==='wid'?'#2e7d32':typ==='pf'?'#1565c0':'#444';
   var row=document.createElement('div');
-  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:'+bg+';min-height:36px;';
-  row.innerHTML='<span style="font-size:11.5px;font-weight:700;color:'+tc+';">'+label+(bt?' <small style="font-size:9px;margin-left:3px;opacity:.75;">('+bt+')</small>':'')+'</span>'
-    +(tot>0?'<span style="background:'+tc+';color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;">'+tot+'</span>':'');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;background:'+bg+';min-height:58px;';
+  row.innerHTML='<span style="font-size:18px;font-weight:700;color:'+tc+';">'+label+(bt?' <small style="font-size:14px;margin-left:5px;opacity:.75;">('+bt+')</small>':'')+'</span>'
+    +(tot>0?'<span style="background:'+tc+';color:#fff;border-radius:16px;padding:2px 13px;font-size:18px;font-weight:700;">'+tot+'</span>':'');
   row.setAttribute('data-key',key);row.setAttribute('data-label',label);
   row.onclick=function(){var k=this.getAttribute('data-key');openBau(k,this.getAttribute('data-label'),getUgr(k));};
   return row;
@@ -562,21 +621,21 @@ function mkOe(stb,i){
   var tot=cntKey(key,ugr)+cntExtra(key);
   var showDel=!bauwerkLocked&&stb.oeff>1;
   var row=document.createElement('div');
-  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:#fff;min-height:36px;gap:8px;';
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;background:#fff;min-height:58px;gap:13px;';
   var lbl=document.createElement('span');
-  lbl.style.cssText='font-size:11.5px;font-weight:700;color:#444;flex:1;';
-  lbl.innerHTML='Ö'+i+(ot?' <small style="color:var(--acc);font-size:9px;margin-left:3px;">'+ot+'</small>':'');
+  lbl.style.cssText='font-size:18px;font-weight:700;color:#444;flex:1;';
+  lbl.innerHTML='Ö'+i+(ot?' <small style="color:var(--acc);font-size:14px;margin-left:5px;">'+ot+'</small>':'');
   row.appendChild(lbl);
   if(tot>0){
     var badge=document.createElement('span');
-    badge.style.cssText='background:var(--acc);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;';
+    badge.style.cssText='background:var(--acc);color:#fff;border-radius:16px;padding:2px 13px;font-size:18px;font-weight:700;';
     badge.textContent=tot;
     row.appendChild(badge);
   }
   row.onclick=function(){openBau(key,'Öffnung '+i,ugr);};
   if(showDel){
     var del=document.createElement('button');del.textContent='✕';
-    del.style.cssText='border:0;background:#ffebee;color:#c62828;border-radius:5px;padding:3px 6px;font-size:10px;cursor:pointer;flex-shrink:0;';
+    del.style.cssText='border:0;background:#ffebee;color:#c62828;border-radius:8px;padding:5px 10px;font-size:16px;cursor:pointer;flex-shrink:0;';
     (function(sid,ii){del.onclick=function(e){e.stopPropagation();if(!confirm('Öffnung löschen?'))return;delOeff(sid,ii);};})(stb.id,i);
     row.appendChild(del);
   }
@@ -700,7 +759,7 @@ function openBau(key,title,ugr){
     var curOt2=dat['__t_'+key]||'';
     var isGewoelbe=(curOt2==='Gew.Beton'||curOt2==='Gew.Mauerwk');
     if(!isGewoelbe){
-      var lc=0;LAGER_TYPES.forEach(function(t){lc+=(dat[key+'___Lager: '+t]||[]).length;});
+      var lc=0;LAGER_TYPES.forEach(function(t){lc+=(dat[key+'___Lager: '+t]||[]).length;(LAGER_BAUTEILE[t]||[]).forEach(function(teil){lc+=(dat[key+'___Lager: '+t+' - '+teil]||[]).length;});});
       var lb=document.createElement('button');lb.className='sb'+(lc>0?' on':'');
       lb.innerHTML='Lager'+(lc>0?'<span class="uc">'+lc+'</span>':'');
       (function(bk,t){lb.onclick=function(){openTypeSel(bk,'Lager',t,LAGER_TYPES);};})(key,title);
@@ -722,9 +781,35 @@ function openTypeSel(baseKey,groupName,bereich,types){
   types.forEach(function(typ){
     var fk=baseKey+'___'+groupName+': '+typ;
     var c=(dat[fk]||[]).length;
+    if(groupName==='Lager'){(LAGER_BAUTEILE[typ]||[]).forEach(function(teil){c+=(dat[baseKey+'___Lager: '+typ+' - '+teil]||[]).length;});}
     var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
     b.innerHTML=typ+(c>0?'<span class="uc">'+c+'</span>':'');
-    (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,groupName+': '+typ,bereich);
+    if(groupName==='Lager'){
+      (function(k,typ2,r){b.onclick=function(){openLagerBauteilSel(baseKey,typ2,r);};})(fk,typ,bereich);
+    } else {
+      (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,groupName+': '+typ,bereich);
+    }
+    g('bauList').appendChild(b);
+  });
+  showPanel('ovBau');
+}
+
+function openLagerBauteilSel(baseKey,lagerTyp,bereich){
+  g('bauTitle').textContent=bereich+' / Lager: '+lagerTyp;
+  g('bauList').innerHTML='';
+  var allgKey=baseKey+'___Lager: '+lagerTyp;
+  var allgC=(dat[allgKey]||[]).length;
+  var allgBtn=document.createElement('button');allgBtn.className='sb'+(allgC>0?' on':'');
+  allgBtn.innerHTML='Allgemein'+(allgC>0?'<span class="uc">'+allgC+'</span>':'');
+  (function(k,n,r){allgBtn.onclick=function(){openSch(k,n,r);};})(allgKey,'Lager: '+lagerTyp,bereich);
+  g('bauList').appendChild(allgBtn);
+  var teile=LAGER_BAUTEILE[lagerTyp]||[];
+  teile.forEach(function(teil){
+    var fk=baseKey+'___Lager: '+lagerTyp+' - '+teil;
+    var c=(dat[fk]||[]).length;
+    var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+    b.innerHTML=teil+(c>0?'<span class="uc">'+c+'</span>':'');
+    (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,'Lager: '+lagerTyp+' - '+teil,bereich);
     g('bauList').appendChild(b);
   });
   showPanel('ovBau');
@@ -804,8 +889,26 @@ function renderSch(){
     (function(ii){edit.onclick=function(){editS(ii);};})(i);
     sr.appendChild(txt);sr.appendChild(edit);sr.appendChild(del);div.appendChild(sr);
     // Copy to sibling components of the same type (opt-in, description text only — no photos)
+    var wgMatch=curKey.match(/^(wg_w[12])___(.*)$/);
     var bMatch=curKey.match(/^(stb\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
-    if(bMatch){
+    if(wgMatch){
+      var wgPart=wgMatch[1],ugrSuffixWg=wgMatch[2];
+      var wgTarget=wgPart==='wg_w1'?'wg_w2':'wg_w1';
+      var cpWg=document.createElement('button');
+      cpWg.textContent='📋 Auf anderes Widerlager (durchgehend) übernehmen';
+      cpWg.style.cssText='border:0;background:none;color:var(--acc);font-size:11.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;margin-top:4px;display:block;';
+      (function(it2,tKey,ugr3){
+        cpWg.onclick=function(){
+          var targetKey=tKey+'___'+ugr3;
+          if(!dat[targetKey])dat[targetKey]=[];
+          dat[targetKey].push({d:it2.d,fotos:[],loc:it2.loc,t:it2.t,a:it2.a});
+          autoSave();
+          render();
+          toast('Übernommen ✓');
+        };
+      })(it,wgTarget,ugrSuffixWg);
+      div.appendChild(cpWg);
+    } else if(bMatch){
       var stbPrefix2=bMatch[1],bauteilPart=bMatch[2],ugrSuffix2=bMatch[3];
       var stbIdNum2=parseInt(stbPrefix2.replace('stb',''),10);
       var stbObj=stbs.filter(function(s){return s.id===stbIdNum2;})[0];
@@ -839,10 +942,47 @@ function renderSch(){
               count++;
             });
             autoSave();
+            render();
             toast('Auf '+count+' weitere Stelle(n) übernommen ✓');
           };
         })(it,siblingKeys,ugrSuffix2);
         div.appendChild(cp);
+      }
+      // Auf gleiches Bauteil in anderen STB übernehmen (z.B. W1 von STB1 -> W1 von STB2, STB3, ...)
+      if(stbObj&&stbs.length>1){
+        var otherStbKeys=[];
+        stbs.forEach(function(s){
+          if(s.id===stbIdNum2)return;
+          if(/^w[12]$/.test(bauteilPart)){
+            otherStbKeys.push('stb'+s.id+'_'+bauteilPart);
+          } else if(/^oe\d+$/.test(bauteilPart)){
+            var n=parseInt(bauteilPart.replace('oe',''),10);
+            if(n<=s.oeff)otherStbKeys.push('stb'+s.id+'_oe'+n);
+          } else if(/^pf\d+$/.test(bauteilPart)){
+            var n2=parseInt(bauteilPart.replace('pf',''),10);
+            if(n2<=s.oeff-1)otherStbKeys.push('stb'+s.id+'_pf'+n2);
+          }
+        });
+        if(otherStbKeys.length){
+          var cp2=document.createElement('button');
+          cp2.textContent='📋 Auf gleiches Bauteil in anderem STB übernehmen';
+          cp2.style.cssText='border:0;background:none;color:var(--acc);font-size:11.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;margin-top:4px;display:block;';
+          (function(it2,oKeys,ugr3){
+            cp2.onclick=function(){
+              var count=0;
+              oKeys.forEach(function(sk){
+                var targetKey=sk+'___'+ugr3;
+                if(!dat[targetKey])dat[targetKey]=[];
+                dat[targetKey].push({d:it2.d,fotos:[],loc:it2.loc,t:it2.t,a:it2.a});
+                count++;
+              });
+              autoSave();
+              render();
+              toast('Auf '+count+' weitere STB übernommen ✓');
+            };
+          })(it,otherStbKeys,ugrSuffix2);
+          div.appendChild(cp2);
+        }
       }
     }
     // Fotos
@@ -872,6 +1012,104 @@ function renderSch(){
 
 function delS(i){if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;if(dat[curKey])dat[curKey].splice(i,1);renderSch();render();autoSave();}
 
+function updateBauteilNrUI(){
+  curVbsState={V:false,B:false,S:false};
+  renderVbsRow();
+  var nrRow=g('mBauteilNrRow'),refRow=g('mBauteilRefRow');
+  if(!nrRow||!refRow)return;
+  var bauteilName=curUgr||'';
+  var dbl=DOPPEL_NR_BAUTEILE[bauteilName];
+  if(dbl){
+    nrRow.style.display='flex';g('mBauteilNrLabel').textContent=dbl.compLabel;g('mBauteilNr').value='';
+    refRow.style.display='flex';g('mBauteilRefLabel').textContent=dbl.refLabel;g('mBauteilRef').value='';
+  } else if(NUMMERIERBARE_BAUTEILE.indexOf(bauteilName)>-1){
+    nrRow.style.display='flex';g('mBauteilNrLabel').textContent='Nr.:';g('mBauteilNr').value='';
+    refRow.style.display='none';
+  } else {
+    nrRow.style.display='none';
+    refRow.style.display='none';
+  }
+}
+
+function collectAllSchaeden(){
+  var out=[];
+  if(isDurchgehendW()){
+    [{k:'wg_w1',l:'Widerlager 1 (durchgehend)',u:getUgr('wg_w1')},{k:'wg_w2',l:'Widerlager 2 (durchgehend)',u:getUgr('wg_w2')}].forEach(function(b){
+      b.u.forEach(function(u){
+        var items=dat[b.k+'___'+u]||[];
+        items.forEach(function(it,idx){
+          out.push({key:b.k,ugr:u,bereich:b.l,idx:idx,item:it});
+        });
+      });
+    });
+  }
+  stbs.forEach(function(stb,si){
+    var stbLbl='STB '+(si+1);
+    var bases=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      var extraU=['Geländer links','Geländer rechts'];
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      bases.push({k:ok,l:'Öffnung '+i,u:getUgr(ok).concat(extraU)});
+      if(i<stb.oeff)bases.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
+    }
+    if(!isDurchgehendW())bases.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
+    bases.forEach(function(b){
+      b.u.forEach(function(u){
+        var items=dat[b.k+'___'+u]||[];
+        items.forEach(function(it,idx){
+          out.push({key:b.k,ugr:u,bereich:stbLbl+' / '+b.l,idx:idx,item:it});
+        });
+      });
+    });
+  });
+  return out;
+}
+
+function openGesamtschaeden(){
+  if(!stbs.length){toast('Noch kein Bauwerk angelegt');return;}
+  var list=collectAllSchaeden();
+  var box=g('gesamtList');box.innerHTML='';
+  if(!list.length){
+    box.innerHTML='<p style="color:var(--faint);font-size:13px;padding:10px;">Keine Schäden erfasst</p>';
+  } else {
+    box.innerHTML='<p style="color:var(--soft);font-size:12px;padding:0 0 8px;">'+list.length+' Schaden(-Einträge) insgesamt</p>';
+    list.forEach(function(entry){
+      var div=document.createElement('div');div.className='sitem';
+      var lh=document.createElement('div');
+      lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
+      lh.textContent=entry.bereich+' / '+entry.ugr;div.appendChild(lh);
+      var sr=document.createElement('div');sr.className='sr';
+      var txt=document.createElement('div');txt.style.cssText='flex:1;font-size:13px;line-height:1.7;';
+      var lines=(entry.item.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+      txt.innerHTML=lines.map(function(p){return '<div>'+(p[0]==='-'?p:'- '+p)+'</div>';}).join('');
+      var edit=document.createElement('button');edit.textContent='✏️';edit.className='dx';edit.style.cssText='background:var(--acc);transform:scale(1.8);transform-origin:center;margin-right:14px;';
+      (function(en){edit.onclick=function(){
+        curKey=en.key+'___'+en.ugr;curUgr=en.ugr;
+        var parts=en.bereich.split(' / ');
+        var kurz=parts.length>1?parts.slice(1).join(' / '):parts[0];
+        curSchTitle=kurz+' / '+en.ugr;
+        editS(en.idx);
+      };})(entry);
+      sr.appendChild(txt);sr.appendChild(edit);div.appendChild(sr);
+      var fotos=entry.item.fotos||[];
+      if(fotos.length){
+        var leiste=document.createElement('div');
+        leiste.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
+        fotos.forEach(function(f){
+          var img=document.createElement('img');img.src=f.data;
+          img.style.cssText='height:80px;border-radius:6px;border:2px solid var(--acc);';
+          leiste.appendChild(img);
+        });
+        div.appendChild(leiste);
+      }
+      box.appendChild(div);
+    });
+  }
+  showPanel('ovGesamt');
+}
+
 function editS(i){
   var it=dat[curKey]&&dat[curKey][i];
   if(!it)return;
@@ -881,20 +1119,22 @@ function editS(i){
   mPendingFotos=(it.fotos||[]).slice();
   renderMFotoLeiste();
   var vEl=g('mVerortung');if(vEl)vEl.textContent=curSchTitle||'';
-  var nrRow=g('mBauteilNrRow');
-  if(nrRow){
-    var bauteilName=curUgr||'';
-    if(NUMMERIERBARE_BAUTEILE.indexOf(bauteilName)>-1){
-      nrRow.style.display='flex';
-      g('mBauteilNr').value=''; // Nr. steckt schon im Text, nicht erneut vorbelegen
-    } else {
-      nrRow.style.display='none';
-    }
-  }
+  updateBauteilNrUI();
   g('mArt').style.display='block';
   g('mTyp').style.display='none';
   bldArt();
-  g('mDesc').value=it.d;
+  // Bestehende V/B/S-Zeile erkennen, aus dem Text lösen und in die Checkboxen zurückübersetzen
+  var lines=(it.d||'').split('\n');
+  var vbsLineRe=/^-?\s*((Verkehrssicherheit|Betriebssicherheit|Standsicherheit)!\s*)+$/;
+  var lastLine=lines[lines.length-1]||'';
+  if(vbsLineRe.test(lastLine.trim())){
+    curVbsState.V=/Verkehrssicherheit!/.test(lastLine);
+    curVbsState.B=/Betriebssicherheit!/.test(lastLine);
+    curVbsState.S=/Standsicherheit!/.test(lastLine);
+    renderVbsRow();
+    lines=lines.slice(0,-1);
+  }
+  g('mDesc').value=lines.join('\n');
   showPanel('ovMod');
   toast('Bearbeitungsmodus – Änderungen speichern nicht vergessen');
 }
@@ -1184,16 +1424,7 @@ function openMod(){
   mPendingFotos=[];
   renderMFotoLeiste();
   var vEl=g('mVerortung');if(vEl)vEl.textContent=curSchTitle||'';
-  var nrRow=g('mBauteilNrRow');
-  if(nrRow){
-    var bauteilName=curUgr||'';
-    if(NUMMERIERBARE_BAUTEILE.indexOf(bauteilName)>-1){
-      nrRow.style.display='flex';
-      g('mBauteilNr').value='';
-    } else {
-      nrRow.style.display='none';
-    }
-  }
+  updateBauteilNrUI();
   g('mArt').style.display='block';
   g('mTyp').style.display='none';
   bldArt();
@@ -1210,14 +1441,19 @@ function takeMFoto(){
 function bldArt(){
   var u=curUgr||(curKey?curKey.split('___')[1]||'':'');
   var arts;
-  var lagerM=u.match(/^Lager: (.+)$/);
+  var lagerM=u.match(/^Lager: (.+?)(?: - (.+))?$/);
   var fugenM=u.match(/^Fugen: (.+)$/);
   if(u==='Geländer links'||u==='Geländer rechts'){
     curTyp='Geländer';
     arts=(SC['Geländer']||[]).slice();
   } else if(lagerM){
-    curTyp='Lager:'+lagerM[1];
-    arts=(LAGER_SC[lagerM[1]]||[]).slice();
+    if(lagerM[2]){
+      curTyp='Lager:'+lagerM[1]+':'+lagerM[2];
+      arts=lagerBauteilSchaeden(lagerM[2]).slice();
+    } else {
+      curTyp='Lager:'+lagerM[1];
+      arts=(LAGER_SC[lagerM[1]]||[]).slice();
+    }
   } else if(fugenM){
     curTyp='Fugen:'+fugenM[1];
     arts=(FUGEN_SC[fugenM[1]]||[]).slice();
@@ -1240,50 +1476,42 @@ function bldArt(){
   });
 }
 
-var EXCLUDE_VBS=['Bewuchs/Vegetation','Abnutzung'];
-var curVbsState=null;
+var curVbsState={V:false,B:false,S:false};
 function vbsSuffix(){
-  if(!curVbsState)return '';
   var map={V:'Verkehrssicherheit',B:'Betriebssicherheit',S:'Standsicherheit'};
   var parts=[];
   ['V','B','S'].forEach(function(l){if(curVbsState[l])parts.push(map[l]+'!');});
-  return parts.length?' '+parts.join(' '):'';
+  return parts.join(' ');
 }
-function buildVbsRow(container){
-  var row=document.createElement('div');
-  row.style.cssText='display:flex;gap:6px;margin-bottom:10px;';
+function renderVbsRow(){
+  var box=g('mVbsRow');if(!box)return;
+  box.innerHTML='';
   var lbl=document.createElement('span');lbl.textContent='Sicherheit:';lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;align-self:center;margin-right:2px;';
-  row.appendChild(lbl);
+  box.appendChild(lbl);
   ['V','B','S'].forEach(function(letter){
     var b=document.createElement('button');b.type='button';b.textContent=letter;
-    b.style.cssText='flex:1;padding:7px;border:1.5px solid var(--acc);border-radius:6px;background:transparent;color:var(--acc);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;';
-    b.onclick=function(){
-      curVbsState[letter]=!curVbsState[letter];
-      b.style.background=curVbsState[letter]?'var(--acc)':'transparent';
-      b.style.color=curVbsState[letter]?'#fff':'var(--acc)';
-    };
-    row.appendChild(b);
+    var on=curVbsState[letter];
+    b.style.cssText='flex:1;padding:7px;border:1.5px solid var(--acc);border-radius:6px;background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--acc)')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;';
+    b.onclick=function(){curVbsState[letter]=!curVbsState[letter];renderVbsRow();};
+    box.appendChild(b);
   });
-  container.appendChild(row);
 }
 
 function selArt(a,btn){
   curArt=a;
-  curVbsState=EXCLUDE_VBS.indexOf(a)>-1?null:{V:false,B:false,S:false};
   var old=g('artInline');if(old)old.parentNode.removeChild(old);
   g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});
   if(btn)btn.classList.add('on');
   var vl=VL[a]||[];
   var wrap=document.createElement('div');wrap.id='artInline';
   wrap.style.cssText='margin:4px 0 12px;padding:12px;background:var(--accs);border-left:3px solid var(--acc);border-radius:0 8px 8px 0;';
-  if(curVbsState)buildVbsRow(wrap);
   var hasInp=vl.some(function(v){return v.i&&v.i.length>0;});
   if(!vl.length){
-    addConfirmBtn(wrap,a,function(){appendDesc(a+vbsSuffix());wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});});
+    addConfirmBtn(wrap,a,function(){appendDesc(a);wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});});
   } else if(!hasInp){
     vl.forEach(function(v){
       var vb=document.createElement('button');vb.className='sb';vb.style.marginBottom='6px';vb.textContent=v.l;
-      (function(vv){vb.onclick=function(){appendDesc(vv.t+vbsSuffix());wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});};})(v);
+      (function(vv){vb.onclick=function(){appendDesc(vv.t);wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});};})(v);
       wrap.appendChild(vb);
     });
   } else if(vl.length===1){
@@ -1294,7 +1522,7 @@ function selArt(a,btn){
       (function(vv){vb.onclick=function(){
         var oi=g('vorlInline');if(oi)oi.parentNode.removeChild(oi);
         wrap.querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');
-        if(!vv.i||!vv.i.length){appendDesc(vv.t+vbsSuffix());return;}
+        if(!vv.i||!vv.i.length){appendDesc(vv.t);return;}
         curVorl=vv;
         var iw=document.createElement('div');iw.id='vorlInline';
         iw.style.cssText='margin-top:8px;padding:10px;background:var(--sur);border:1px solid var(--acc);border-radius:8px;';
@@ -1364,7 +1592,6 @@ function confVorl(){
     }
   });
   t+=extra;
-  t+=vbsSuffix();
   appendDesc(t);
   var ai=g('artInline');if(ai)ai.parentNode.removeChild(ai);
   var vi=g('vorlInline');if(vi)vi.parentNode.removeChild(vi);
@@ -1376,8 +1603,19 @@ function saveS(){
   var desc=g('mDesc').value.trim();
   if(!desc){toast('Bitte Schaden wählen und bestätigen');return;}
   if(!curKey){toast('Fehler: kein Bauteil gewählt');return;}
+  var dbl=DOPPEL_NR_BAUTEILE[curUgr||''];
   var nrRow=g('mBauteilNrRow');
-  if(nrRow&&nrRow.style.display!=='none'){
+  if(dbl&&nrRow&&nrRow.style.display!=='none'){
+    var compVal=(g('mBauteilNr').value||'').trim();
+    var refVal=(g('mBauteilRef').value||'').trim();
+    if(compVal||refVal){
+      var line='- '+curUgr.split(' an ')[0];
+      if(compVal)line+=' Nr. '+compVal;
+      line+=' an '+dbl.refWord;
+      if(refVal)line+=' Nr. '+refVal;
+      desc=line+'\n'+desc;
+    }
+  } else if(nrRow&&nrRow.style.display!=='none'){
     var nrVal=(g('mBauteilNr').value||'').trim();
     if(nrVal){
       if(nrVal.toLowerCase()==='alle'){
@@ -1388,6 +1626,8 @@ function saveS(){
       }
     }
   }
+  var vbsTxt=vbsSuffix();
+  if(vbsTxt)desc=desc+'\n- '+vbsTxt;
   if(!dat[curKey])dat[curKey]=[];
   var entry={d:desc,fotos:mPendingFotos.slice(),loc:curSchTitle||'',t:curTyp,a:curArt};
   if(curEditIdx>=0&&dat[curKey][curEditIdx]){
@@ -1402,6 +1642,7 @@ function saveS(){
   clearResumeState();
   hidePanel('ovMod');
   renderSch();render();autoSave();
+  if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
 }
 
 // ============================================================
@@ -1430,7 +1671,7 @@ window.addEventListener('popstate',function(){
     return;
   }
   // Priority order
-  var order=['ovFoto','ovMod','ovSch','ovBau'];
+  var order=['ovFoto','ovMod','ovSch','ovBau','ovGesamt'];
   for(var i=0;i<order.length;i++){
     var el=g(order[i]);
     if(el&&el.classList.contains('open')){
@@ -1594,16 +1835,7 @@ function makeEndRecord(count,cdSize,cdOffset){
 function downloadFotos(){
   var zip=new PureZip();
   var count=0;
-  stbs.forEach(function(stb){
-    var blist=[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
-    for(var i=1;i<=stb.oeff;i++){
-      var ok='stb'+stb.id+'_oe'+i;
-      var extraU=['Geländer links','Geländer rechts'];
-      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);});
-      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
-      blist.push({k:ok,u:getUgr(ok).concat(extraU)});
-      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:PF_UGR});
-    }
+  function processFotoBlist(blist){
     blist.forEach(function(b){
       b.u.forEach(function(u){
         (dat[b.k+'___'+u]||[]).forEach(function(it){
@@ -1616,6 +1848,21 @@ function downloadFotos(){
         });
       });
     });
+  }
+  if(isDurchgehendW()){
+    processFotoBlist([{k:'wg_w1',u:getUgr('wg_w1')},{k:'wg_w2',u:getUgr('wg_w2')}]);
+  }
+  stbs.forEach(function(stb){
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      var extraU=['Geländer links','Geländer rechts'];
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      blist.push({k:ok,u:getUgr(ok).concat(extraU)});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:PF_UGR});
+    }
+    processFotoBlist(blist);
   });
   if(!count){toast('Keine Fotos vorhanden');return;}
   zip.generateAsync({type:'blob'}).then(function(blob){
@@ -1669,50 +1916,58 @@ function doExport(includeImages){
 
   var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],mediaFiles=[],relCounter=1;
 
+  function exportBauteilBlock(b){
+    var allU=b.u.slice();
+    if(b.extra){
+      allU.push('Geländer links','Geländer rechts');
+      LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){allU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
+    }
+    var hasItems=false;
+    allU.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
+    if(!hasItems)return;
+    body+=docxPara(b.l,'Heading2');
+    allU.forEach(function(u){
+      var items=dat[b.k+'___'+u]||[];
+      if(!items.length)return;
+      body+=docxPara(u,'Heading3');
+      items.forEach(function(it){
+        var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+        lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
+        if(includeImages){
+          (it.fotos||[]).forEach(function(foto){
+            relCounter++;
+            var rId='rId'+relCounter;
+            var mediaName='image'+relCounter+'.jpg';
+            var b64=(foto.data.split(',')[1])||'';
+            mediaFiles.push({name:mediaName,base64:b64});
+            rels.push({id:rId,target:'media/'+mediaName,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
+            body+=docxImagePara(rId,foto.w,foto.h,foto.loc||('Foto '+(foto.nr||'')));
+          });
+        } else if((it.fotos||[]).length){
+          body+=docxPara('📷 '+it.fotos.length+' Foto(s) vorhanden (nicht im Dokument, siehe separater Bilder-Export)',null);
+        }
+      });
+    });
+  }
+
+  if(isDurchgehendW()){
+    body+=docxPara('Widerlager (durchgehend, für alle STB)','Heading1');
+    exportBauteilBlock({k:'wg_w1',l:'Widerlager 1',u:getUgr('wg_w1')});
+    exportBauteilBlock({k:'wg_w2',l:'Widerlager 2',u:getUgr('wg_w2')});
+  }
+
   stbs.forEach(function(stb,si){
     body+=docxPara('STB '+(si+1),'Heading1');
-    var blist=[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
       blist.push({k:ok,l:'Öffnung '+i,u:getUgr(ok),extra:true});
       if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
     }
-    blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
+    if(!isDurchgehendW())blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
 
-    blist.forEach(function(b){
-      var allU=b.u.slice();
-      if(b.extra){
-        allU.push('Geländer links','Geländer rechts');
-        LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);});
-        FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
-      }
-      var hasItems=false;
-      allU.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
-      if(!hasItems)return;
-      body+=docxPara(b.l,'Heading2');
-      allU.forEach(function(u){
-        var items=dat[b.k+'___'+u]||[];
-        if(!items.length)return;
-        body+=docxPara(u,'Heading3');
-        items.forEach(function(it){
-          var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
-          lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
-          if(includeImages){
-            (it.fotos||[]).forEach(function(foto){
-              relCounter++;
-              var rId='rId'+relCounter;
-              var mediaName='image'+relCounter+'.jpg';
-              var b64=(foto.data.split(',')[1])||'';
-              mediaFiles.push({name:mediaName,base64:b64});
-              rels.push({id:rId,target:'media/'+mediaName,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
-              body+=docxImagePara(rId,foto.w,foto.h,foto.loc||('Foto '+(foto.nr||'')));
-            });
-          } else if((it.fotos||[]).length){
-            body+=docxPara('📷 '+it.fotos.length+' Foto(s) vorhanden (nicht im Dokument, siehe separater Bilder-Export)',null);
-          }
-        });
-      });
-    });
+    blist.forEach(function(b){exportBauteilBlock(b);});
   });
 
   body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
@@ -1864,17 +2119,6 @@ function buildSearchIndex(){
   try{apply(localStorage.getItem('bpd')==='1');}catch(e){}
   btn.onclick=function(){apply(!document.body.classList.contains('dark'));};
 })();
-
-// Return in Beschreibung = neue Zeile mit Bindestrich
-document.getElementById('mDesc').addEventListener('keydown',function(e){
-  if(e.key==='Enter'){
-    e.preventDefault();
-    var ta=this,pos=ta.selectionStart,val=ta.value,ins='\n- ';
-    ta.value=val.substring(0,pos)+ins+val.substring(pos);
-    ta.selectionStart=ta.selectionEnd=pos+ins.length;
-  }
-});
-
 
 // NEW PROTOCOL — see doNew() in HELPERS section above
 
