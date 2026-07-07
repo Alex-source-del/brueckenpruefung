@@ -97,16 +97,17 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
 .pbtns button{flex:1;padding:11px;border-radius:7px;border:0;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;}
 .ps{background:var(--acc);color:#fff;}
 .pc{background:var(--s2);color:var(--soft);border:1px solid var(--line)!important;}
-.irow{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-.irow label{font-size:13px;color:var(--soft);min-width:90px;font-weight:600;}
-.irow input{flex:1;border:2px solid var(--acc);border-radius:7px;padding:12px;font-size:20px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;}
-.irow span{font-size:11px;color:var(--faint);}
+.irow{display:flex;gap:8px;align-items:center;margin-bottom:8px;justify-content:center;}
+.irow label{font-size:13px;color:var(--soft);width:110px;flex-shrink:0;font-weight:600;text-align:right;}
+.irow input{flex:none;width:64px;border:2px solid var(--acc);border-radius:7px;padding:8px 4px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;}
+.irow span{font-size:11px;color:var(--faint);width:24px;flex-shrink:0;}
 .sitem{background:var(--s2);border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:7px;}
 .sitem .sr{display:flex;align-items:center;gap:8px;}
 .sitem span{flex:1;font-size:13px;}
 .sitem button{border:0;background:var(--reds);color:var(--red);border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;}
 .sitem img{max-width:100%;max-height:80px;border-radius:6px;cursor:zoom-in;margin-top:6px;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;z-index:300;display:none;}
+.toast.show{display:block;}
 </style>
 </head>
 <body>
@@ -175,7 +176,10 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
     <div id="mArt" style="display:none;margin-top:10px;"></div>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:8px;"></div>
-      <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
+        <button type="button" onclick="if(g('mDesc').value&&!confirm('Beschreibung wirklich löschen?'))return;g('mDesc').value='';" style="border:0;background:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 4px;">🗑 Löschen</button>
+      </div>
       <textarea id="mDesc" placeholder="Beschreibung..."></textarea>
     </div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
@@ -211,47 +215,128 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
 <script>
 // DATA
 var SC = {
-  'Beton':['Diagonale Risse','Horizontale Risse','Vertikale Risse','Betonabplatzung','Betonabplatzung m. freilieg. Bewehrung','Aussinterungen','Abschalung','Mörtelfugenschäden','Offene Fugen','Steinausbruch','Steinabplatzung','Versatz','Verschmutzung','Vegetation','Abnutzung','Lose/fehlende Verbindungsmittel'],
-  'Mauerwerk':['Diagonale Risse','Horizontale Risse','Vertikale Risse','Aussinterungen','Mörtelfugenschäden','Offene Fugen','Steinausbruch','Steinabplatzung','Versatz','Feuchtigkeitsschäden','Vegetation','Verschmutzung','Abnutzung','Lose/fehlende Verbindungsmittel'],
-  'Stahl':['Verformung/Verschiebung/Verkippung','Korrosion','Korrosionsschutzschäden','Entwässerung','Verschmutzung','Abnutzung','Lose/fehlende Verbindungsmittel'],
-  'Gew.Beton':['Diagonale Risse','Horizontale Risse','Vertikale Risse','Betonabplatzung m. freilieg. Bewehrung','Aussinterungen','Mörtelfugenschäden','Offene Fugen','Versatz','Vegetation','Verschmutzung','Abnutzung'],
-  'Gew.Mauerwk':['Diagonale Risse','Horizontale Risse','Vertikale Risse','Aussinterungen','Mörtelfugenschäden','Offene Fugen','Steinausbruch','Steinabplatzung','Versatz','Feuchtigkeitsschäden','Vegetation','Verschmutzung','Abnutzung']
+  // Widerlager/Pfeiler Beton (senkrecht/waagerecht/diagonal) - auch Auflagerbank-Sonderfall
+  'Beton':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Widerlager/Pfeiler Mauerwerk (senkrecht/waagerecht/diagonal)
+  'Mauerwerk':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Hohlstellen','Bewuchs/Vegetation'],
+  // Gewölbe Beton / Fahrbahnplatte Beton / Fahrbahnplatte WIB (längs/quer/schräg)
+  'BetonLQS':['Längs rissig','Quer rissig','Schräg rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Gewölbe Mauerwerk (längs/quer/schräg)
+  'MauerwerkLQS':['Längs rissig','Quer rissig','Schräg rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Bewuchs/Vegetation'],
+  // Überbau Stahl (alle Stahlbauteile außer Walzträgerunterflansch)
+  'Stahl':['Verformung/Verschiebung/Verkippung','Korrosion','Korrosionsschutzschäden','Lose/fehlende Verbindungsmittel','Lose/fehlende Nietverbindung','Schweißnahtriss','Verschmutzung','Abnutzung','Bewuchs/Vegetation'],
+  // Walzträgerunterflansch (Fahrbahnplatte WIB)
+  'WIB-Stahl':['Verformung/Verschiebung/Verkippung','Anfahrschramme','Anfahrkratzer','Korrosion','Korrosionsschutzschäden','Bewuchs/Vegetation'],
+  // Überbau Geländer
+  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Korrosionsschutzschäden','Korrosion','Bewuchs/Vegetation']
 };
+// Zusatz-Schäden für alle "...Untersicht"-Bauteile, unabhängig vom Material
+var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben'];
+
 var VL = {
-  'Diagonale Risse':[{l:'Rissbreite+Länge',t:'Diagonal rissig bis {0}mm, Risslänge:{1}cm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'cm'}]}],
-  'Horizontale Risse':[{l:'Rissbreite+Länge',t:'Horizontal rissig bis {0}mm, Risslänge:{1}cm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'cm'}]}],
-  'Vertikale Risse':[{l:'Rissbreite+Länge',t:'Vertikal rissig bis {0}mm, Risslänge:{1}cm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'cm'}]}],
-  'Betonabplatzung':[{l:'LxBxT',t:'Betonabplatzung L:{0}cm B:{1}cm T:{2}cm',i:[{l:'Länge',u:'cm'},{l:'Breite',u:'cm'},{l:'Tiefe',u:'cm'}]}],
-  'Betonabplatzung m. freilieg. Bewehrung':[{l:'LxBxT',t:'Betonabplatzung m.freilieg.Bewehrung L:{0}cm B:{1}cm T:{2}cm',i:[{l:'Länge',u:'cm'},{l:'Breite',u:'cm'},{l:'Tiefe',u:'cm'}]}],
-  'Aussinterungen':[{l:'Trocken',t:'Aussinterungen, trocken',i:[]},{l:'Feucht',t:'Aussinterungen, feucht',i:[]}],
+  'Senkrecht rissig':[{l:'Breite+Länge',t:'Senkrecht rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Waagerecht rissig':[{l:'Breite+Länge',t:'Waagerecht rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Diagonal rissig':[{l:'Breite+Länge',t:'Diagonal rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Längs rissig':[{l:'Breite+Länge',t:'Längs rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Quer rissig':[{l:'Breite+Länge',t:'Quer rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Schräg rissig':[{l:'Breite+Länge',t:'Schräg rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Betonabplatzung mit freiliegender Bewehrung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Betonabplatzung mit freiliegender Bewehrung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Betonabplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Betonabplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Aussinterungen':[{l:'Trocken',t:'Aussinterungen zum Zeitpunkt der Begutachtung trocken',i:[]},{l:'Feucht',t:'Aussinterungen zum Zeitpunkt der Begutachtung feucht',i:[]}],
+  'Hohlstellen':[{l:'Bestätigen',t:'Hohlstellen',i:[]}],
+  'Grobkornstellen':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Grobkornstellen',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Poren und Lunker':[{l:'Maß',t:'Poren und Lunker bis {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Abschalung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abschalung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Abplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Steinausbrüche':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Steinausbrüche',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Korrosion':[{l:'Vereinzelt',t:'Korrosion vereinzelt',i:[]},{l:'Stellenweise',t:'Korrosion stellenweise',i:[]},{l:'Mehrfach',t:'Korrosion mehrfach',i:[]}],
   'Korrosionsschutzschäden':[{l:'Vereinzelt',t:'Korrosionsschutzschaden vereinzelt',i:[]},{l:'Stellenweise',t:'Korrosionsschutzschaden stellenweise',i:[]},{l:'Mehrfach',t:'Korrosionsschutzschaden mehrfach',i:[]}],
   'Verformung/Verschiebung/Verkippung':[{l:'Verformung',t:'Verformung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verschiebung',t:'Verschiebung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verkippung',t:'Verkippung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]}],
-  'Versatz':[{l:'Maß',t:'Versatz Maß:{0}cm',i:[{l:'Maß',u:'cm'}]}],
-  'Steinausbruch':[{l:'LxBxT',t:'Steinausbruch L:{0}cm B:{1}cm T:{2}cm',i:[{l:'Länge',u:'cm'},{l:'Breite',u:'cm'},{l:'Tiefe',u:'cm'}]}],
-  'Steinabplatzung':[{l:'LxBxT',t:'Steinabplatzung L:{0}cm B:{1}cm T:{2}cm',i:[{l:'Länge',u:'cm'},{l:'Breite',u:'cm'},{l:'Tiefe',u:'cm'}]}],
-  'Abschalung':[{l:'LxBxT',t:'Abschalung L:{0}cm B:{1}cm T:{2}cm',i:[{l:'Länge',u:'cm'},{l:'Breite',u:'cm'},{l:'Tiefe',u:'cm'}]}],
-  'Mörtelfugenschäden':[{l:'Bestätigen',t:'Mörtelfugenschäden',i:[]}],
-  'Offene Fugen':[{l:'Festgestellt',t:'Offene Fugen festgestellt',i:[]}],
-  'Feuchtigkeitsschäden':[{l:'Nass',t:'Feuchtigkeitsschaden nass',i:[]},{l:'Feucht',t:'Feuchtigkeitsschaden feucht',i:[]}],
-  'Entwässerung':[{l:'Verstopft',t:'Entwässerung verstopft',i:[]},{l:'Beschädigt',t:'Entwässerung beschädigt',i:[]},{l:'Fehlend',t:'Entwässerung fehlend',i:[]}],
-  'Vegetation':[{l:'Festgestellt',t:'Vegetation festgestellt',i:[]}],
+  'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}],
+  'Lose/fehlende Nietverbindung':[{l:'Lose',t:'Lose Nietverbindung festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Nietverbindung festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Nietverbindung festgestellt',i:[]}],
+  'Schweißnahtriss':[{l:'Länge',t:'Schweißnahtriss, Länge {0}mm',i:[{l:'Länge',u:'mm'}]}],
   'Verschmutzung':[{l:'Festgestellt',t:'Verschmutzung festgestellt',i:[]}],
-  'Abnutzung':[{l:'Festgestellt',t:'Abnutzung festgestellt',i:[]}],
-  'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}]
+  'Anfahrschramme':[{l:'Bestätigen',t:'Anfahrschramme festgestellt',i:[]}],
+  'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt',i:[]}],
+  'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt',i:[]}],
+  'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt',i:[]}],
+  'Verformung':[{l:'Maß',t:'Verformung, {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Schweißnahtschaden':[{l:'Bestätigen',t:'Schweißnahtschaden festgestellt',i:[]}],
+  'Lose Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Lose Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
+  'Fehlende Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Fehlende Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
+  'Verguss rissig an Pfosten':[{l:'mm+Pfosten Nr.',t:'Verguss rissig bis {0}mm an Pfosten Nr.: {1}',i:[{l:'Rissbreite',u:'mm'},{l:'Pfosten Nr.',u:''}]}],
+  // Lager
+  'Lager Nr./Achse':[{l:'Angeben',t:'Lager Nr.: {0}, Achse W{1}',i:[{l:'Lager Nr.',u:''},{l:'Achse W',u:''}]}],
+  'Verschiebung Richtung W':[{l:'Angeben',t:'Verschiebung {0}mm in Richtung W{1}',i:[{l:'Maß',u:'mm'},{l:'Achse W',u:''}]}],
+  'Korrosionsbeginn flächig':[{l:'Bestätigen',t:'Korrosionsbeginn flächig',i:[]}],
+  'Leicht verschmutzt':[{l:'Bestätigen',t:'Leicht verschmutzt',i:[]}],
+  'Vergussmörtel/Lagersockel rissig':[{l:'Maß',t:'Vergussmörtel/Lagersockel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Vergussmörtel rissig':[{l:'Maß',t:'Vergussmörtel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Spaltmaß an Knagge':[{l:'Maß',t:'{0}mm Spaltmaß an Knagge',i:[{l:'Maß',u:'mm'}]}],
+  'Temperaturen':[{l:'Angeben',t:'Oberflächentemperatur {0}°C, Lufttemperatur {1}°C',i:[{l:'Oberflächentemp.',u:'°C'},{l:'Lufttemp.',u:'°C'}]}],
+  'Elastomer-Zustand':[{l:'Allseits beweglich',t:'Elastomer allseits beweglich',i:[]},{l:'Quer fest',t:'Elastomer quer fest',i:[]},{l:'Allseits fest',t:'Elastomer allseits fest',i:[]},{l:'Längs beweglich',t:'Elastomer längs beweglich',i:[]}],
+  'Verschiebung 0mm links/rechts':[{l:'Bestätigen',t:'Verschiebung 0mm links/rechts',i:[]}],
+  // Fugen
+  'Höhenversatz':[{l:'Maß',t:'Höhenversatz {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Dichtprofil rissig/beschädigt':[{l:'Bestätigen',t:'Dichtprofil rissig/beschädigt',i:[]}],
+  'Dichtprofil fehlend':[{l:'Bestätigen',t:'Dichtprofil fehlend',i:[]}],
+  'Lamelle verformt/beschädigt':[{l:'Bestätigen',t:'Lamelle verformt/beschädigt',i:[]}],
+  'Verschmutzt/verstopft':[{l:'Bestätigen',t:'Verschmutzt/verstopft',i:[]}],
+  'Finger verformt/verbogen':[{l:'Bestätigen',t:'Finger verformt/verbogen',i:[]}],
+  'Finger gebrochen/fehlend':[{l:'Bestätigen',t:'Finger gebrochen/fehlend',i:[]}],
+  'Asphalt rissig':[{l:'Bestätigen',t:'Asphalt rissig',i:[]}],
+  'Ausbrüche/Abplatzungen':[{l:'Bestätigen',t:'Ausbrüche/Abplatzungen',i:[]}],
+  'Verschleiß':[{l:'Bestätigen',t:'Verschleiß festgestellt',i:[]}],
+  'Rissig':[{l:'Maß',t:'Rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Versatz':[{l:'Maß',t:'Versatz {0}mm',i:[{l:'Maß',u:'mm'}]}]
 };
-var W_UGR = ['Widerlager Beton','Widerlager Mauerwerk','Flügel Beton links','Flügel Beton rechts','Flügel Mauerwerk links','Flügel Mauerwerk rechts','Kammerwand vorne','Kammerwand links','Kammerwand rechts','Kammerwand hinten','Auflagerbank'];
-var OE_B = ['Fahrbahnplatte Beton','Fahrbahnplatte Beton Untersicht','Untersicht','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
-var OE_S = ['Fahrbahnplatte Stahl','Fahrbahnplatte Stahl Untersicht','Hauptträger','Querträger','Längsträger','Längsrippen','Querrippen','Beulstreifen','Konsole','Untersicht','Randweg','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
-var OE_GB = ['Gewölbe Beton Untersicht','Stirnwand links','Stirnwand rechts','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
-var OE_GM = ['Gewölbe Mauerwerk Untersicht','Stirnmauer links','Stirnmauer rechts','Kappe links','Kappe rechts','Radweg links','Radweg rechts','Schotterwand links','Schotterwand rechts','Geländer links','Geländer rechts','Entwässerung','Lager','Fugen'];
-var PF_UGR = ['Pfeilerschaft','Pfeilerköpfe','Auflagerbank'];
-var UT = {'Widerlager Beton':'Beton','Widerlager Mauerwerk':'Mauerwerk','Flügel Beton links':'Beton','Flügel Beton rechts':'Beton','Flügel Mauerwerk links':'Mauerwerk','Flügel Mauerwerk rechts':'Mauerwerk'};
+
+// ============================================================
+// BAUTEIL-GLIEDERUNG (Neustrukturierung)
+// ============================================================
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts'];
+var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank'];
+var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Randweguntersicht'];
+var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Randweguntersicht','Walzträgerunterflansch'];
+var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg','Randwegkonsole'];
+var OE_GB=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnwand links','Stirnwand rechts','Abdeckung Stirnwand links','Abdeckung Stirnwand rechts','Randweg links','Randweg rechts'];
+var OE_GM=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnmauer links','Stirnmauer rechts','Abdeckung Stirnmauer links','Abdeckung Stirnmauer rechts','Randweg links','Randweg rechts'];
+
+var LAGER_TYPES=['Rollenlager','Linienkipplager Festlager','Linienkipplager quer verschieblich','Elastomerlager'];
+var FUGEN_TYPES=['Lamellenübergang','Fingerkonstruktion','Wartungsfreier Übergang','Schleppplatte'];
+var LAGER_SC={
+  'Rollenlager':['Lager Nr./Achse','Verschiebung Richtung W','Korrosionsbeginn flächig','Leicht verschmutzt','Vergussmörtel/Lagersockel rissig'],
+  'Linienkipplager Festlager':['Lager Nr./Achse','Korrosionsbeginn flächig','Leicht verschmutzt','Vergussmörtel rissig'],
+  'Linienkipplager quer verschieblich':['Lager Nr./Achse','Spaltmaß an Knagge','Korrosionsbeginn flächig','Leicht verschmutzt','Vergussmörtel rissig'],
+  'Elastomerlager':['Lager Nr./Achse','Temperaturen','Elastomer-Zustand','Verschiebung Richtung W','Verschiebung 0mm links/rechts','Korrosionsbeginn flächig','Leicht verschmutzt','Vergussmörtel rissig']
+};
+var FUGEN_SC={
+  'Lamellenübergang':['Höhenversatz','Dichtprofil rissig/beschädigt','Dichtprofil fehlend','Lamelle verformt/beschädigt','Korrosion','Lose/fehlende Verbindungsmittel','Verschmutzt/verstopft'],
+  'Fingerkonstruktion':['Finger verformt/verbogen','Finger gebrochen/fehlend','Höhenversatz','Korrosion','Verschmutzt/verstopft'],
+  'Wartungsfreier Übergang':['Asphalt rissig','Ausbrüche/Abplatzungen','Höhenversatz','Verschleiß'],
+  'Schleppplatte':['Rissig','Versatz','Hohlstellen','Abplatzung']
+};
+
+// Bauteile, deren Schadenskatalog unabhängig vom übergeordneten Material fest vorgegeben ist
+function resolveSchadenTyp(baseKey,bauteil,parentTyp){
+  if(bauteil==='Auflagerbank')return 'Beton';
+  if(/_w[12]$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
+  if(/_pf\d+$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
+  // Öffnung
+  if(bauteil==='Walzträgerunterflansch')return 'WIB-Stahl';
+  if((bauteil==='Randweg links'||bauteil==='Randweg rechts')&&parentTyp==='Gew.Mauerwk')return 'BetonLQS';
+  if(parentTyp==='Stahl')return 'Stahl';
+  if(parentTyp==='WIB')return 'BetonLQS';
+  if(parentTyp==='Gew.Beton')return 'BetonLQS';
+  if(parentTyp==='Gew.Mauerwk')return 'MauerwerkLQS';
+  return 'BetonLQS';
+}
 
 // STATE
 var stbs=[], nxtId=1, dat={};
 var bauwerkLocked=false;
-var curKey=null, curBauKey=null, curBauTitle='', curSchTitle='', lastUgr=[];
+var curKey=null, curBauKey=null, curBauTitle='', curSchTitle='', curUgr='', lastUgr=[];
 var curTyp='Beton', curArt='', curVorl=null;
 var fotoCounter=0, curFotoIdx=-1;
 var mPendingFotos=[];
@@ -313,7 +398,7 @@ function render(){
       +((!bauwerkLocked&&stbs.length>1)?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
     col.appendChild(hdr);
     var inner=document.createElement('div');inner.className='col-table';
-    inner.appendChild(mkKa('stb'+stb.id+'_w2','W2',W_UGR,'wid',stb.id));
+    inner.appendChild(mkKa('stb'+stb.id+'_w2','W2','wid'));
     for(var i=stb.oeff;i>=1;i--){
       if(i===stb.oeff&&!bauwerkLocked&&stb.oeff<5){
         var pairRow=document.createElement('div');pairRow.style.cssText='display:flex;';
@@ -327,9 +412,9 @@ function render(){
       } else {
         inner.appendChild(mkOe(stb,i));
       }
-      if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),PF_UGR,'pf',stb.id));
+      if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),'pf'));
     }
-    inner.appendChild(mkKa('stb'+stb.id+'_w1','W1',W_UGR,'wid',stb.id));
+    inner.appendChild(mkKa('stb'+stb.id+'_w1','W1','wid'));
     col.appendChild(inner);
     if(si===stbs.length-1&&!bauwerkLocked&&stbs.length<5){
       var addStbTile=document.createElement('div');
@@ -380,23 +465,45 @@ function toggleKopf(){
 }
 
 function cntKey(key,ugr){var n=0;ugr.forEach(function(u){n+=(dat[key+'___'+u]||[]).length;});return n;}
-function cntStb(stb){
-  var n=cntKey('stb'+stb.id+'_w1',W_UGR)+cntKey('stb'+stb.id+'_w2',W_UGR);
-  for(var i=1;i<=stb.oeff;i++){n+=cntKey('stb'+stb.id+'_oe'+i,getUgr('stb'+stb.id+'_oe'+i));if(i<stb.oeff)n+=cntKey('stb'+stb.id+'_pf'+i,PF_UGR);}
+function cntExtra(key){
+  if(!/_oe\d+$/.test(key))return 0;
+  var n=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
+  LAGER_TYPES.forEach(function(t){n+=(dat[key+'___Lager: '+t]||[]).length;});
+  FUGEN_TYPES.forEach(function(t){n+=(dat[key+'___Fugen: '+t]||[]).length;});
   return n;
 }
-function getUgr(k){var t=dat['__t_'+k]||'';return t==='Stahl'?OE_S:t==='Gew.Beton'?OE_GB:t==='Gew.Mauerwk'?OE_GM:OE_B;}
+function cntStb(stb){
+  var n=cntKey('stb'+stb.id+'_w1',getUgr('stb'+stb.id+'_w1'))+cntKey('stb'+stb.id+'_w2',getUgr('stb'+stb.id+'_w2'));
+  for(var i=1;i<=stb.oeff;i++){
+    var ok='stb'+stb.id+'_oe'+i;
+    n+=cntKey(ok,getUgr(ok))+cntExtra(ok);
+    if(i<stb.oeff)n+=cntKey('stb'+stb.id+'_pf'+i,PF_UGR);
+  }
+  return n;
+}
+function getUgr(k){
+  var t=dat['__t_'+k]||'';
+  if(/_w[12]$/.test(k))return t==='Mauerwerk'?W_UGR_MAUERWERK:W_UGR_BETON;
+  if(/_pf\d+$/.test(k))return PF_UGR;
+  if(t==='Stahl')return OE_S;
+  if(t==='WIB')return OE_WIB;
+  if(t==='Gew.Beton')return OE_GB;
+  if(t==='Gew.Mauerwk')return OE_GM;
+  return OE_B;
+}
 
-function mkKa(key,label,ugr,typ){
+function mkKa(key,label,typ){
+  var ugr=getUgr(key);
+  var bt=dat['__t_'+key]||'';
   var tot=cntKey(key,ugr);
   var bg=typ==='wid'?'#e8f5e9':typ==='pf'?'#e3f2fd':'#fff';
   var tc=typ==='wid'?'#2e7d32':typ==='pf'?'#1565c0':'#444';
   var row=document.createElement('div');
   row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:'+bg+';min-height:36px;';
-  row.innerHTML='<span style="font-size:11.5px;font-weight:700;color:'+tc+';">'+label+'</span>'
+  row.innerHTML='<span style="font-size:11.5px;font-weight:700;color:'+tc+';">'+label+(bt?' <small style="font-size:9px;margin-left:3px;opacity:.75;">('+bt+')</small>':'')+'</span>'
     +(tot>0?'<span style="background:'+tc+';color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;">'+tot+'</span>':'');
   row.setAttribute('data-key',key);row.setAttribute('data-label',label);
-  row.onclick=function(){openBau(this.getAttribute('data-key'),this.getAttribute('data-label'),ugr);};
+  row.onclick=function(){var k=this.getAttribute('data-key');openBau(k,this.getAttribute('data-label'),getUgr(k));};
   return row;
 }
 
@@ -404,7 +511,7 @@ function mkOe(stb,i){
   var key='stb'+stb.id+'_oe'+i;
   var ot=dat['__t_'+key]||'';
   var ugr=getUgr(key);
-  var tot=cntKey(key,ugr);
+  var tot=cntKey(key,ugr)+cntExtra(key);
   var showDel=!bauwerkLocked&&stb.oeff>1;
   var row=document.createElement('div');
   row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;background:#fff;min-height:36px;gap:8px;';
@@ -456,43 +563,64 @@ function rmStb(id){
 // BAUTEILE PANEL
 // ============================================================
 function openBau(key,title,ugr){
-  curBauKey=key;curBauTitle=title;lastUgr=ugr||W_UGR;
+  curBauKey=key;curBauTitle=title;lastUgr=ugr||OE_B;
   g('bauTitle').textContent=title;
   g('bauList').innerHTML='';
-  var isOe=key.indexOf('_oe')>-1&&key.indexOf('___')===-1;
-  if(isOe){
+  var isOe=/_oe\d+$/.test(key)&&key.indexOf('___')===-1;
+  var isW=/_w[12]$/.test(key)&&key.indexOf('___')===-1;
+  var isPf=/_pf\d+$/.test(key)&&key.indexOf('___')===-1;
+  if(isOe||isW||isPf){
     var curOt=dat['__t_'+key]||'';
+    var options=isOe?['Beton','Stahl','WIB','Gew.Beton','Gew.Mauerwk']:['Beton','Mauerwerk'];
+    var optLabels={'WIB':'WIB (Walzträger in Beton)'};
     var ugr2=getUgr(key);
     var tw=document.createElement('div');tw.style.marginBottom='12px';
-    var tl=document.createElement('div');tl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;margin-bottom:6px;';tl.textContent='Überbautyp:';
+    var tl=document.createElement('div');tl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;margin-bottom:6px;';
+    tl.textContent=isOe?'Überbautyp:':'Bauwerkstyp:';
     tw.appendChild(tl);
     var tr=document.createElement('div');tr.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
-    ['Beton','Stahl','Gew.Beton','Gew.Mauerwk'].forEach(function(t){
-      var b=document.createElement('button');b.className='sb'+(curOt===t?' on':'');b.textContent=t;
+    options.forEach(function(t){
+      var b=document.createElement('button');b.className='sb'+(curOt===t?' on':'');b.textContent=optLabels[t]||t;
       b.style.cssText='border:1px solid '+(curOt===t?'var(--acc)':'var(--line)')+';border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;background:'+(curOt===t?'var(--acc)':'transparent')+';color:'+(curOt===t?'#fff':'var(--soft)')+';';
       (function(typ){b.onclick=function(){dat['__t_'+key]=typ;render();openBau(key,title,getUgr(key));};})(t);
       tr.appendChild(b);
     });
     tw.appendChild(tr);
     if(curOt){
+      var resetBtn=document.createElement('button');
+      resetBtn.textContent='✕ Typ zurücksetzen';
+      resetBtn.style.cssText='margin-top:8px;border:0;background:none;color:#c62828;font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;display:block;';
+      resetBtn.onclick=function(){
+        var n=cntKey(key,getUgr(key))+cntExtra(key);
+        var msg=n>0?('Es sind bereits '+n+' Schaden(-Einträge) unter diesem Typ gespeichert. Diese bleiben erhalten, aber ohne gewählten Typ nicht mehr sichtbar. Trotzdem zurücksetzen?'):'Typ zurücksetzen?';
+        if(!confirm(msg))return;
+        delete dat['__t_'+key];
+        render();openBau(key,title,[]);
+      };
+      tw.appendChild(resetBtn);
+    }
+    if(curOt&&(isOe||isPf)){
+      var applyLabel=isOe?'📋 Auf alle Öffnungen dieses STB anwenden':'📋 Auf alle Pfeiler dieses STB anwenden';
       var applyAll=document.createElement('button');
-      applyAll.textContent='📋 Auf alle Öffnungen dieses STB anwenden';
+      applyAll.textContent=applyLabel;
       applyAll.style.cssText='margin-top:8px;border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;display:block;';
       applyAll.onclick=function(){
-        var m=key.match(/^(stb\d+)_oe(\d+)$/);
+        var m=key.match(isOe?/^(stb\d+)_oe(\d+)$/:/^(stb\d+)_pf(\d+)$/);
         if(!m)return;
         var stbPrefix=m[1],stbIdNum=parseInt(m[1].replace('stb',''),10);
         var stb=stbs.filter(function(s){return s.id===stbIdNum;})[0];
         if(!stb)return;
-        for(var i=1;i<=stb.oeff;i++){dat['__t_'+stbPrefix+'_oe'+i]=curOt;}
+        if(isOe){for(var i=1;i<=stb.oeff;i++){dat['__t_'+stbPrefix+'_oe'+i]=curOt;}}
+        else{var pfCount=stb.oeff-1;for(var k=1;k<=pfCount;k++){dat['__t_'+stbPrefix+'_pf'+k]=curOt;}}
         render();openBau(key,title,getUgr(key));
-        toast('Überbautyp auf alle Öffnungen übernommen ✓');
+        toast((isOe?'Überbautyp':'Bauwerkstyp')+' übernommen ✓');
       };
       tw.appendChild(applyAll);
     }
     var hr=document.createElement('hr');hr.style.cssText='border:0;border-top:1px solid var(--line);margin:10px 0;';
     g('bauList').appendChild(tw);g('bauList').appendChild(hr);
     ugr=ugr2;
+    if(!curOt){showPanel('ovBau');return;}
   }
   var shown={};
   ugr.forEach(function(u){
@@ -511,6 +639,45 @@ function openBau(key,title,ugr){
       (function(k2,u2,t2){b.onclick=function(){openSch(k2,u2,t2);};})(k,u,title);
       g('bauList').appendChild(b);
     }
+  });
+  if(isOe){
+    var hr2=document.createElement('hr');hr2.style.cssText='border:0;border-top:1px solid var(--line);margin:10px 0;';
+    g('bauList').appendChild(hr2);
+    var gc=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
+    var gb=document.createElement('button');gb.className='sb'+(gc>0?' on':'');
+    gb.innerHTML='Geländer links/rechts'+(gc>0?'<span class="uc">'+gc+'</span>':'');
+    (function(bk,t){gb.onclick=function(){openReliSel(bk,'Geländer',t);};})(key,title);
+    g('bauList').appendChild(gb);
+
+    var curOt2=dat['__t_'+key]||'';
+    var isGewoelbe=(curOt2==='Gew.Beton'||curOt2==='Gew.Mauerwk');
+    if(!isGewoelbe){
+      var lc=0;LAGER_TYPES.forEach(function(t){lc+=(dat[key+'___Lager: '+t]||[]).length;});
+      var lb=document.createElement('button');lb.className='sb'+(lc>0?' on':'');
+      lb.innerHTML='Lager'+(lc>0?'<span class="uc">'+lc+'</span>':'');
+      (function(bk,t){lb.onclick=function(){openTypeSel(bk,'Lager',t,LAGER_TYPES);};})(key,title);
+      g('bauList').appendChild(lb);
+
+      var fc=0;FUGEN_TYPES.forEach(function(t){fc+=(dat[key+'___Fugen: '+t]||[]).length;});
+      var fb=document.createElement('button');fb.className='sb'+(fc>0?' on':'');
+      fb.innerHTML='Fugen'+(fc>0?'<span class="uc">'+fc+'</span>':'');
+      (function(bk,t){fb.onclick=function(){openTypeSel(bk,'Fugen',t,FUGEN_TYPES);};})(key,title);
+      g('bauList').appendChild(fb);
+    }
+  }
+  showPanel('ovBau');
+}
+
+function openTypeSel(baseKey,groupName,bereich,types){
+  g('bauTitle').textContent=bereich+' / '+groupName;
+  g('bauList').innerHTML='';
+  types.forEach(function(typ){
+    var fk=baseKey+'___'+groupName+': '+typ;
+    var c=(dat[fk]||[]).length;
+    var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+    b.innerHTML=typ+(c>0?'<span class="uc">'+c+'</span>':'');
+    (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,groupName+': '+typ,bereich);
+    g('bauList').appendChild(b);
   });
   showPanel('ovBau');
 }
@@ -536,7 +703,7 @@ function openReliSel(baseKey,baseName,bereich){
 // SCHÄDEN PANEL
 // ============================================================
 function openSch(key,ugr,bereich){
-  curKey=key;curSchTitle=bereich+' / '+ugr;
+  curKey=key;curUgr=ugr;curSchTitle=bereich+' / '+ugr;
   g('schTitle').textContent=curSchTitle;
   renderUgrSwitch(ugr);
   renderSch();
@@ -721,7 +888,7 @@ function saveResumeState(extra){
   try{
     var state={
       bauKey:curBauKey,bauTitle:curBauTitle,ugr:lastUgr,
-      schKey:curKey,schTitle:curSchTitle,
+      schKey:curKey,schTitle:curSchTitle,schUgr:curUgr,
       ts:Date.now()
     };
     for(var k in extra)state[k]=extra[k];
@@ -741,7 +908,7 @@ function tryResume(){
   try{
     openBau(st.bauKey,st.bauTitle,st.ugr);
     if(st.schKey){
-      curKey=st.schKey;curSchTitle=st.schTitle;
+      curKey=st.schKey;curSchTitle=st.schTitle;curUgr=st.schUgr||'';
       g('schTitle').textContent=curSchTitle;
       renderSch();
       showPanel('ovSch');
@@ -934,16 +1101,14 @@ function openGallery(schadenIdx,fotoIdx){
 // SCHADEN MODAL
 // ============================================================
 function openMod(){
-  curTyp='Beton';curArt='';curVorl=null;
+  curArt='';curVorl=null;
   g('mDesc').value='';
   mPendingFotos=[];
   renderMFotoLeiste();
   var vEl=g('mVerortung');if(vEl)vEl.textContent=curSchTitle||'';
   g('mArt').style.display='block';
-  var u=curKey?curKey.split('___')[1]||'':'';
-  var at=UT[u];
-  if(at){curTyp=at;g('mTyp').style.display='none';bldArt();}
-  else{g('mTyp').style.display='block';bldTyp();bldArt();}
+  g('mTyp').style.display='none';
+  bldArt();
   showPanel('ovMod');
 }
 
@@ -954,19 +1119,27 @@ function takeMFoto(){
   document.getElementById('mFoto').click();
 }
 
-function bldTyp(){
-  var isW=curKey&&(/_w[12]___/.test(curKey));
-  var T=isW?['Beton','Mauerwerk']:['Beton','Stahl','Gew.Beton','Gew.Mauerwk'];
-  g('mTyp').innerHTML='<label style="font-size:12px;color:var(--soft);font-weight:600;display:block;margin-bottom:8px;">Bauwerkstyp</label>';
-  T.forEach(function(t){
-    var b=document.createElement('button');b.className='sb'+(t===curTyp?' on':'');b.textContent=t;
-    (function(tt){b.onclick=function(){curTyp=tt;bldTyp();bldArt();};})(t);
-    g('mTyp').appendChild(b);
-  });
-}
-
 function bldArt(){
-  var arts=SC[curTyp]||[];
+  var u=curUgr||(curKey?curKey.split('___')[1]||'':'');
+  var arts;
+  var lagerM=u.match(/^Lager: (.+)$/);
+  var fugenM=u.match(/^Fugen: (.+)$/);
+  if(u==='Geländer links'||u==='Geländer rechts'){
+    curTyp='Geländer';
+    arts=(SC['Geländer']||[]).slice();
+  } else if(lagerM){
+    curTyp='Lager:'+lagerM[1];
+    arts=(LAGER_SC[lagerM[1]]||[]).slice();
+  } else if(fugenM){
+    curTyp='Fugen:'+fugenM[1];
+    arts=(FUGEN_SC[fugenM[1]]||[]).slice();
+  } else {
+    var baseKey=curKey?curKey.split('___')[0]:'';
+    var parentTyp=dat['__t_'+baseKey]||'';
+    curTyp=resolveSchadenTyp(baseKey,u,parentTyp);
+    arts=(SC[curTyp]||[]).slice();
+    if(/Untersicht$/.test(u))arts=arts.concat(UNTERSICHT_EXTRA);
+  }
   g('mArt').innerHTML='';
   var lbl=document.createElement('label');
   lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;display:block;margin:10px 0 8px;';
@@ -1033,7 +1206,17 @@ function buildInpFields(container,vorl){
     var lbl=document.createElement('label');lbl.textContent=inp.l+':';
     var input=document.createElement('input');input.type='number';input.id='vi'+i;input.placeholder='0';
     var unit=document.createElement('span');unit.textContent=inp.u;
-    row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);container.appendChild(row);
+    row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
+    var isLast=(i===vorl.i.length-1);
+    if(!isLast){
+      var nextBtn=document.createElement('button');
+      nextBtn.type='button';
+      nextBtn.textContent='OK →';
+      nextBtn.style.cssText='margin-left:6px;padding:6px 12px;border:1.5px solid var(--acc);border-radius:6px;background:var(--accs);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;';
+      (function(ii){nextBtn.onclick=function(){noc(ii,vorl.i.length);};})(i);
+      row.appendChild(nextBtn);
+    }
+    container.appendChild(row);
     input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();noc(i,vorl.i.length);}});
   });
   var ok=document.createElement('button');
@@ -1053,7 +1236,17 @@ function noc(i,tot){if(i<tot-1){var n=g('vi'+(i+1));if(n){n.focus();return;}}con
 function confVorl(){
   if(!curVorl)return;
   var t=curVorl.t;
-  curVorl.i.forEach(function(inp,i){var f=g('vi'+i);t=t.replace('{'+i+'}',f?f.value.trim():'___');});
+  var extra='';
+  curVorl.i.forEach(function(inp,i){
+    var f=g('vi'+i);
+    var val=f?f.value.trim():'';
+    if(inp.opt){
+      if(val!=='')extra+=inp.suffix.replace('{'+i+'}',val);
+    } else {
+      t=t.replace('{'+i+'}',val||'___');
+    }
+  });
+  t+=extra;
   appendDesc(t);
   var ai=g('artInline');if(ai)ai.parentNode.removeChild(ai);
   var vi=g('vorlInline');if(vi)vi.parentNode.removeChild(vi);
@@ -1265,11 +1458,13 @@ function downloadFotos(){
   var zip=new PureZip();
   var count=0;
   stbs.forEach(function(stb){
-    var blist=[{k:'stb'+stb.id+'_w1',u:W_UGR},{k:'stb'+stb.id+'_w2',u:W_UGR}];
+    var blist=[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
-      var ot=dat['__t_'+ok]||'';
-      blist.push({k:ok,u:ot==='Stahl'?OE_S:ot==='Gew.Beton'?OE_GB:ot==='Gew.Mauerwk'?OE_GM:OE_B});
+      var extraU=['Geländer links','Geländer rechts'];
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      blist.push({k:ok,u:getUgr(ok).concat(extraU)});
       if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:PF_UGR});
     }
     blist.forEach(function(b){
@@ -1333,27 +1528,32 @@ function doExport(includeImages){
 
   stbs.forEach(function(stb,si){
     body+=docxPara('STB '+(si+1),'Heading1');
-    var blist=[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:W_UGR}];
+    var blist=[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
-      var ot=dat['__t_'+ok]||'';
-      blist.push({k:ok,l:'Öffnung '+i,u:ot==='Stahl'?OE_S:ot==='Gew.Beton'?OE_GB:ot==='Gew.Mauerwk'?OE_GM:OE_B});
+      blist.push({k:ok,l:'Öffnung '+i,u:getUgr(ok),extra:true});
       if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
     }
-    blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:W_UGR});
+    blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
 
     blist.forEach(function(b){
+      var allU=b.u.slice();
+      if(b.extra){
+        allU.push('Geländer links','Geländer rechts');
+        LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);});
+        FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
+      }
       var hasItems=false;
-      b.u.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
+      allU.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
       if(!hasItems)return;
       body+=docxPara(b.l,'Heading2');
-      b.u.forEach(function(u){
+      allU.forEach(function(u){
         var items=dat[b.k+'___'+u]||[];
         if(!items.length)return;
         body+=docxPara(u,'Heading3');
         items.forEach(function(it){
-          var parts=it.d.split(/,\s*/);
-          parts.forEach(function(p){body+=docxPara('- '+p.trim(),null);});
+          var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+          lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
           if(includeImages){
             (it.fotos||[]).forEach(function(foto){
               relCounter++;
@@ -1454,8 +1654,8 @@ function buildSearchIndex(){
   stbs.forEach(function(stb,si){
     var lbl='STB '+(si+1);
     (function(sid,lbl){
-      idx.push({txt:lbl+' Widerlager 1 (W1)',fn:function(){openBau('stb'+sid+'_w1','W1',W_UGR);}});
-      idx.push({txt:lbl+' Widerlager 2 (W2)',fn:function(){openBau('stb'+sid+'_w2','W2',W_UGR);}});
+      idx.push({txt:lbl+' Widerlager 1 (W1)',fn:function(){openBau('stb'+sid+'_w1','W1',getUgr('stb'+sid+'_w1'));}});
+      idx.push({txt:lbl+' Widerlager 2 (W2)',fn:function(){openBau('stb'+sid+'_w2','W2',getUgr('stb'+sid+'_w2'));}});
     })(stb.id,lbl);
     for(var i=1;i<=stb.oeff;i++){
       (function(sid,lbl,i){
