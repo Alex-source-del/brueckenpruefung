@@ -253,14 +253,14 @@ var SC = {
   // Walzträgerunterflansch (Fahrbahnplatte WIB)
   'WIB-Stahl':['Verformung/Verschiebung/Verkippung','Anfahrschramme','Anfahrkratzer','Korrosion','Korrosionsschutzschäden','Bewuchs/Vegetation'],
   // Überbau Geländer
-  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Korrosionsschutzschäden','Korrosion','Bewuchs/Vegetation'],
+  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Korrosionsschutzschäden','Korrosion','Fußleiste fehlt/liegt auf','Fußleiste Korrosionsschutzschäden/Korrosion','Fußleiste Verbindungsmittel locker/fehlen','Abstand Geländer zu Gleismitte','Bewuchs/Vegetation'],
   // Böschungsbefestigung (bei Widerlager)
   'Böschungsbefestigung':['Trittsteine nicht fachgerecht','Trittsteine locker','Trittsteine fehlen'],
   // Kabeltrog/Kabelkanal (unter Randweg)
   'Kabeltrog':['Deckel brüchig','Wandung brüchig','Teilzerstört']
 };
 // Zusatz-Schäden für alle "...Untersicht"-Bauteile, unabhängig vom Material
-var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben'];
+var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben','Kleinste Lichte Höhe Bauwerk'];
 
 var VL = {
   'Senkrecht rissig':[{l:'Breite+Länge',t:'Senkrecht rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
@@ -301,11 +301,16 @@ var VL = {
   'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt',i:[]}],
   'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt',i:[]}],
   'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt',i:[]}],
-  'Verformung':[{l:'Maß',t:'Verformung, {0}mm',i:[{l:'Maß',u:'mm'}]}],
-  'Schweißnahtschaden':[{l:'Bestätigen',t:'Schweißnahtschaden festgestellt',i:[]}],
-  'Lose Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Lose Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
-  'Fehlende Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Fehlende Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
-  'Verguss rissig an Pfosten':[{l:'mm+Pfosten Nr.',t:'Verguss rissig bis {0}mm an Pfosten Nr.: {1}',i:[{l:'Rissbreite',u:'mm'},{l:'Pfosten Nr.',u:''}]}],
+  'Verformung':[{l:'Maß+Pfosten Nr.',t:'Verformung, {0}mm an Pfosten Nr.: {1}',i:[{l:'Maß',u:'mm'},{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Schweißnahtschaden':[{l:'Pfosten Nr.',t:'Schweißnahtschaden festgestellt an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Fußleiste fehlt/liegt auf':[{l:'Fehlt',t:'Fußleiste fehlt an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Liegt auf',t:'Fußleiste liegt auf an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Fußleiste Korrosionsschutzschäden/Korrosion':[{l:'Korrosionsschutzschäden',t:'Fußleiste Korrosionsschutzschäden an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Korrosion',t:'Fußleiste Korrosion an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Fußleiste Verbindungsmittel locker/fehlen':[{l:'Locker',t:'Fußleiste Verbindungsmittel locker an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Fehlen',t:'Fußleiste Verbindungsmittel fehlen an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Abstand Geländer zu Gleismitte':[{l:'Links',t:'Abstand Geländer links zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]},{l:'Rechts',t:'Abstand Geländer rechts zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]}],
+  'Kleinste Lichte Höhe Bauwerk':[{l:'Maß',t:'Kleinste Lichte Höhe Bauwerk {0}m',i:[{l:'Höhe',u:'m'}]}],
+  'Lose Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Lose Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Fehlende Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Fehlende Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Verguss rissig an Pfosten':[{l:'mm+Pfosten Nr.',t:'Verguss rissig bis {0}mm an Pfosten Nr.: {1}',i:[{l:'Rissbreite',u:'mm'},{l:'Pfosten Nr.',u:'',alle:true}]}],
   // Lager
   'Lager Nr./Achse':[{l:'Angeben',t:'Lager Nr.: {0}, Widerlager{1}',i:[{l:'Lager Nr.',u:''},{l:'Widerlager Nr.',u:''}]}],
   'Verschiebung Richtung W':[{l:'Angeben',t:'Verschiebung {0}mm in Richtung Widerlager{1}',i:[{l:'Maß',u:'mm'},{l:'Widerlager Nr.',u:''}]}],
@@ -1549,9 +1554,18 @@ function buildInpFields(container,vorl){
   vorl.i.forEach(function(inp,i){
     var row=document.createElement('div');row.className='irow';
     var lbl=document.createElement('label');lbl.textContent=inp.l+':';
-    var input=document.createElement('input');input.type='number';input.id='vi'+i;input.placeholder='0';
+    var input=document.createElement('input');
+    input.type=inp.u===''?'text':'number';
+    input.id='vi'+i;input.placeholder=inp.u===''?'z.B. 3 oder 1,2,3':'0';
     var unit=document.createElement('span');unit.textContent=inp.u;
     row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
+    if(inp.alle){
+      var alleBtn=document.createElement('button');
+      alleBtn.type='button';alleBtn.textContent='Alle';
+      alleBtn.style.cssText='margin-left:6px;padding:6px 12px;border:1.5px solid var(--acc);border-radius:6px;background:var(--accs);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;';
+      (function(inputEl){alleBtn.onclick=function(){inputEl.value='Alle';};})(input);
+      row.appendChild(alleBtn);
+    }
     var isLast=(i===vorl.i.length-1);
     if(!isLast){
       var nextBtn=document.createElement('button');
