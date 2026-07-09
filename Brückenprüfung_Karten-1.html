@@ -150,6 +150,9 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
   <button style="border:0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#5b6b7c;color:#fff;" onclick="doExport(false)">📄 Nur Dokument</button>
   <button style="border:0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#1565c0;color:#fff;" onclick="downloadFotos()">🖼 Nur Bilder</button>
   <button class="bn" onclick="doNew()">🗑 Neu</button>
+  <button style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="doBackup()">💾 Sichern</button>
+  <button style="border:1.5px solid var(--line);background:var(--sur);color:var(--ink);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="g('restoreInput').click()">📂 Wiederherstellen</button>
+  <input type="file" id="restoreInput" accept="application/json" style="display:none;" onchange="handleRestoreFile(this.files[0])">
 </div>
 
 <!-- BAUTEILE PANEL -->
@@ -171,6 +174,7 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
     <div class="ptop">
       <button class="bback" onclick="g('ovSch').classList.remove('open');if(curBauKey)openBau(curBauKey,curBauTitle,lastUgr);">← Zurück</button>
       <h3 id="schTitle">Schäden</h3>
+
     </div>
     <div id="schUgrSwitch" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
     <div id="schList"></div>
@@ -185,7 +189,8 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
     <div class="pbar"></div>
     <div class="ptop">
       <button class="bback" onclick="g('ovMod').classList.remove('open');">← Zurück</button>
-      <h3>Schaden erfassen</h3>
+      <h3 style="flex:1;">Schaden erfassen</h3>
+
     </div>
     <div id="mTyp"></div>
     <div id="mArt" style="display:none;margin-top:10px;"></div>
@@ -301,16 +306,16 @@ var VL = {
   'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt',i:[]}],
   'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt',i:[]}],
   'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt',i:[]}],
-  'Verformung':[{l:'Maß+Pfosten Nr.',t:'Verformung, {0}mm an Pfosten Nr.: {1}',i:[{l:'Maß',u:'mm'},{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Schweißnahtschaden':[{l:'Pfosten Nr.',t:'Schweißnahtschaden festgestellt an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Fußleiste fehlt/liegt auf':[{l:'Fehlt',t:'Fußleiste fehlt an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Liegt auf',t:'Fußleiste liegt auf an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Fußleiste Korrosionsschutzschäden/Korrosion':[{l:'Korrosionsschutzschäden',t:'Fußleiste Korrosionsschutzschäden an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Korrosion',t:'Fußleiste Korrosion an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Fußleiste Verbindungsmittel locker/fehlen':[{l:'Locker',t:'Fußleiste Verbindungsmittel locker an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]},{l:'Fehlen',t:'Fußleiste Verbindungsmittel fehlen an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Verformung':[{l:'Maß',t:'Verformung, {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Schweißnahtschaden':[{l:'Bestätigen',t:'Schweißnahtschaden festgestellt',i:[]}],
+  'Fußleiste fehlt/liegt auf':[{l:'Fehlt',t:'Fußleiste fehlt',i:[]},{l:'Liegt auf',t:'Fußleiste liegt auf',i:[]}],
+  'Fußleiste Korrosionsschutzschäden/Korrosion':[{l:'Korrosionsschutzschäden',t:'Fußleiste Korrosionsschutzschäden',i:[]},{l:'Korrosion',t:'Fußleiste Korrosion',i:[]}],
+  'Fußleiste Verbindungsmittel locker/fehlen':[{l:'Locker',t:'Fußleiste Verbindungsmittel locker',i:[]},{l:'Fehlen',t:'Fußleiste Verbindungsmittel fehlen',i:[]}],
   'Abstand Geländer zu Gleismitte':[{l:'Links',t:'Abstand Geländer links zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]},{l:'Rechts',t:'Abstand Geländer rechts zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]}],
   'Kleinste Lichte Höhe Bauwerk':[{l:'Maß',t:'Kleinste Lichte Höhe Bauwerk {0}m',i:[{l:'Höhe',u:'m'}]}],
-  'Lose Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Lose Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Fehlende Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Fehlende Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:'',alle:true}]}],
-  'Verguss rissig an Pfosten':[{l:'mm+Pfosten Nr.',t:'Verguss rissig bis {0}mm an Pfosten Nr.: {1}',i:[{l:'Rissbreite',u:'mm'},{l:'Pfosten Nr.',u:'',alle:true}]}],
+  'Lose Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Lose Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
+  'Fehlende Verbindungsmittel an Pfosten':[{l:'Pfosten Nr.',t:'Fehlende Verbindungsmittel an Pfosten Nr.: {0}',i:[{l:'Pfosten Nr.',u:''}]}],
+  'Verguss rissig an Pfosten':[{l:'mm+Pfosten Nr.',t:'Verguss rissig bis {0}mm an Pfosten Nr.: {1}',i:[{l:'Rissbreite',u:'mm'},{l:'Pfosten Nr.',u:''}]}],
   // Lager
   'Lager Nr./Achse':[{l:'Angeben',t:'Lager Nr.: {0}, Widerlager{1}',i:[{l:'Lager Nr.',u:''},{l:'Widerlager Nr.',u:''}]}],
   'Verschiebung Richtung W':[{l:'Angeben',t:'Verschiebung {0}mm in Richtung Widerlager{1}',i:[{l:'Maß',u:'mm'},{l:'Widerlager Nr.',u:''}]}],
@@ -649,26 +654,26 @@ function mkOe(stb,i){
 
 function startBauwerk(){
   stbs=[{id:1,oeff:1}];nxtId=2;bauwerkLocked=false;
-  render();toast('Bauwerk erstellt — jetzt Struktur festlegen');
+  render();autoSave();toast('Bauwerk erstellt — jetzt Struktur festlegen');
 }
 
-function addOeff(sid){stbs.forEach(function(s){if(s.id===sid&&s.oeff<5)s.oeff++;});render();}
+function addOeff(sid){stbs.forEach(function(s){if(s.id===sid&&s.oeff<5)s.oeff++;});render();autoSave();}
 function delOeff(sid,i){
   stbs.forEach(function(s){if(s.id===sid&&s.oeff>1)s.oeff--;});
   Object.keys(dat).forEach(function(k){if(k.indexOf('stb'+sid+'_oe'+i+'___')===0)delete dat[k];});
-  render();
+  render();autoSave();
 }
 function addStb(){
   if(stbs.length>=5)return;
   var src=stbs[0];var ns={id:nxtId++,oeff:src.oeff};stbs.push(ns);
   for(var i=1;i<=src.oeff;i++){var t=dat['__t_stb'+src.id+'_oe'+i];if(t)dat['__t_stb'+ns.id+'_oe'+i]=t;}
-  render();toast('STB hinzugefügt ✓');
+  render();autoSave();toast('STB hinzugefügt ✓');
 }
 function rmStb(id){
   if(!confirm('STB entfernen?'))return;
   stbs=stbs.filter(function(s){return s.id!==id;});
   Object.keys(dat).forEach(function(k){if(k.indexOf('stb'+id+'_')===0)delete dat[k];});
-  render();
+  render();autoSave();
 }
 
 // ============================================================
@@ -1554,18 +1559,9 @@ function buildInpFields(container,vorl){
   vorl.i.forEach(function(inp,i){
     var row=document.createElement('div');row.className='irow';
     var lbl=document.createElement('label');lbl.textContent=inp.l+':';
-    var input=document.createElement('input');
-    input.type=inp.u===''?'text':'number';
-    input.id='vi'+i;input.placeholder=inp.u===''?'z.B. 3 oder 1,2,3':'0';
+    var input=document.createElement('input');input.type='number';input.id='vi'+i;input.placeholder='0';
     var unit=document.createElement('span');unit.textContent=inp.u;
     row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
-    if(inp.alle){
-      var alleBtn=document.createElement('button');
-      alleBtn.type='button';alleBtn.textContent='Alle';
-      alleBtn.style.cssText='margin-left:6px;padding:6px 12px;border:1.5px solid var(--acc);border-radius:6px;background:var(--accs);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;';
-      (function(inputEl){alleBtn.onclick=function(){inputEl.value='Alle';};})(input);
-      row.appendChild(alleBtn);
-    }
     var isLast=(i===vorl.i.length-1);
     if(!isLast){
       var nextBtn=document.createElement('button');
@@ -1718,6 +1714,50 @@ function doNew(){
   g('f_dat').value=new Date().toISOString().split('T')[0];
   try{['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
   render();setKopfCollapsed(false);toast('Neues Protokoll gestartet');
+}
+
+// ============================================================
+// SICHERUNG / WIEDERHERSTELLUNG (Backup gegen Datenverlust)
+// ============================================================
+var BACKUP_KEYS=['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'];
+
+function doBackup(){
+  autoSave();
+  var payload={meta:{tool:'bruecken-karten-app',exported:new Date().toISOString()},data:{}};
+  BACKUP_KEYS.forEach(function(k){
+    var v=null;
+    try{v=localStorage.getItem(k);}catch(e){}
+    payload.data[k]=v;
+  });
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
+  a.download='bp_sicherung_'+stamp+'.json';
+  a.click();
+  toast('Sicherung heruntergeladen ✓');
+}
+
+function handleRestoreFile(file){
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var payload=JSON.parse(reader.result);
+      var data=payload.data||payload;
+      if(!confirm('Aktuelle Daten werden durch die Sicherung ersetzt. Fortfahren?'))return;
+      BACKUP_KEYS.forEach(function(k){
+        if(data[k]!=null){try{localStorage.setItem(k,data[k]);}catch(e){}}
+        else{try{localStorage.removeItem(k);}catch(e){}}
+      });
+      toast('Wiederhergestellt — Seite wird neu geladen ✓');
+      setTimeout(function(){location.reload();},800);
+    }catch(err){
+      toast('Datei konnte nicht gelesen werden');
+    }
+  };
+  reader.readAsText(file);
+  g('restoreInput').value='';
 }
 
 // Return key in description
@@ -2135,6 +2175,14 @@ function buildSearchIndex(){
 })();
 
 // NEW PROTOCOL — see doNew() in HELPERS section above
+
+// Offline-Fähigkeit: Service Worker registrieren (nur wirksam bei Aufruf über
+// http/https, z.B. GitHub Pages — bei lokal geöffneter Datei ohne Effekt).
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
 
 </script>
 </body>
