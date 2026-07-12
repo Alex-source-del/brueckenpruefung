@@ -1,0 +1,3742 @@
+<!DOCTYPE html>
+<html lang="de"> 
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brückenprüfung [BETA]</title>
+<style>
+:root{--bg:#f0f4f8;--sur:#fff;--s2:#e8eef4;--ink:#16202b;--soft:#5b6b7c;--faint:#8a99a8;--line:#dde5ee;--acc:#0e7c66;--accs:#e3f3ef;--red:#c0392b;--reds:#fdecea;}
+body.dark{--bg:#111518;--sur:#1a2028;--s2:#232c36;--ink:#e8eef4;--soft:#8fa3b3;--faint:#5a6e7e;--line:#2a3540;--acc:#13a386;--accs:#0e2e28;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+header{background:var(--acc);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+header h1{font-size:15px;font-weight:700;flex:1;}
+.hbtn{border:0;background:rgba(255,255,255,.2);color:#fff;width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:14px;}
+/* KOPF */
+.kopf{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:var(--sur);border-bottom:1px solid var(--line);}
+.kopf .full{grid-column:1/-1;}
+.fl label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px;font-weight:600;}
+.fl input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;}
+.fl input:focus{border-color:var(--acc);}
+/* GRID */
+.wrap{overflow-x:auto;padding:8px 8px 0;}
+.grid{display:flex;gap:5px;align-items:flex-start;min-width:min-content;}
+/* STB SPALTE (tatsächlich verwendete Klassen) */
+.col{width:128px;flex-shrink:0;display:flex;flex-direction:column;}
+.col-hdr{background:var(--acc);color:#fff;border-radius:7px 7px 0 0;padding:6px 8px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;}
+.col-hdr .sc{font-size:9.5px;background:rgba(255,255,255,.25);border-radius:9px;padding:1px 6px;}
+.col-hdr .dx{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px;margin-left:auto;}
+.dx{border:0;background:#ffebee;color:#c62828;border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;}
+.col-table{border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex:1;}
+.wg-bar{margin:0;box-sizing:border-box;padding:14px 16px;border-radius:8px;background:#2e7d32;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:700;font-size:15px;}
+.wg-bar .wgc{background:rgba(255,255,255,.25);border-radius:16px;padding:2px 13px;font-size:15px;}
+.wg-bar .wgl{display:flex;align-items:center;gap:8px;}
+#wgW2Bar:not(:empty){margin-bottom:8px;}
+#wgW1Bar:not(:empty){margin-top:8px;}
+.col-table>div{border-top:1.5px solid var(--line);}
+.col-table>div:first-child{border-top:0;}
+.stb{display:flex;flex-direction:column;gap:0;width:118px;flex-shrink:0;}
+.stb-hdr{background:var(--acc);color:#fff;border-radius:7px 7px 0 0;padding:6px 8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;}
+.stb-hdr .sc{font-size:9px;background:rgba(255,255,255,.25);border-radius:9px;padding:1px 5px;margin-left:5px;}
+.stb-hdr .dx{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px;margin-left:auto;}
+/* KACHEL */
+.ka{background:var(--sur);border:1.5px solid var(--line);cursor:pointer;transition:border-color .15s;flex:1;}
+.ka.wid{background:#e8f5e9;border-color:#4caf50;}
+.ka.wid .ka-name{color:#2e7d32;}
+.ka.wid .ka-cnt{border-color:#4caf50;color:#2e7d32;}
+.ka.wid.hat .ka-cnt{background:#4caf50;border-color:#4caf50;color:#fff;}
+.ka.pf{background:#e3f2fd;border-color:#1e88e5;}
+.ka.pf .ka-name{color:#1565c0;}
+.ka.pf .ka-cnt{border-color:#1e88e5;color:#1565c0;}
+.ka.pf.hat .ka-cnt{background:#1e88e5;border-color:#1e88e5;color:#fff;}
+body.dark .ka.wid{background:#1b3a1f;border-color:#4caf50;}
+body.dark .ka.pf{background:#0d2137;border-color:#1e88e5;}
+.ka:hover{border-color:var(--acc);}
+.ka.hat{border-color:var(--acc);background:var(--accs);}
+.ka-inner{padding:6px 8px;display:flex;align-items:center;justify-content:space-between;}
+.ka-name{font-size:10.5px;font-weight:700;color:var(--soft);}
+.ka.hat .ka-name{color:var(--acc);}
+.ka-cnt{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--faint);}
+.ka.hat .ka-cnt{background:var(--acc);color:#fff;border-color:var(--acc);}
+/* ÖFFNUNG KACHEL */
+.oeka{background:#fff;border:1.5px solid #999;border-radius:7px;cursor:pointer;transition:border-color .15s;min-height:44px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.oeka:hover{border-color:var(--acc);}
+.oeka.hat{border-color:var(--acc);background:var(--accs);}
+body.dark .oeka{background:var(--sur);border-color:#555;}
+.oeka:hover{border-color:var(--acc);}
+.oeka.hat{border-color:var(--acc);background:var(--accs);}
+.oe-hdr{padding:5px 8px;display:flex;align-items:center;justify-content:space-between;}
+.oe-name{font-size:10.5px;font-weight:700;color:var(--soft);}
+.oeka.hat .oe-name{color:var(--acc);}
+.oe-cnt{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--faint);}
+.oeka.hat .oe-cnt{background:var(--acc);color:#fff;border-color:var(--acc);}
+
+/* ADD ÖFFNUNG */
+.add-oe{border:2px dashed var(--acc);background:var(--accs);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--acc);border-radius:7px;flex-shrink:0;}
+.add-oe:hover{background:var(--acc);color:#fff;}
+.stb-row{display:flex;align-items:stretch;gap:6px;}
+/* STB BOTTOM */
+
+/* ADD STB */
+.add-stb{display:flex;justify-content:flex-start;gap:8px;margin-top:10px;padding-left:4px;}
+.as{border:2px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+/* EXPORT */
+.expbar{display:flex;gap:8px;padding:12px;flex-wrap:wrap;}
+.expbar button{flex:1 1 auto;min-width:100px;}
+.expbar button{flex:1;padding:11px;border:0;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.be{background:var(--acc);color:#fff;}
+.bn{background:var(--red);color:#fff;}
+/* OVERLAY */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:flex-end;justify-content:center;}
+.ov.open{display:flex;}
+.pan{background:var(--sur);border-radius:12px 12px 0 0;padding:18px;width:100%;max-width:100%;max-height:92vh;overflow-y:auto;}
+.pbar{width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 12px;}
+.ptop{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.ptop h3{font-size:15px;font-weight:700;color:var(--acc);flex:1;}
+#ovGesamt .ptop h3{font-size:22px;text-align:center;}
+.bback{border:1px solid var(--line);background:var(--s2);color:var(--soft);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;}
+.sb{width:100%;padding:10px 13px;border:1px solid var(--line);background:var(--s2);border-radius:7px;text-align:left;cursor:pointer;font-size:13px;color:var(--ink);font-family:inherit;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.sb:hover,.sb.on{border-color:var(--acc);background:var(--accs);color:var(--acc);font-weight:600;}
+.uc{background:var(--acc);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;}
+.pan textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:9px;font-family:inherit;font-size:14px;background:var(--s2);color:var(--ink);outline:none;height:90px;resize:none;margin-top:6px;}
+#mDesc{font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#000;min-height:180px;max-height:55vh;overflow-y:auto;border:2px solid var(--acc)!important;}
+body.dark #mDesc{color:var(--ink);}
+.pbtns{display:flex;gap:8px;margin-top:12px;}
+.pbtns button{flex:1;padding:11px;border-radius:7px;border:0;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;}
+.ps{background:var(--acc);color:#fff;}
+.pc{background:var(--s2);color:var(--soft);border:1px solid var(--line)!important;}
+.irow{display:flex;gap:8px;align-items:center;margin-bottom:8px;justify-content:center;}
+.irow label{font-size:13px;color:var(--soft);width:110px;flex-shrink:0;font-weight:600;text-align:right;}
+.irow input{flex:none;width:64px;border:2px solid var(--acc);border-radius:7px;padding:8px 4px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;}
+.irow span{font-size:11px;color:var(--faint);width:24px;flex-shrink:0;}
+.sitem{background:var(--s2);border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:7px;}
+.gbau{border:1.5px solid var(--acc);border-radius:9px;margin-bottom:10px;overflow:hidden;}
+.gbau-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--accs);cursor:pointer;user-select:none;}
+.gbau-hdr .gt{font-size:15px;font-weight:700;color:var(--acc);}
+.gbau-hdr .gc{background:var(--acc);color:#fff;border-radius:14px;padding:2px 11px;font-size:13px;font-weight:700;}
+.gbau-hdr .garr{color:var(--acc);font-size:13px;margin-left:8px;transition:transform .15s;}
+.gbau-hdr.open .garr{transform:rotate(90deg);}
+.gbau-body{padding:10px;display:none;}
+.gbau-body.open{display:block;}
+.sitem .sr{display:flex;align-items:center;gap:8px;}
+.sitem span{flex:1;font-size:13px;}
+.sitem button{border:0;background:var(--reds);color:var(--red);border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;}
+.sitem img{max-width:100%;max-height:80px;border-radius:6px;cursor:zoom-in;margin-top:6px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;z-index:300;display:none;}
+.toast.show{display:block;}
+</style>
+</head>
+<body>
+<header>
+  <div style="width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;flex-shrink:0;">BP</div>
+  <h1>Brückenprüfung <span style="font-size:12px;background:#ff9800;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">BETA</span></h1>
+  <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
+  <button class="hbtn" id="darkBtn">☀️</button>
+</header>
+<div class="kopf" id="kopfBox">
+  <div class="fl"><label>Strecke</label><input id="f_str" placeholder="z.B. 5900"></div>
+  <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092"></div>
+  <div class="fl full"><label>Brückenname</label><input id="f_br" placeholder="z.B. EÜ Musterstraße"></div>
+  <div class="fl"><label>Datum</label><input id="f_dat" type="date"></div>
+  <div class="fl"><label>Prüfer</label><input id="f_pr" placeholder="Name"></div>
+</div>
+<div style="padding:10px 12px 0;position:relative;display:flex;gap:8px;align-items:flex-start;">
+  <div style="flex:1;position:relative;">
+    <input id="bauSearch" placeholder="🔍 Bauteil suchen (z.B. STB 2 Ö3)" style="width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 12px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;">
+    <div id="bauSearchResults" style="position:absolute;left:0;right:0;top:100%;background:var(--sur);border:1px solid var(--line);border-radius:0 0 7px 7px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:40;display:none;max-height:220px;overflow-y:auto;"></div>
+  </div>
+  <button onclick="S.gesamtReturnTo=null;openGesamtschaeden()" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">📋 Gesamtschäden</button>
+</div>
+
+<!-- GESAMTSCHÄDEN PANEL -->
+<div class="ov" id="ovGesamt">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="zurueckAusGesamtschaeden()">← Zurück</button>
+      <h3>Gesamtschäden</h3>
+    </div>
+    <div id="gesamtList"></div>
+  </div>
+</div>
+
+<div class="wrap"><div id="wgW2Bar"></div><div class="grid" id="mainGrid"></div><div id="wgW1Bar"></div></div>
+<div id="stbBtnArea" style="padding:0 12px 12px;"></div>
+<div class="expbar">
+  <button class="be" onclick="doExport(true)">📄🖼 Mit Bildern</button>
+  <button style="border:0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#5b6b7c;color:#fff;" onclick="doExport(false)">📄 Nur Dokument</button>
+  <button style="border:0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#1565c0;color:#fff;" onclick="downloadFotos()">🖼 Nur Bilder</button>
+  <button class="bn" onclick="doNew()">🗑 Neu</button>
+  <button style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="doBackup()">💾 Sichern</button>
+  <button style="border:1.5px solid var(--line);background:var(--sur);color:var(--ink);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="g('restoreInput').click()">📂 Wiederherstellen</button>
+  <input type="file" id="restoreInput" accept="application/json" style="display:none;" onchange="handleRestoreFile(this.files[0])">
+</div>
+
+<!-- BAUTEILE PANEL -->
+<div class="ov" id="ovBau">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="g('ovBau').classList.remove('open')">← Zurück</button>
+      <h3 id="bauTitle">Bauteile</h3>
+    </div>
+    <div id="bauList"></div>
+  </div>
+</div>
+
+<!-- SCHÄDEN EINES BAUTEIL-BEREICHS (z.B. "Schäden Öffnung 1") — eigener Bildschirm,
+     getrennt von der Kachel-Auswahl zum Anlegen neuer Schäden. "Zurück" führt einfach
+     zur Kachel-Auswahl zurück, die im Hintergrund weiter offen bleibt. Wichtig: MUSS im
+     HTML nach #ovBau stehen, da alle .ov-Panels denselben z-index haben und sich beim
+     gleichzeitigen Offensein rein nach DOM-Reihenfolge überdecken — stand dieser Block
+     vor #ovBau, wurde er komplett von #ovBau verdeckt und schien "nichts zu tun".
+-->
+<div class="ov" id="ovBauSchaeden">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="g('ovBauSchaeden').classList.remove('open');">← Zurück</button>
+      <h3 id="bauSchaedenTitle"></h3>
+    </div>
+    <div id="bauSchaedenList"></div>
+  </div>
+</div>
+
+<!-- SCHÄDEN PANEL -->
+<div class="ov" id="ovSch">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="g('ovSch').classList.remove('open');if(S.bauKey)openBau(S.bauKey,S.bauTitle,S.lastUgr);">← Zurück</button>
+      <h3 id="schTitle">Schäden</h3>
+
+    </div>
+    <div id="schUgrSwitch" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+    <div id="schList"></div>
+    <button onclick="openMod()" style="width:100%;padding:9px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">+ Schaden hinzufügen</button>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none">
+  </div>
+</div>
+
+<!-- SCHADEN MODAL -->
+<div class="ov" id="ovMod">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <button class="bback" onclick="resetBeideState();g('ovMod').classList.remove('open');">← Zurück</button>
+      <h3 style="flex:1;">Schaden erfassen</h3>
+
+    </div>
+    <div id="mTyp"></div>
+    <div id="mVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:8px;"></div>
+    <div id="mArt" style="display:none;margin-top:10px;"></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+      <div id="mBauteilNrRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+        <label id="mBauteilNrLabel" style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
+        <input id="mBauteilNr" type="text" inputmode="decimal" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay()" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
+      </div>
+      <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+        <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
+        <input id="mBauteilRef" type="text" inputmode="decimal" placeholder="z.B. 2" oninput="updateVerortungDisplay()" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
+        <button type="button" onclick="if(g('mDesc').value&&!confirm('Beschreibung wirklich löschen?'))return;g('mDesc').value='';autoGrowMDesc();resetMassnahmeBox();curSchadenEntries=[];renderSchadenChips();var gb=g('genauBox');if(gb){gb.style.display='none';gb.innerHTML='';}" style="border:0;background:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 4px;">🗑 Löschen</button>
+      </div>
+      <div id="schadenChips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+      <div id="genauBox" style="display:none;background:var(--accs);border:2px solid var(--acc);border-radius:9px;padding:10px;margin-bottom:8px;"></div>
+      <textarea id="mDesc" placeholder="Beschreibung..." onfocus="scrollMDescIntoView()" oninput="autoGrowMDesc()"></textarea>
+      <div id="massnahmeBox" style="display:none;margin-top:6px;flex-direction:column;gap:6px;background:var(--accs);border:2px solid var(--acc);border-radius:9px;padding:10px;"></div>
+      <div id="mVbsRow" style="display:flex;gap:6px;margin-top:8px;"></div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+      <label style="font-size:12px;color:var(--soft);font-weight:600;">📷 Foto</label>
+      <div onclick="takeMFoto()"  style="border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;margin-top:5px;">📷 Foto aufnehmen</div>
+      <input type="file" id="mFoto" accept="image/*" capture="environment" style="display:none">
+      <div id="mFotoLeiste" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+    </div>
+    <div class="pbtns">
+      <button class="pc" onclick="resetBeideState();clearResumeState();g('ovMod').classList.remove('open');">Schließen</button>
+      <button class="ps" id="mSaveBtn" onclick="saveS()">Speichern</button>
+    </div>
+    <button id="mSaveNextBtn" style="width:100%;margin-top:8px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="saveAndNext()">✓ Speichern &amp; weiteren Schaden hier erfassen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FOTO PANEL -->
+<div class="ov" id="ovFoto">
+  <div class="pan">
+    <div class="pbar"></div>
+    <div class="ptop">
+      <h3 id="fotoTitle" style="flex:1;">Fotos</h3>
+      <span id="fpCount" style="font-size:12px;color:var(--soft);margin-right:10px;">0/10</span>
+    </div>
+    <div id="fpVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:12px;"></div>
+    <div id="fpLeiste" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:80px;"></div>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none">
+    <button onclick="fpTakeFoto()" id="fotoAddBtn" style="width:100%;padding:12px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;">📷 Foto aufnehmen</button>
+    <button onclick="closeFotoPanel()" style="width:100%;padding:12px;background:var(--acc);color:#fff;border:0;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ OK</button>
+  </div>
+</div>
+<script>
+// DATA
+// ============================================================
+// FACHDATEN / KATALOGE — ändert sich selten, enthält keine Ablauflogik.
+// Enthält alle Schadenskataloge (SC/LAGER_SC/FUGEN_SC), Bauteillisten
+// (*_UGR, LAGER_TYPES, LAGER_BAUTEILE, FUGEN_TYPES) und Sondertabellen
+// (VL, DOPPEL_NR_BAUTEILE, NUMMERIERBARE_BAUTEILE). Reicht bis zum
+// "STATE"-Abschnitt weiter unten, ab dort beginnt die eigentliche App-Logik.
+// ============================================================
+var SC = {
+  // Widerlager/Pfeiler Beton (senkrecht/waagerecht/diagonal) - auch Auflagerbank-Sonderfall
+  'Beton':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Widerlager/Pfeiler Mauerwerk (senkrecht/waagerecht/diagonal)
+  'Mauerwerk':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Hohlstellen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation'],
+  // Gewölbe Beton / Fahrbahnplatte Beton / Fahrbahnplatte WIB (längs/quer/schräg)
+  'BetonLQS':['Längs rissig','Quer rissig','Schräg rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Gewölbe Mauerwerk (längs/quer/schräg)
+  'MauerwerkLQS':['Längs rissig','Quer rissig','Schräg rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation'],
+  // Überbau Stahl (alle Stahlbauteile außer Walzträgerunterflansch)
+  'Stahl':['Verformung/Verschiebung/Verkippung','Korrosion','Korrosionsschutzschäden','Lose/fehlende Verbindungsmittel','Lose/fehlende Nietverbindung','Schweißnahtriss','Verschmutzung','Abnutzung','Bewuchs/Vegetation'],
+  // Walzträgerunterflansch (Fahrbahnplatte WIB)
+  'WIB-Stahl':['Verformung/Verschiebung/Verkippung','Anfahrschramme','Anfahrkratzer','Korrosion','Korrosionsschutzschäden','Bewuchs/Vegetation'],
+  // Überbau Geländer
+  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Verguss brüchig an Pfosten','Korrosionsschutzschäden','Korrosion','Fußleiste fehlt/liegt auf','Fußleiste Korrosionsschutzschäden/Korrosion','Fußleiste Verbindungsmittel locker/fehlen','Abstand Geländer zu Gleismitte','Bewuchs/Vegetation'],
+  // Böschungsbefestigung (bei Widerlager)
+  'Böschungsbefestigung':['Trittsteine nicht fachgerecht','Trittsteine locker','Trittsteine fehlen'],
+  // Kabeltrog/Kabelkanal (unter Randweg)
+  'Kabeltrog':['Deckel brüchig','Wandung brüchig','Teilzerstört']
+};
+// Zusatz-Schäden für alle "...Untersicht"-Bauteile, unabhängig vom Material
+var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben','Kleinste Lichte Höhe Bauwerk'];
+
+var VL = {
+  // Lager-Bauteile "Lagersockel" und "Verguss": bei der vereinfachten Lagererfassung als
+  // eigene Bauteil-Einträge anwählbar, mit typischen Schadensbildern zur Auswahl.
+  'Lagersockel':[
+    {l:'Brüchig',t:'Lagersockel brüchig'},
+    {l:'Hohl',t:'Lagersockel hohl'},
+    {l:'Rissig',t:'Lagersockel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}
+  ],
+  'Verguss':[
+    {l:'Brüchig',t:'Verguss brüchig'},
+    {l:'Hohl',t:'Verguss hohl'},
+    {l:'Rissig',t:'Verguss rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}
+  ],
+  // Anker-/Lagerplatten und Verbindungsmittel/Befestigungsmittel: Korrosion/Korrosionsschutzschäden
+  // als Auswahl anbieten (bei allen Lagertypen gleich).
+  'Obere Ankerplatte':[
+    {l:'Korrosion',t:'Obere Ankerplatte Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Obere Ankerplatte Korrosionsschutzschäden'}
+  ],
+  'Untere Ankerplatte':[
+    {l:'Korrosion',t:'Untere Ankerplatte Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Untere Ankerplatte Korrosionsschutzschäden'}
+  ],
+  'Obere Lagerplatte':[
+    {l:'Korrosion',t:'Obere Lagerplatte Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Obere Lagerplatte Korrosionsschutzschäden'}
+  ],
+  'Untere Lagerplatte':[
+    {l:'Korrosion',t:'Untere Lagerplatte Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Untere Lagerplatte Korrosionsschutzschäden'}
+  ],
+  'Verbindungsmittel/Befestigungsmittel':[
+    {l:'Korrosion',t:'Verbindungsmittel/Befestigungsmittel Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Verbindungsmittel/Befestigungsmittel Korrosionsschutzschäden'}
+  ],
+  // Weitere metallische Lagerbauteile — Elastomerkissen und Gleitteil (PTFE) bewusst
+  // ausgenommen, da nicht aus Metall.
+  'Rolle':[
+    {l:'Korrosion',t:'Rolle Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Rolle Korrosionsschutzschäden'}
+  ],
+  'Führungsleiste':[
+    {l:'Korrosion',t:'Führungsleiste Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Führungsleiste Korrosionsschutzschäden'}
+  ],
+  'Gleitplatte':[
+    {l:'Korrosion',t:'Gleitplatte Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Gleitplatte Korrosionsschutzschäden'}
+  ],
+  'Druckstück':[
+    {l:'Korrosion',t:'Druckstück Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Druckstück Korrosionsschutzschäden'}
+  ],
+  'Führungskonstruktion':[
+    {l:'Korrosion',t:'Führungskonstruktion Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Führungskonstruktion Korrosionsschutzschäden'}
+  ],
+  'Festhaltekonstruktion':[
+    {l:'Korrosion',t:'Festhaltekonstruktion Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Festhaltekonstruktion Korrosionsschutzschäden'}
+  ],
+  'Typenschild':[
+    {l:'Korrosion',t:'Typenschild Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Typenschild Korrosionsschutzschäden'},
+    {l:'Fehlt/unleserlich',t:'Typenschild fehlt/unleserlich'}
+  ],
+  // Gleitteil (PTFE) — nicht aus Metall, deshalb keine Korrosion, sondern die typischen
+  // Verschleiß-Schadensbilder eines Gleitwerkstoffs.
+  'Gleitteil (PTFE)':[
+    {l:'Abgenutzt',t:'Gleitteil (PTFE) abgenutzt'},
+    {l:'Verschmutzung',t:'Gleitteil (PTFE) Verschmutzung'},
+    {l:'Verformt/beschädigt',t:'Gleitteil (PTFE) verformt/beschädigt'}
+  ],
+  'Senkrecht rissig':[{l:'Breite+Länge',t:'Senkrecht rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Waagerecht rissig':[{l:'Breite+Länge',t:'Waagerecht rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Diagonal rissig':[{l:'Breite+Länge',t:'Diagonal rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Netzrissig':[{l:'Maß',t:'Netzrissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Unregelmäßig rissig':[{l:'Maß',t:'Unregelmäßig rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Längs rissig':[{l:'Breite+Länge',t:'Längs rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Quer rissig':[{l:'Breite+Länge',t:'Quer rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Schräg rissig':[{l:'Breite+Länge',t:'Schräg rissig bis {0}mm, Länge {1}mm',i:[{l:'Rissbreite',u:'mm'},{l:'Risslänge',u:'mm'}]}],
+  'Betonabplatzung mit freiliegender Bewehrung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Betonabplatzung mit freiliegender Bewehrung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Betonabplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Betonabplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Aussinterungen':[{l:'Trocken',t:'Aussinterungen zum Zeitpunkt der Begutachtung trocken',i:[]},{l:'Feucht',t:'Aussinterungen zum Zeitpunkt der Begutachtung feucht',i:[]}],
+  'Hohlstellen':[{l:'Bestätigen',t:'Hohlstellen',i:[]}],
+  'Grobkornstellen':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Grobkornstellen',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Poren und Lunker':[{l:'Maß',t:'Poren und Lunker bis {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Abschalung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abschalung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Abplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Steinausbrüche':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Steinausbrüche',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
+  'Korrosion':[
+    {l:'Vereinzelt angerostet',t:'Korrosion vereinzelt, angerostet',i:[]},
+    {l:'Vereinzelt Plattenrost',t:'Korrosion vereinzelt, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Vereinzelt Korrosionsschutzschäden',t:'Korrosion vereinzelt, Korrosionsschutzschäden',i:[]},
+    {l:'Stellenweise angerostet',t:'Korrosion stellenweise, angerostet',i:[]},
+    {l:'Stellenweise Plattenrost',t:'Korrosion stellenweise, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Stellenweise Korrosionsschutzschäden',t:'Korrosion stellenweise, Korrosionsschutzschäden',i:[]},
+    {l:'Mehrfach angerostet',t:'Korrosion mehrfach, angerostet',i:[]},
+    {l:'Mehrfach Plattenrost',t:'Korrosion mehrfach, Plattenrost {0}mm',i:[{l:'Maß',u:'mm'}]},
+    {l:'Mehrfach Korrosionsschutzschäden',t:'Korrosion mehrfach, Korrosionsschutzschäden',i:[]}
+  ],
+  'Korrosionsschutzschäden':[{l:'Vereinzelt',t:'Korrosionsschutzschaden vereinzelt',i:[]},{l:'Stellenweise',t:'Korrosionsschutzschaden stellenweise',i:[]},{l:'Mehrfach',t:'Korrosionsschutzschaden mehrfach',i:[]}],
+  'Verformung/Verschiebung/Verkippung':[{l:'Verformung',t:'Verformung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verschiebung',t:'Verschiebung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verkippung',t:'Verkippung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]}],
+  'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}],
+  'Lose/fehlende Nietverbindung':[{l:'Lose',t:'Lose Nietverbindung festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Nietverbindung festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Nietverbindung festgestellt',i:[]}],
+  'Schweißnahtriss':[{l:'Länge',t:'Schweißnahtriss, Länge {0}mm',i:[{l:'Länge',u:'mm'}]}],
+  'Verschmutzung':[{l:'Festgestellt',t:'Verschmutzung festgestellt',i:[]}],
+  'Anfahrschramme':[{l:'Bestätigen',t:'Anfahrschramme festgestellt',i:[]}],
+  'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt',i:[]}],
+  'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt',i:[]}],
+  'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt',i:[]}],
+  'Verformung':[{l:'Maß',t:'Verformung, {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Schweißnahtschaden':[{l:'Bestätigen',t:'Schweißnahtschaden festgestellt',i:[]}],
+  'Fußleiste fehlt/liegt auf':[{l:'Fehlt',t:'Fußleiste fehlt',i:[]},{l:'Liegt auf',t:'Fußleiste liegt auf',i:[]}],
+  'Fußleiste Korrosionsschutzschäden/Korrosion':[{l:'Korrosionsschutzschäden',t:'Fußleiste Korrosionsschutzschäden',i:[]},{l:'Korrosion',t:'Fußleiste Korrosion',i:[]}],
+  'Fußleiste Verbindungsmittel locker/fehlen':[{l:'Locker',t:'Fußleiste Verbindungsmittel locker',i:[]},{l:'Fehlen',t:'Fußleiste Verbindungsmittel fehlen',i:[]}],
+  'Abstand Geländer zu Gleismitte':[{l:'Links',t:'Abstand Geländer links zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]},{l:'Rechts',t:'Abstand Geländer rechts zu Gleismitte {0}m',i:[{l:'Abstand',u:'m'}]}],
+  'Kleinste Lichte Höhe Bauwerk':[{l:'Maß',t:'Kleinste Lichte Höhe Bauwerk {0}m',i:[{l:'Höhe',u:'m'}]}],
+  // Lager
+  'Lager Nr./Achse':[{l:'Angeben',t:'Lager Nr.: {0}, Widerlager{1}',i:[{l:'Lager Nr.',u:''},{l:'Widerlager Nr.',u:''}]}],
+  'Verschiebung Richtung W':[{l:'Angeben',t:'Verschiebung {0}mm in Richtung Widerlager{1}',i:[{l:'Maß',u:'mm'},{l:'Widerlager Nr.',u:''}]}],
+  'Korrosionsbeginn':[{l:'Bestätigen',t:'Korrosionsbeginn',i:[]}],
+  'Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}],
+  'Trittsteine nicht fachgerecht':[{l:'Isthöhe',t:'Trittsteine nicht fachgerecht, Sollhöhe 50mm, Isthöhe {0}mm',i:[{l:'Isthöhe',u:'mm'}]}],
+  'Trittsteine locker':[{l:'Bestätigen',t:'Trittsteine locker',i:[]}],
+  'Trittsteine fehlen':[{l:'Bestätigen',t:'Trittsteine fehlen',i:[]}],
+  'Deckel brüchig':[{l:'Bestätigen',t:'Deckel brüchig',i:[]}],
+  'Wandung brüchig':[{l:'Bestätigen',t:'Wandung brüchig',i:[]}],
+  'Teilzerstört':[{l:'Bestätigen',t:'Teilzerstört',i:[]}],
+  'Mörtelfugenschäden/offene Fugen':[{l:'Bestätigen',t:'Mörtelfugenschäden/offene Fugen',i:[]}],
+  'Verformt/beschädigt':[{l:'Bestätigen',t:'Verformt/beschädigt',i:[]}],
+  'Abgenutzt':[{l:'Bestätigen',t:'Abgenutzt',i:[]}],
+  'Risse/Versprödung':[{l:'Bestätigen',t:'Risse/Versprödung festgestellt',i:[]}],
+  'Fehlt/unleserlich':[{l:'Bestätigen',t:'Fehlt/unleserlich',i:[]}],
+  'Temperaturen':[{l:'Angeben',t:'Oberflächentemperatur {0}°C, Lufttemperatur {1}°C',i:[{l:'Oberflächentemp.',u:'°C'},{l:'Lufttemp.',u:'°C'}]}],
+  'Leicht verschmutzt':[{l:'Bestätigen',t:'Leicht verschmutzt',i:[]}],
+  'Vergussmörtel/Lagersockel rissig':[{l:'Maß',t:'Vergussmörtel/Lagersockel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Vergussmörtel rissig':[{l:'Maß',t:'Vergussmörtel rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Spaltmaß an Knagge':[{l:'Maß',t:'{0}mm Spaltmaß an Knagge',i:[{l:'Maß',u:'mm'}]}],
+  'Elastomer-Zustand':[{l:'Allseits beweglich',t:'Elastomer allseits beweglich',i:[]},{l:'Quer fest',t:'Elastomer quer fest',i:[]},{l:'Allseits fest',t:'Elastomer allseits fest',i:[]},{l:'Längs beweglich',t:'Elastomer längs beweglich',i:[]}],
+  'Verschiebung 0mm links/rechts':[{l:'Bestätigen',t:'Verschiebung 0mm links/rechts',i:[]}],
+  // Fugen
+  'Höhenversatz':[{l:'Maß',t:'Höhenversatz {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  'Dichtprofil rissig/beschädigt':[{l:'Bestätigen',t:'Dichtprofil rissig/beschädigt',i:[]}],
+  'Dichtprofil fehlend':[{l:'Bestätigen',t:'Dichtprofil fehlend',i:[]}],
+  'Lamelle verformt/beschädigt':[{l:'Bestätigen',t:'Lamelle verformt/beschädigt',i:[]}],
+  'Verschmutzt/verstopft':[{l:'Bestätigen',t:'Verschmutzt/verstopft',i:[]}],
+  'Finger verformt/verbogen':[{l:'Bestätigen',t:'Finger verformt/verbogen',i:[]}],
+  'Finger gebrochen/fehlend':[{l:'Bestätigen',t:'Finger gebrochen/fehlend',i:[]}],
+  'Asphalt rissig':[{l:'Bestätigen',t:'Asphalt rissig',i:[]}],
+  'Ausbrüche/Abplatzungen':[{l:'Bestätigen',t:'Ausbrüche/Abplatzungen',i:[]}],
+  'Verschleiß':[{l:'Bestätigen',t:'Verschleiß festgestellt',i:[]}],
+  'Rissig':[{l:'Maß',t:'Rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]}],
+  'Versatz':[{l:'Maß',t:'Versatz {0}mm',i:[{l:'Maß',u:'mm'}]}]
+};
+
+// ============================================================
+// BAUTEIL-GLIEDERUNG (Neustrukturierung)
+// ============================================================
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
+var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank'];
+var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht'];
+var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht','Walzträgerunterflansch'];
+var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg','Kabeltrog/Kabelkanal','Randwegkonsole'];
+// Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
+// Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
+var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts'];
+// Bauteile mit zwei Nummern (eigene Nr. + Bezugs-Nr.), z.B. "Beulsteife Nr. 3 an Hauptträger Nr. 2"
+// Auf weitere Stahlbauteile erweiterbar, einfach hier ergänzen
+var DOPPEL_NR_BAUTEILE={
+  'Beulsteife an Hauptträger':{compLabel:'Beulsteife Nr.:',refLabel:'an Hauptträger Nr.:',refWord:'Hauptträger'}
+};
+var OE_GB=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnwand links','Stirnwand rechts','Abdeckung Stirnwand links','Abdeckung Stirnwand rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal'];
+var OE_GM=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnmauer links','Stirnmauer rechts','Abdeckung Stirnmauer links','Abdeckung Stirnmauer rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal'];
+
+var LAGER_TYPES=['Rollenlager','Linienkipplager Festlager','Linienkipplager quer verschieblich','Elastomerlager'];
+var FUGEN_TYPES=['Lamellenübergang','Fingerkonstruktion','Wartungsfreier Übergang','Schleppplatte'];
+// Lagerbauteile (Unterpunkte) je Lagertyp - reduzierte, praxisrelevante Auswahl (Quelle: KIB-Referenz, gekürzt)
+var LAGER_BAUTEILE={
+  'Rollenlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Rolle','Führungsleiste','Gleitplatte','Gleitteil (PTFE)','Typenschild'],
+  'Linienkipplager Festlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Druckstück','Typenschild'],
+  'Linienkipplager quer verschieblich':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Druckstück','Gleitplatte','Gleitteil (PTFE)','Führungskonstruktion','Festhaltekonstruktion','Typenschild'],
+  'Elastomerlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Elastomerkissen','Festhaltekonstruktion','Typenschild']
+};
+// Automatische Schadenszuordnung je Bauteilbezeichnung (eigene Einschätzung, keine Norm)
+function lagerBauteilSchaeden(bauteil){
+  if(/Elastomerkissen/.test(bauteil))return ['Verformt/beschädigt','Risse/Versprödung','Verschmutzung'];
+  if(/Typenschild/.test(bauteil))return ['Fehlt/unleserlich'];
+  if(/Gleit|Rolle/.test(bauteil))return ['Abgenutzt','Verschmutzung','Verformt/beschädigt'];
+  return ['Korrosion','Verschmutzung','Verformt/beschädigt'];
+}
+var FUGEN_SC={
+  'Lamellenübergang':['Höhenversatz','Dichtprofil rissig/beschädigt','Dichtprofil fehlend','Lamelle verformt/beschädigt','Korrosion','Lose/fehlende Verbindungsmittel','Verschmutzt/verstopft'],
+  'Fingerkonstruktion':['Finger verformt/verbogen','Finger gebrochen/fehlend','Höhenversatz','Korrosion','Verschmutzt/verstopft'],
+  'Wartungsfreier Übergang':['Asphalt rissig','Ausbrüche/Abplatzungen','Höhenversatz','Verschleiß'],
+  'Schleppplatte':['Rissig','Versatz','Hohlstellen','Abplatzung']
+};
+
+// Bauteile, deren Schadenskatalog unabhängig vom übergeordneten Material fest vorgegeben ist
+function resolveSchadenTyp(baseKey,bauteil,parentTyp){
+  if(bauteil==='Auflagerbank')return 'Beton';
+  if(bauteil==='Böschungsbefestigung')return 'Böschungsbefestigung';
+  if(bauteil==='Übergang zum Bahnkörper')return 'Beton';
+  if(bauteil==='Kabeltrog/Kabelkanal')return 'Kabeltrog';
+  if(/_w[12]$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
+  if(/_pf\d+$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
+  // Öffnung
+  if(bauteil==='Walzträgerunterflansch')return 'WIB-Stahl';
+  if((bauteil==='Randweg links'||bauteil==='Randweg rechts')&&parentTyp==='Gew.Mauerwk')return 'BetonLQS';
+  if(parentTyp==='Stahl')return 'Stahl';
+  if(parentTyp==='WIB')return 'BetonLQS';
+  if(parentTyp==='Gew.Beton')return 'BetonLQS';
+  if(parentTyp==='Gew.Mauerwk')return 'MauerwerkLQS';
+  return 'BetonLQS';
+}
+
+// ============================================================
+// DATENSCHEMA (dat-Objekt) — bitte lesen, bevor an Schlüssel-Konstruktion
+// (Speichern/Auslesen von Schäden) etwas geändert wird
+// ============================================================
+// `dat` ist ein flaches Objekt. Schaden-Einträge liegen unter zusammengesetzten
+// Text-Schlüsseln nach dem Muster:
+//
+//     <bauteilKey>___<UgrText>          →  Array von Schaden-Einträgen
+//
+// Beispiele für <bauteilKey>:
+//   stb<id>_w1 / stb<id>_w2   Widerlager 1/2 eines einzelnen STB
+//   wg_w1 / wg_w2             Widerlager 1/2 "durchgehend" (STB-übergreifend, siehe unten)
+//   stb<id>_oe<n>             Öffnung n eines STB
+//   stb<id>_pf<n>             Pfeiler n eines STB
+//
+// <UgrText> ist einer der Bauteilbegriffe aus den *_UGR-Katalogen weiter unten
+// (z.B. "Widerlager Vorderansicht", "Kammerwand links", "Querträger" ...).
+//
+// SONDERFALL Links/Rechts-Bauteile (z.B. "Geländer links"/"Geländer rechts",
+// "Kappe links"/"Kappe rechts" usw. — überall, wo ein *_UGR-Eintrag auf " links"
+// oder " rechts" endet): Links und Rechts sind zwei GETRENNTE <UgrText>-Werte,
+// landen also in zwei getrennten dat[]-Arrays. Die Erfassungsmaske erkennt
+// solche Paare automatisch (isRL-Prüfung in openBau/render) und bietet dort
+// einen gemeinsamen Auswahlbildschirm (openReliSel) mit drei Optionen:
+//   "Links"   → normaler Eintrag in <bauteilKey>___<Bauteil> links
+//   "Rechts"  → normaler Eintrag in <bauteilKey>___<Bauteil> rechts
+//   "Beide"   → siehe eigener Abschnitt "BEIDE-ABLAUF" weiter unten
+//
+// SONDERFALL Lager (bei Öffnungen, wenn kein Gewölbe-Typ gewählt ist):
+//   <bauteilKey>___Lager: <LagerTyp>                    → Eintrag direkt am Lager
+//   <bauteilKey>___Lager: <LagerTyp> - <LagerBauteil>    → Eintrag an einem Lager-Bauteil
+//   (LagerTyp aus LAGER_TYPES, LagerBauteil aus LAGER_BAUTEILE[LagerTyp])
+//
+// SONDERFALL Fugen (bei Öffnungen, wenn kein Gewölbe-Typ gewählt ist):
+//   <bauteilKey>___Fugen: <FugenTyp>     (FugenTyp aus FUGEN_TYPES)
+//
+// WICHTIG: Jede Funktion, die Schäden sucht/zählt (collectAllSchaeden, cntKey,
+// mkKa, mkOe ...), muss <bauteilKey> und <UgrText> exakt genau so zusammensetzen
+// wie beim Speichern (saveS/openSch) — sonst werden vorhandene Einträge nicht
+// gefunden ("verschwinden" scheinbar, obwohl sie noch in dat liegen). Genau das
+// war die Ursache des Widerlager-durchgehend-Bugs (Juli 2026).
+//
+// Zusatz-Schlüssel (kein Array, sondern Einzelwerte):
+//   __t_<bauteilKey>       gewählter Bauwerks-/Überbautyp (Beton/Stahl/... ) für dieses Bauteil
+//   __durchgehendW         true/false, ob Widerlager STB-übergreifend zusammengefasst sind
+//   __recentArt_<S.typ>   zuletzt verwendete Schadensarten (für die Schnellauswahl)
+//
+// "Durchgehend"-Umschaltung (migrateWiderlagerDurchgehend) verschiebt Einträge
+// zwischen stb<id>_w1/_w2 und wg_w1/wg_w2, OHNE die __t_-Typangaben zu löschen.
+//
+// Die sechs Kernfelder von S unten beschreiben zusammen "wo bin ich gerade":
+//   S.bauKey  = aktuell geöffnetes Bauteil (z.B. "stb1_w1")
+//   S.key     = aktuell geöffneter Schaden-Schlüssel (S.bauKey + "___" + S.ugr)
+//   S.ugr     = aktuell gewählter Bauteilbegriff (UgrText)
+//   S.schTitle= Anzeigetext "wo bin ich" (für Fotos/Export)
+//   S.typ     = aufgelöster Schadenskatalog-Typ (z.B. "Stahl", "Lager:Elastomerlager")
+//   S.art     = aktuell gewählte Schadensart innerhalb des Formulars
+// Sie werden an mehreren Stellen (openBau, openSch, openMod, saveS) gesetzt und
+// gelesen — bei Änderungen an einer dieser Funktionen prüfen, ob die anderen
+// noch mit dem konsistent sind, was hier gesetzt wird.
+//
+// BEIDE-ABLAUF (Links+Rechts in einem Rutsch, seit Juli 2026, nur Beta):
+// Eigene Zusatzfelder in S, gedanklich getrennt von den Feldern oben, weil sie
+// eine zusätzliche Ebene "wo bin ich INNERHALB der Beide-Erfassung" beschreiben:
+//   S.beidePhase     = null (kein Beide-Ablauf aktiv) | 1 (Links wird gerade
+//                       erfasst) | 2 (Rechts wird gerade erfasst)
+//   S.beideBaseKey   = <bauteilKey> des Links/Rechts-Paares (z.B. "stb1_oe1")
+//   S.beideBaseName  = Bauteilname ohne Seite (z.B. "Geländer")
+//   S.beideBereich   = Anzeigename der Ebene (z.B. "Öffnung 1"), für Beschriftungen
+//   S.beideLinksDesc/-Fotos/-Typ/-Art = fertig gebauter Links-Teil, zwischen-
+//                       gespeichert nach Phase 1, bis Phase 2 abgeschlossen ist
+// Ergebnis beim finalen Speichern (Phase 2 → saveS): EIN gemeinsamer Beschreibungs-
+// text ("<Bauteil> links und rechts" / Abschnitte "Links:"/"Rechts:") wird als
+// ZWEI UNABHÄNGIGE Kopien angelegt — je eine in
+// <bauteilKey>___<Bauteil> links UND <bauteilKey>___<Bauteil> rechts — nicht als
+// gemeinsame Objekt-Referenz (sonst würde Bearbeiten/Löschen einer Kopie die
+// andere unkontrolliert mit verändern). resetBeideState() räumt den kompletten
+// Zwischenzustand auf; wird an jeder Stelle aufgerufen, an der man den Ablauf
+// verlassen kann (Zurück/Schließen im Modal, editS(), switchUgr(), openSch() bei
+// Zielwechsel), damit ein abgebrochener Beide-Versuch nie in einen späteren,
+// nicht damit zusammenhängenden Speichervorgang hineinwirkt.
+// ============================================================
+
+// STATE
+var stbs=[], nxtId=1, dat={};
+var curGalleryOv=null; // aktuell offene Foto-Vollbildansicht (falls eine offen ist) — für Android-Zurück-Knopf
+function isDurchgehendW(){return !!dat['__durchgehendW'];}
+var bauwerkLocked=false;
+// Bündelt die Navigations-/Erfassungs-Variablen ("wo bin ich gerade, was wird gerade
+// erfasst") in einem Objekt statt vieler einzelner globaler Variablen — reine
+// Aufräumarbeit ohne Verhaltensänderung, siehe DATENSCHEMA-Kommentar oben für die
+// Bedeutung der einzelnen Felder.
+var S={
+  key:null, bauKey:null, bauTitle:'', schTitle:'', ugr:'', lastUgr:[], editIdx:-1,
+  editIsBeide:false,
+  typ:'Beton', art:'', vorl:null,
+  // Wohin "← Zurück" im Gesamtschäden-Panel führen soll: null = zurück zum Hauptbild
+  // (Panel wurde über den Kopfzeilen-Button geöffnet), sonst ein Objekt mit den
+  // Angaben, um die konkrete Schadensliste wieder zu öffnen (Panel wurde über den
+  // "Zu Gesamtschäden"-Link aus einer Schadensliste heraus geöffnet).
+  gesamtReturnTo:null,
+  // "Beide" (links+rechts in einem Rutsch): beidePhase 1 = Links wird gerade erfasst,
+  // 2 = Rechts wird gerade erfasst (Links-Inhalt liegt bereits in beideLinksDesc/-Fotos).
+  beidePhase:null, beideBaseKey:null, beideBaseName:null, beideBereich:null,
+  beideLinksDesc:null, beideLinksFotos:[], beideLinksTyp:'', beideLinksArt:''
+};
+function resetBeideState(){
+  S.beidePhase=null;S.beideBaseKey=null;S.beideBaseName=null;S.beideBereich=null;
+  S.beideLinksDesc=null;S.beideLinksFotos=[];S.beideLinksTyp='';S.beideLinksArt='';
+}
+// Passt Speichern-Button(e) an die laufende "Beide"-Erfassung an: Schritt 1 (Links) zeigt
+// "Weiter: Rechts erfassen", Schritt 2 (Rechts) zeigt "Speichern (Links + Rechts)"; der
+// separate "…& weiteren Schaden hier erfassen"-Knopf ergibt in der Beide-Erfassung keinen
+// Sinn und wird währenddessen ausgeblendet.
+function updateBeideModalUI(){
+  var saveBtn=g('mSaveBtn'),nextBtn=g('mSaveNextBtn');
+  if(S.beidePhase===1){
+    if(saveBtn)saveBtn.textContent='Weiter: Rechts erfassen →';
+    if(nextBtn)nextBtn.style.display='none';
+  } else if(S.beidePhase===2){
+    if(saveBtn)saveBtn.textContent='💾 Speichern (Links + Rechts)';
+    if(nextBtn)nextBtn.style.display='none';
+  } else {
+    if(saveBtn)saveBtn.textContent='Speichern';
+    if(nextBtn)nextBtn.style.display='';
+  }
+}
+var fotoCounter=0, curFotoIdx=-1;
+function buildLagerFotoLabel(){
+  // Eigene Beschriftung für Lager-Fotos: STB + Widerlager ODER Pfeiler (je nachdem, was
+  // ausgefüllt ist) + Lager-Nummer — bewusst OHNE Lagertyp (z.B. "Elastomerlager"), der
+  // soll laut Andreas nicht mit auf dem Bild stehen.
+  if(!/^Lager: /.test(S.ugr||''))return null;
+  var mwBox=g('lagerMesswerte');
+  if(!mwBox||!curLagerMesswertFelder.length)return null;
+  var stbM=(S.key||'').match(/^stb(\d+)_/);
+  var wIdx=-1,pIdx=-1,lIdx=-1;
+  curLagerMesswertFelder.forEach(function(f,idx){
+    if(f.label==='Widerlager')wIdx=idx;
+    if(f.label==='Pfeiler')pIdx=idx;
+    if(f.label==='Lager')lIdx=idx;
+  });
+  var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim():'';
+  var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim():'';
+  var lVal=lIdx>=0&&g('lagerMw'+lIdx)?g('lagerMw'+lIdx).value.trim():'';
+  var parts=[];
+  if(stbM)parts.push('STB '+stbM[1]);
+  if(wVal)parts.push('Widerlager '+wVal);
+  else if(pVal)parts.push('Pfeiler '+pVal);
+  if(lVal)parts.push('Lager '+lVal);
+  return parts.length?parts.join(', '):null;
+}
+
+function fotoLabelFromKey(key){
+  // Bevorzugt dieselbe automatische Standort-Überschrift wie in der Schadensbeschreibung
+  // (inkl. Bauteil-Nummer bei nummerierbaren Stahlbauteilen, STB/Widerlager/Bereich, oder
+  // bei Lager die eigene STB/Widerlager-bzw.-Pfeiler/Lager-Nummer-Beschriftung) — Foto und
+  // Text zeigen jetzt bewusst wieder dieselbe vollständige Überschrift. Fällt bei allem, was
+  // keine der beiden Funktionen abdeckt (z.B. Fugen), auf die alte schlüsselbasierte
+  // Herleitung zurück.
+  var lagerLabel=buildLagerFotoLabel();
+  if(lagerLabel)return lagerLabel;
+  var auto=buildTextLocationHeading();
+  if(auto)return auto;
+  if(!key)return S.schTitle||'';
+  var m=key.match(/^stb(\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
+  if(!m)return S.schTitle||'';
+  var stbNum=m[1],part=m[2],ugr=m[3];
+  var partLabel;
+  if(part==='w1'){partLabel='Widerlager1';ugr=ugr.replace(/^Widerlager\s*/,'');}
+  else if(part==='w2'){partLabel='Widerlager2';ugr=ugr.replace(/^Widerlager\s*/,'');}
+  else if(/^oe(\d+)$/.test(part))partLabel='Öffnung'+part.replace('oe','');
+  else if(/^pf(\d+)$/.test(part))partLabel='Pfeiler'+part.replace('pf','');
+  else partLabel=part;
+  return 'STB'+stbNum+', '+partLabel+', '+ugr;
+}
+var mPendingFotos=[];
+
+function g(id){return document.getElementById(id);}
+function toast(m){var t=g('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+// ============================================================
+// AUTOSAVE
+// ============================================================
+function autoSave(){
+  try{
+    localStorage.setItem('bp_dat',JSON.stringify(dat));
+    localStorage.setItem('bp_stbs',JSON.stringify(stbs));
+    localStorage.setItem('bp_nxtId',''+nxtId);
+    localStorage.setItem('bp_fc',''+fotoCounter);
+    localStorage.setItem('bp_locked',bauwerkLocked?'1':'0');
+    var k={str:g('f_str').value,km:g('f_km').value,br:g('f_br').value,dat:g('f_dat').value,pr:g('f_pr').value};
+    localStorage.setItem('bp_kopf',JSON.stringify(k));
+  }catch(e){}
+}
+function loadSaved(){
+  try{
+    var d=localStorage.getItem('bp_dat');if(d)dat=JSON.parse(d);
+    var s=localStorage.getItem('bp_stbs');if(s)stbs=JSON.parse(s);
+    var n=localStorage.getItem('bp_nxtId');if(n)nxtId=parseInt(n);
+    var fc=localStorage.getItem('bp_fc');if(fc)fotoCounter=parseInt(fc);
+    var lk=localStorage.getItem('bp_locked');if(lk!==null)bauwerkLocked=(lk==='1');
+    var k=localStorage.getItem('bp_kopf');
+    if(k){k=JSON.parse(k);
+      if(k.str)g('f_str').value=k.str;if(k.km)g('f_km').value=k.km;
+      if(k.br)g('f_br').value=k.br;if(k.dat)g('f_dat').value=k.dat;
+      if(k.pr)g('f_pr').value=k.pr;
+    }
+  }catch(e){}
+}
+
+// ============================================================
+// RENDER GRID
+// ============================================================
+function render(){
+  var grid=g('mainGrid');grid.innerHTML='';
+  var sa0=g('stbBtnArea');if(sa0)sa0.innerHTML='';
+  if(!stbs.length){
+    grid.style.cssText='display:flex;justify-content:center;width:100%;';
+    var empty=document.createElement('div');
+    empty.style.cssText='padding:60px 20px;text-align:center;color:var(--soft);width:100%;';
+    empty.innerHTML='<div style="font-size:16px;margin-bottom:20px;">Noch kein Bauwerk angelegt.</div>'+
+      '<button class="ps" style="padding:18px 32px;font-size:17px;font-weight:700;border-radius:10px;" onclick="startBauwerk()">🏗 Bauwerk erstellen</button>';
+    grid.appendChild(empty);
+    return;
+  }
+  grid.style.cssText='';
+  var dgActive=isDurchgehendW()&&stbs.length>1;
+  var w2Bar=g('wgW2Bar'),w1Bar=g('wgW1Bar');
+  if(w2Bar)w2Bar.innerHTML='';
+  if(w1Bar)w1Bar.innerHTML='';
+  if(dgActive){
+    var gridWidthPx=stbs.length*128+Math.max(0,stbs.length-1)*5; // .col{width:128px} + .grid{gap:5px}
+    var w2ugr=getUgr('wg_w2'),w1ugr=getUgr('wg_w1');
+    var w2cnt=cntKey('wg_w2',w2ugr),w1cnt=cntKey('wg_w1',w1ugr);
+    if(w2Bar){var b2=mkWgBar('wg_w2','W2 (durchgehend — alle STB)',w2cnt);b2.style.width=gridWidthPx+'px';w2Bar.appendChild(b2);}
+    if(w1Bar){var b1=mkWgBar('wg_w1','W1 (durchgehend — alle STB)',w1cnt);b1.style.width=gridWidthPx+'px';w1Bar.appendChild(b1);}
+  }
+  stbs.forEach(function(stb,si){
+    var col=document.createElement('div');col.className='col';
+    var hdr=document.createElement('div');hdr.className='col-hdr';
+    hdr.innerHTML='STB '+(si+1)
+      +((!bauwerkLocked&&stbs.length>1)?' <button class="dx" onclick="rmStb('+stb.id+')">✕</button>':'');
+    col.appendChild(hdr);
+    var inner=document.createElement('div');inner.className='col-table';
+    if(!dgActive){
+      var w2Key=isDurchgehendW()?'wg_w2':('stb'+stb.id+'_w2');
+      inner.appendChild(mkKa(w2Key,isDurchgehendW()?'W2 (durchgehend)':'W2','wid'));
+    }
+    for(var i=stb.oeff;i>=1;i--){
+      if(i===stb.oeff&&!bauwerkLocked&&stb.oeff<5){
+        var pairRow=document.createElement('div');pairRow.style.cssText='display:flex;';
+        var addOeTile=document.createElement('div');
+        addOeTile.style.cssText='width:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1.5px solid var(--line);background:var(--accs);color:var(--acc);font-size:15px;font-weight:700;cursor:pointer;';
+        addOeTile.textContent='+';
+        (function(sid){addOeTile.onclick=function(){addOeff(sid);};})(stb.id);
+        var oeTile=mkOe(stb,i);oeTile.style.flex='1';
+        pairRow.appendChild(addOeTile);pairRow.appendChild(oeTile);
+        inner.appendChild(pairRow);
+      } else {
+        inner.appendChild(mkOe(stb,i));
+      }
+      if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),'pf'));
+    }
+    if(!dgActive){
+      var w1Key=isDurchgehendW()?'wg_w1':('stb'+stb.id+'_w1');
+      inner.appendChild(mkKa(w1Key,isDurchgehendW()?'W1 (durchgehend)':'W1','wid'));
+    }
+    col.appendChild(inner);
+    if(si===stbs.length-1&&!bauwerkLocked&&stbs.length<5){
+      var addStbTile=document.createElement('div');
+      addStbTile.style.cssText='margin-top:6px;border:1.5px solid var(--acc);border-radius:7px;background:var(--accs);color:var(--acc);text-align:center;padding:8px;font-size:12px;font-weight:700;cursor:pointer;';
+      addStbTile.textContent='+ STB';
+      addStbTile.onclick=addStb;
+      col.appendChild(addStbTile);
+    }
+    grid.appendChild(col);
+  });
+  var sa=g('stbBtnArea');if(sa){sa.innerHTML='';
+    if(stbs.length>1){
+      var dgBtn=document.createElement('button');
+      dgBtn.textContent=isDurchgehendW()?'🔗 Widerlager getrennt anzeigen':'🔗 Widerlager durchgehend (mehrere Überbauten, ein Widerlager)';
+      dgBtn.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid var(--acc);border-radius:7px;background:'+(isDurchgehendW()?'var(--acc)':'var(--accs)')+';color:'+(isDurchgehendW()?'#fff':'var(--acc)')+';font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+      dgBtn.onclick=function(){
+        var turningOn=!isDurchgehendW();
+        if(!confirm(turningOn?
+          'Widerlager durchgehend einschalten? Vorhandene Schäden aller STBs werden je Seite (W1 bzw. W2) automatisch zusammengeführt.':
+          'Widerlager wieder getrennt anzeigen? Schäden gehen zurück an den STB, aus dem sie ursprünglich stammen. Neu hinzugekommene Schäden landen beim ersten STB.'))return;
+        var movedCount=migrateWiderlagerDurchgehend(turningOn);
+        dat['__durchgehendW']=turningOn;
+        autoSave();render();
+        var msg=turningOn?'Widerlager sind jetzt durchgehend (STB-übergreifend)':'Widerlager sind jetzt wieder getrennt je STB';
+        if(movedCount>0)msg+=' — '+movedCount+' bestehende Einträge automatisch übernommen';
+        toast(msg);
+      };
+      sa.appendChild(dgBtn);
+    }
+    if(!bauwerkLocked){
+      var lockBtn=document.createElement('button');
+      lockBtn.className='ps';
+      lockBtn.style.cssText='margin-top:10px;width:100%;padding:12px;font-size:14px;';
+      lockBtn.textContent='✓ Bauwerk fertig — Speichern';
+      lockBtn.onclick=lockBauwerk;
+      sa.appendChild(lockBtn);
+    } else {
+      var editLink=document.createElement('button');
+      editLink.textContent='✏️ Bauwerksstruktur bearbeiten';
+      editLink.style.cssText='border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:6px 0;';
+      editLink.onclick=unlockBauwerk;
+      sa.appendChild(editLink);
+    }
+  }
+}
+
+function lockBauwerk(){
+  bauwerkLocked=true;autoSave();render();
+  toast('Bauwerk übernommen — bereit zum Prüfen ✓');
+  setKopfCollapsed(true);
+}
+function unlockBauwerk(){
+  bauwerkLocked=false;render();
+  setKopfCollapsed(false);
+}
+function setKopfCollapsed(collapsed){
+  var box=g('kopfBox'),btn=g('kopfToggleBtn');
+  if(!box||!btn)return;
+  box.style.display=collapsed?'none':'';
+  btn.textContent=collapsed?'▸':'▾';
+  try{localStorage.setItem('bp_kopfCollapsed',collapsed?'1':'0');}catch(e){}
+}
+function toggleKopf(){
+  var box=g('kopfBox');
+  setKopfCollapsed(box.style.display!=='none');
+}
+
+function cntKey(key,ugr){var n=0;ugr.forEach(function(u){n+=(dat[key+'___'+u]||[]).length;});return n;}
+function cntExtra(key){
+  if(!/_oe\d+$/.test(key))return 0;
+  var n=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
+  LAGER_TYPES.forEach(function(t){
+    n+=(dat[key+'___Lager: '+t]||[]).length;
+    (LAGER_BAUTEILE[t]||[]).forEach(function(teil){n+=(dat[key+'___Lager: '+t+' - '+teil]||[]).length;});
+  });
+  FUGEN_TYPES.forEach(function(t){n+=(dat[key+'___Fugen: '+t]||[]).length;});
+  return n;
+}
+// Liefert die passende Ugr-Liste je nach Bauteil + gewähltem Typ (dat['__t_'+k]).
+// WICHTIG: Ändert sich der Typ NACH dem Speichern von Schäden, findet cntKey()/
+// collectAllSchaeden() alte Einträge unter dem vorherigen Typ nicht mehr (siehe
+// Warnhinweis beim "Typ zurücksetzen"-Button in openBau).
+var W_UGR_ALLE=W_UGR_BETON.concat(W_UGR_MAUERWERK).filter(function(v,i,a){return a.indexOf(v)===i;});
+// Kurzer Titel (z.B. "W1", "Öffnung 2", "Pfeiler 1") aus einem Basis-Schlüssel — entspricht
+// derselben Schreibweise, die auch beim normalen Navigieren über die Kacheln verwendet wird
+// (nicht die längere Bezeichnung aus der Gesamtschäden-Sammlung).
+function shortBauTitleFromKey(baseKey){
+  var oeM=baseKey.match(/^stb\d+_oe(\d+)$/);
+  if(oeM)return 'Öffnung '+oeM[1];
+  var wM=baseKey.match(/^stb\d+_w([12])$/);
+  if(wM)return 'W'+wM[1];
+  var pfM=baseKey.match(/^stb\d+_pf(\d+)$/);
+  if(pfM)return 'Pfeiler '+pfM[1];
+  var wgM=baseKey.match(/^wg_w([12])$/);
+  if(wgM)return 'W'+wgM[1]+' (durchgehend)';
+  return '';
+}
+
+function getUgr(k){
+  // wg_w1/wg_w2 ("durchgehend") können Schäden aus STBs mit unterschiedlichem
+  // Bauwerkstyp enthalten (z.B. ein STB Beton, ein anderer Mauerwerk) — deshalb
+  // hier IMMER die vereinigte Begriffsliste verwenden, sonst werden Einträge des
+  // "falschen" Typs beim Zählen/Anzeigen unsichtbar, obwohl sie noch in dat liegen.
+  if(k==='wg_w1'||k==='wg_w2')return W_UGR_ALLE;
+  var t=dat['__t_'+k]||'';
+  if(/_w[12]$/.test(k))return t==='Mauerwerk'?W_UGR_MAUERWERK:W_UGR_BETON;
+  if(/_pf\d+$/.test(k))return PF_UGR;
+  if(t==='Stahl')return OE_S;
+  if(t==='WIB')return OE_WIB;
+  if(t==='Gew.Beton')return OE_GB;
+  if(t==='Gew.Mauerwk')return OE_GM;
+  return OE_B;
+}
+
+function mkWgBar(key,label,cnt){
+  var bar=document.createElement('div');bar.className='wg-bar';
+  var left=document.createElement('span');left.className='wgl';
+  left.innerHTML='🔗 '+label;
+  bar.appendChild(left);
+  if(cnt>0){var c=document.createElement('span');c.className='wgc';c.textContent=cnt;bar.appendChild(c);}
+  bar.onclick=function(){openBau(key,label.replace(' (durchgehend — alle STB)',' (durchgehend)'),getUgr(key));};
+  return bar;
+}
+
+function mkKa(key,label,typ){
+  var ugr=getUgr(key);
+  var bt=dat['__t_'+key]||'';
+  var tot=cntKey(key,ugr);
+  var bg=typ==='wid'?'#e8f5e9':typ==='pf'?'#e3f2fd':'#fff';
+  var tc=typ==='wid'?'#2e7d32':typ==='pf'?'#1565c0':'#444';
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;background:'+bg+';min-height:58px;';
+  row.innerHTML='<span style="font-size:18px;font-weight:700;color:'+tc+';">'+label+(bt?' <small style="font-size:14px;margin-left:5px;opacity:.75;">('+bt+')</small>':'')+'</span>'
+    +(tot>0?'<span style="background:'+tc+';color:#fff;border-radius:16px;padding:2px 13px;font-size:18px;font-weight:700;">'+tot+'</span>':'');
+  row.setAttribute('data-key',key);row.setAttribute('data-label',label);
+  row.onclick=function(){var k=this.getAttribute('data-key');openBau(k,this.getAttribute('data-label'),getUgr(k));};
+  return row;
+}
+
+function mkOe(stb,i){
+  var key='stb'+stb.id+'_oe'+i;
+  var ot=dat['__t_'+key]||'';
+  var ugr=getUgr(key);
+  var tot=cntKey(key,ugr)+cntExtra(key);
+  var showDel=!bauwerkLocked&&stb.oeff>1;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;background:#fff;min-height:58px;gap:13px;';
+  var lbl=document.createElement('span');
+  lbl.style.cssText='font-size:18px;font-weight:700;color:#444;flex:1;';
+  lbl.innerHTML='Ö'+i+(ot?' <small style="color:var(--acc);font-size:14px;margin-left:5px;">'+ot+'</small>':'');
+  row.appendChild(lbl);
+  if(tot>0){
+    var badge=document.createElement('span');
+    badge.style.cssText='background:var(--acc);color:#fff;border-radius:16px;padding:2px 13px;font-size:18px;font-weight:700;';
+    badge.textContent=tot;
+    row.appendChild(badge);
+  }
+  row.onclick=function(){openBau(key,'Öffnung '+i,ugr);};
+  if(showDel){
+    var del=document.createElement('button');del.textContent='✕';
+    del.style.cssText='border:0;background:#ffebee;color:#c62828;border-radius:8px;padding:5px 10px;font-size:16px;cursor:pointer;flex-shrink:0;';
+    (function(sid,ii){del.onclick=function(e){e.stopPropagation();if(!confirm('Öffnung löschen?'))return;delOeff(sid,ii);};})(stb.id,i);
+    row.appendChild(del);
+  }
+  return row;
+}
+
+function startBauwerk(){
+  stbs=[{id:1,oeff:1}];nxtId=2;bauwerkLocked=false;
+  render();autoSave();toast('Bauwerk erstellt — jetzt Struktur festlegen');
+}
+
+function addOeff(sid){stbs.forEach(function(s){if(s.id===sid&&s.oeff<5)s.oeff++;});render();autoSave();refreshOpenSchList();}
+function delOeff(sid,i){
+  stbs.forEach(function(s){if(s.id===sid&&s.oeff>1)s.oeff--;});
+  Object.keys(dat).forEach(function(k){if(k.indexOf('stb'+sid+'_oe'+i+'___')===0)delete dat[k];});
+  render();autoSave();refreshOpenSchList();
+}
+function addStb(){
+  if(stbs.length>=5)return;
+  var src=stbs[0];var ns={id:nxtId++,oeff:src.oeff};stbs.push(ns);
+  for(var i=1;i<=src.oeff;i++){var t=dat['__t_stb'+src.id+'_oe'+i];if(t)dat['__t_stb'+ns.id+'_oe'+i]=t;}
+  render();autoSave();toast('STB hinzugefügt ✓');refreshOpenSchList();
+}
+function rmStb(id){
+  if(!confirm('STB entfernen?'))return;
+  stbs=stbs.filter(function(s){return s.id!==id;});
+  Object.keys(dat).forEach(function(k){if(k.indexOf('stb'+id+'_')===0)delete dat[k];});
+  render();autoSave();refreshOpenSchList();
+}
+// Bauwerksstruktur (STB/Öffnungen) kann sich ändern, während eine Schäden-Liste bereits
+// geöffnet ist — deren "Übernehmen"-Knöpfe hängen von der aktuellen Anzahl STB/Öffnungen
+// ab und müssen sofort neu berechnet werden, statt erst beim nächsten Öffnen des Panels.
+function refreshOpenSchList(){
+  var el=g('ovSch');
+  if(el&&el.classList.contains('open'))renderSch();
+}
+
+// ============================================================
+// BAUTEILE PANEL
+// ============================================================
+// Sammelt alle bereits erfassten Schäden zu einem Bauteil-Schlüssel (z.B. "stb1_w1"),
+// unabhängig vom UGR-Katalog — durchsucht dat[] direkt nach allen Schlüsseln mit dem
+// Präfix "<key>___", das erfasst automatisch auch Lager-, Fugen- und Links/Rechts-
+// Einträge, ohne dass hier jedes Mal die genaue Bauteil-Liste nachgebildet werden muss.
+function collectSchaedenForBauKey(key){
+  var out=[];
+  var prefix=key+'___';
+  Object.keys(dat).forEach(function(k){
+    if(k.indexOf(prefix)!==0)return;
+    var ugr=k.slice(prefix.length);
+    (dat[k]||[]).forEach(function(item,idx){
+      out.push({key:key,ugr:ugr,idx:idx,item:item});
+    });
+  });
+  return out;
+}
+
+function openBau(key,title,ugr){
+  S.bauKey=key;S.bauTitle=title;S.lastUgr=ugr||OE_B;
+  g('bauTitle').textContent=title;
+  g('bauList').innerHTML='';
+  var isOe=/_oe\d+$/.test(key)&&key.indexOf('___')===-1;
+  var isW=/_w[12]$/.test(key)&&key.indexOf('___')===-1;
+  var isPf=/_pf\d+$/.test(key)&&key.indexOf('___')===-1;
+  if(isOe||isW||isPf){
+    var curOt=dat['__t_'+key]||'';
+    var options=isOe?['Beton','Stahl','WIB','Gew.Beton','Gew.Mauerwk']:['Beton','Mauerwerk'];
+    var optLabels={'WIB':'WIB (Walzträger in Beton)'};
+    var ugr2=getUgr(key);
+    var tw=document.createElement('div');tw.style.marginBottom='12px';
+    var tl=document.createElement('div');tl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;margin-bottom:6px;';
+    tl.textContent=isOe?'Überbautyp:':'Bauwerkstyp:';
+    tw.appendChild(tl);
+    var tr=document.createElement('div');tr.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+    options.forEach(function(t){
+      var b=document.createElement('button');b.className='sb'+(curOt===t?' on':'');b.textContent=optLabels[t]||t;
+      b.style.cssText='border:1px solid '+(curOt===t?'var(--acc)':'var(--line)')+';border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;background:'+(curOt===t?'var(--acc)':'transparent')+';color:'+(curOt===t?'#fff':'var(--soft)')+';';
+      (function(typ){b.onclick=function(){dat['__t_'+key]=typ;render();openBau(key,title,getUgr(key));};})(t);
+      tr.appendChild(b);
+    });
+    tw.appendChild(tr);
+    if(curOt){
+      var resetBtn=document.createElement('button');
+      resetBtn.textContent='✕ Typ zurücksetzen';
+      resetBtn.style.cssText='margin-top:8px;border:0;background:none;color:#c62828;font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;display:block;';
+      resetBtn.onclick=function(){
+        var n=cntKey(key,getUgr(key))+cntExtra(key);
+        var msg=n>0?('Es sind bereits '+n+' Schaden(-Einträge) unter diesem Typ gespeichert. Diese bleiben erhalten, aber ohne gewählten Typ nicht mehr sichtbar. Trotzdem zurücksetzen?'):'Typ zurücksetzen?';
+        if(!confirm(msg))return;
+        delete dat['__t_'+key];
+        render();openBau(key,title,[]);
+      };
+      tw.appendChild(resetBtn);
+    }
+    if(curOt&&(isOe||isPf)){
+      var applyLabel=isOe?'📋 Auf alle Öffnungen dieses STB anwenden':'📋 Auf alle Pfeiler dieses STB anwenden';
+      var applyAll=document.createElement('button');
+      applyAll.textContent=applyLabel;
+      applyAll.style.cssText='margin-top:8px;border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;display:block;';
+      applyAll.onclick=function(){
+        var m=key.match(isOe?/^(stb\d+)_oe(\d+)$/:/^(stb\d+)_pf(\d+)$/);
+        if(!m)return;
+        var stbPrefix=m[1],stbIdNum=parseInt(m[1].replace('stb',''),10);
+        var stb=stbs.filter(function(s){return s.id===stbIdNum;})[0];
+        if(!stb)return;
+        if(isOe){for(var i=1;i<=stb.oeff;i++){dat['__t_'+stbPrefix+'_oe'+i]=curOt;}}
+        else{var pfCount=stb.oeff-1;for(var k=1;k<=pfCount;k++){dat['__t_'+stbPrefix+'_pf'+k]=curOt;}}
+        render();openBau(key,title,getUgr(key));
+        toast((isOe?'Überbautyp':'Bauwerkstyp')+' übernommen ✓');
+      };
+      tw.appendChild(applyAll);
+    }
+    var hr=document.createElement('hr');hr.style.cssText='border:0;border-top:1px solid var(--line);margin:10px 0;';
+    g('bauList').appendChild(tw);g('bauList').appendChild(hr);
+    ugr=ugr2;
+    if(!curOt){showPanel('ovBau');return;}
+  }
+  var vorhandene=collectSchaedenForBauKey(key);
+  if(vorhandene.length){
+    var schBtn=document.createElement('button');
+    schBtn.style.cssText='width:100%;margin-bottom:14px;padding:14px 12px;border:2px solid var(--acc);border-radius:10px;background:var(--accs);color:var(--acc);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;text-align:center;';
+    schBtn.textContent='📋 Schäden '+title+' anzeigen ('+vorhandene.length+')';
+    (function(k,t){schBtn.onclick=function(){openBauSchaeden(k,t);};})(key,title);
+    g('bauList').appendChild(schBtn);
+  }
+  var shown={};
+  ugr.forEach(function(u){
+    var isRL=/ (links|rechts)$/.test(u);var base=isRL?u.replace(/ (links|rechts)$/,''):null;
+    if(isRL){
+      if(shown[base])return;shown[base]=true;
+      var c=(dat[key+'___'+base+' links']||[]).length+(dat[key+'___'+base+' rechts']||[]).length;
+      var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+      b.innerHTML=base+' links/rechts'+(c>0?'<span class="uc">'+c+'</span>':'');
+      (function(bk,bn,t){b.onclick=function(){openReliSel(bk,bn,t);};})(key,base,title);
+      g('bauList').appendChild(b);
+    } else {
+      var k=key+'___'+u;var c=(dat[k]||[]).length;
+      var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+      b.innerHTML=u+(c>0?'<span class="uc">'+c+'</span>':'');
+      (function(k2,u2,t2){b.onclick=function(){openSch(k2,u2,t2);};})(k,u,title);
+      g('bauList').appendChild(b);
+    }
+  });
+  if(isOe){
+    var hr2=document.createElement('hr');hr2.style.cssText='border:0;border-top:1px solid var(--line);margin:10px 0;';
+    g('bauList').appendChild(hr2);
+    var gc=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
+    var gb=document.createElement('button');gb.className='sb'+(gc>0?' on':'');
+    gb.innerHTML='Geländer links/rechts'+(gc>0?'<span class="uc">'+gc+'</span>':'');
+    (function(bk,t){gb.onclick=function(){openReliSel(bk,'Geländer',t);};})(key,title);
+    g('bauList').appendChild(gb);
+
+    var curOt2=dat['__t_'+key]||'';
+    var isGewoelbe=(curOt2==='Gew.Beton'||curOt2==='Gew.Mauerwk');
+    if(!isGewoelbe){
+      var lc=0;LAGER_TYPES.forEach(function(t){lc+=(dat[key+'___Lager: '+t]||[]).length;(LAGER_BAUTEILE[t]||[]).forEach(function(teil){lc+=(dat[key+'___Lager: '+t+' - '+teil]||[]).length;});});
+      var lb=document.createElement('button');lb.className='sb'+(lc>0?' on':'');
+      lb.innerHTML='Lager'+(lc>0?'<span class="uc">'+lc+'</span>':'');
+      (function(bk,t){lb.onclick=function(){openTypeSel(bk,'Lager',t,LAGER_TYPES);};})(key,title);
+      g('bauList').appendChild(lb);
+
+      var fc=0;FUGEN_TYPES.forEach(function(t){fc+=(dat[key+'___Fugen: '+t]||[]).length;});
+      var fb=document.createElement('button');fb.className='sb'+(fc>0?' on':'');
+      fb.innerHTML='Fugen'+(fc>0?'<span class="uc">'+fc+'</span>':'');
+      (function(bk,t){fb.onclick=function(){openTypeSel(bk,'Fugen',t,FUGEN_TYPES);};})(key,title);
+      g('bauList').appendChild(fb);
+    }
+  }
+
+  showPanel('ovBau');
+}
+
+// Eigener Bildschirm "Schäden <Bereich>" — zeigt die bereits erfassten Schäden dieses
+// Bauteil-Bereichs im Gesamtschäden-Stil (voller Text, Fotos, Stift zum direkten
+// Bearbeiten). Bewusst getrennt von der Kachel-Auswahl (openBau) zum Anlegen neuer
+// Schäden, damit beides klar auseinandergehalten wird — "Zurück" führt einfach zur
+// Kachel-Auswahl zurück, die im Hintergrund weiter offen bleibt.
+function openBauSchaeden(key,title){
+  // Sicherheitsnetz: alle .ov-Panels teilen sich denselben z-index, die Reihenfolge im
+  // Sichtbaren richtet sich also rein nach DOM-Position. Bleibt z.B. ovSch im Hintergrund
+  // "offen" (Klasse "open" gesetzt, auch wenn gerade nicht sichtbar — etwa nach einer
+  // vorherigen Navigation oder wiederhergestelltem Zustand), würde es diesen Bildschirm
+  // sonst verdecken. Deshalb hier explizit schließen, bevor ovBauSchaeden gezeigt wird.
+  g('ovSch').classList.remove('open');
+  g('ovMod').classList.remove('open');
+  g('bauSchaedenTitle').textContent='Schäden '+title;
+  var box=g('bauSchaedenList');box.innerHTML='';
+  var vorhandene=collectSchaedenForBauKey(key);
+  if(!vorhandene.length){
+    box.innerHTML='<p style="color:var(--faint);font-size:13px;padding:10px;">Keine Schäden erfasst</p>';
+    showPanel('ovBauSchaeden');
+    return;
+  }
+  vorhandene.forEach(function(entry){
+    var div=document.createElement('div');div.className='sitem';
+    var lh=document.createElement('div');
+    lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
+    lh.textContent=entry.ugr;div.appendChild(lh);
+    var sr=document.createElement('div');sr.className='sr';
+    var txt=document.createElement('div');txt.style.cssText='flex:1;font-size:13px;line-height:1.7;';
+    var lines=(entry.item.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+    txt.innerHTML=lines.map(function(p){return '<div>'+(p[0]==='-'?p:'- '+p)+'</div>';}).join('');
+    var edit=document.createElement('button');edit.textContent='✏️';edit.className='dx';edit.style.cssText='background:var(--acc);transform:scale(1.8);transform-origin:center;margin-right:14px;';
+    (function(en){edit.onclick=function(e){
+      e.stopPropagation();
+      S.key=en.key+'___'+en.ugr;S.ugr=en.ugr;
+      S.schTitle=title+' / '+en.ugr;
+      editS(en.idx);
+    };})(entry);
+    var del=document.createElement('button');del.textContent='🗑';del.className='dx';
+    del.style.cssText='background:#ffebee;color:#c62828;transform:scale(1.8);transform-origin:center;margin-right:14px;';
+    (function(en){del.onclick=function(e){
+      e.stopPropagation();
+      if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;
+      var k=en.key+'___'+en.ugr;
+      if(dat[k])dat[k].splice(en.idx,1);
+      render();autoSave();
+      openBauSchaeden(key,title);
+    };})(entry);
+    sr.appendChild(txt);sr.appendChild(edit);sr.appendChild(del);div.appendChild(sr);
+    var fotos=entry.item.fotos||[];
+    if(fotos.length){
+      var leiste=document.createElement('div');
+      leiste.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
+      fotos.forEach(function(f){
+        var img=document.createElement('img');img.src=f.data;
+        img.style.cssText='height:80px;border-radius:6px;border:2px solid var(--acc);';
+        leiste.appendChild(img);
+      });
+      div.appendChild(leiste);
+    }
+    box.appendChild(div);
+  });
+  showPanel('ovBauSchaeden');
+}
+
+function openTypeSel(baseKey,groupName,bereich,types){
+  g('bauTitle').textContent=bereich+' / '+groupName;
+  g('bauList').innerHTML='';
+  types.forEach(function(typ){
+    var fk=baseKey+'___'+groupName+': '+typ;
+    var c=(dat[fk]||[]).length;
+    if(groupName==='Lager'){(LAGER_BAUTEILE[typ]||[]).forEach(function(teil){c+=(dat[baseKey+'___Lager: '+typ+' - '+teil]||[]).length;});}
+    var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+    b.innerHTML=typ+(c>0?'<span class="uc">'+c+'</span>':'');
+    (function(k,n,r){b.onclick=function(){openSch(k,n,r);};})(fk,groupName+': '+typ,bereich);
+    g('bauList').appendChild(b);
+  });
+  showPanel('ovBau');
+}
+
+function openReliSel(baseKey,baseName,bereich){
+  g('bauTitle').textContent=bereich+' / '+baseName;
+  g('bauList').innerHTML='';
+  var wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:10px;';
+  ['links','rechts'].forEach(function(side){
+    var fk=baseKey+'___'+baseName+' '+side;
+    var c=(dat[fk]||[]).length;
+    var b=document.createElement('button');
+    b.style.cssText='flex:1;padding:20px 10px;border:2px solid '+(c>0?'var(--acc)':'var(--line)')+';border-radius:10px;background:'+(c>0?'var(--accs)':'var(--s2)')+';cursor:pointer;font-size:16px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
+    b.innerHTML=(side==='links'?'← Links':'Rechts →')+(c>0?'<br><span style="font-size:12px;color:var(--acc);">'+c+' Schäden</span>':'');
+    (function(k,n,r){b.onclick=function(){resetBeideState();openSch(k,n,r);};})(fk,baseName+' '+side,bereich);
+    wrap.appendChild(b);
+  });
+  g('bauList').appendChild(wrap);
+  // Dritte Option: Schaden für beide Seiten in einem Rutsch erfassen. Ablauf: zuerst wird
+  // die Erfassungsmaske für "Links" geöffnet (alle Schäden für die linke Seite eintragen),
+  // beim Antippen von "Speichern" wechselt die Maske automatisch zu "Rechts" (Schritt 2/2),
+  // und erst beim zweiten "Speichern" wird EIN gemeinsamer Eintrag mit der Überschrift
+  // "<Bauteil> links und rechts" angelegt (Abschnitte "Links:"/"Rechts:" getrennt, da die
+  // Schäden je Seite unterschiedlich sein können). Der Eintrag wird als unabhängige Kopie
+  // sowohl in der Links- als auch in der Rechts-Liste abgelegt, damit er in beiden
+  // Einzelansichten sichtbar ist und mitgezählt wird.
+  var bb=document.createElement('button');
+  bb.style.cssText='width:100%;margin-top:10px;padding:14px 10px;border:2px solid var(--line);border-radius:10px;background:var(--s2);cursor:pointer;font-size:15px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
+  bb.innerHTML='↔ Beide (links + rechts)';
+  (function(baseKey2,baseName2,bereich2){
+    bb.onclick=function(){
+      resetBeideState();
+      openSch(baseKey2+'___'+baseName2+' links',baseName2+' links',bereich2);
+      S.beidePhase=1;S.beideBaseKey=baseKey2;S.beideBaseName=baseName2;S.beideBereich=bereich2;
+    };
+  })(baseKey,baseName,bereich);
+  g('bauList').appendChild(bb);
+  showPanel('ovBau');
+}
+
+// ============================================================
+// SCHÄDEN PANEL
+// ============================================================
+function openSch(key,ugr,bereich){
+  if(S.beidePhase&&S.key!==key)resetBeideState();
+  S.key=key;S.ugr=ugr;S.schTitle=bereich+' / '+ugr;
+  var stbM=key.split('___')[0].match(/^stb(\d+)_/);
+  g('schTitle').textContent=(stbM?'STB '+stbM[1]+' / ':'')+S.schTitle;
+  renderUgrSwitch(ugr);
+  renderSch();
+  showPanel('ovSch');
+}
+
+function renderUgrSwitch(activeUgr){
+  var box=g('schUgrSwitch');if(!box)return;
+  box.innerHTML='';
+  if(!S.bauKey||!S.lastUgr||S.lastUgr.length<2)return;
+  // Flatten li/re pairs into individual chips so switching is a single tap
+  S.lastUgr.forEach(function(u){
+    var chip=document.createElement('button');
+    chip.textContent=u;
+    var isActive=(u===activeUgr);
+    chip.style.cssText='border:1.5px solid '+(isActive?'var(--acc)':'var(--line)')+';background:'+(isActive?'var(--acc)':'var(--s2)')+';color:'+(isActive?'#fff':'var(--soft)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;';
+    (function(uu){chip.onclick=function(){if(uu===activeUgr)return;switchUgr(uu);};})(u);
+    box.appendChild(chip);
+  });
+}
+
+function switchUgr(u){
+  resetBeideState();
+  var key=S.bauKey+'___'+u;
+  openSch(key,u,S.bauTitle);
+}
+
+function renderSch(){
+  var items=dat[S.key]||[];
+  var el=g('schList');el.innerHTML='';
+  if(!items.length){
+    el.innerHTML='<p style="color:var(--faint);font-size:13px;font-style:italic;padding:6px 0;">Keine Schäden</p>';
+    return;
+  }
+  items.forEach(function(it,i){
+    var div=document.createElement('div');div.className='sitem';
+    // Location
+    if(it.loc){
+      var lh=document.createElement('div');
+      lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
+      var stbMloc=(S.key||'').match(/^stb(\d+)_/);
+      lh.textContent=(stbMloc?'STB '+stbMloc[1]+' / ':'')+it.loc;div.appendChild(lh);
+    }
+    // Text + delete
+    var sr=document.createElement('div');sr.className='sr';
+    var txt=document.createElement('div');txt.style.cssText='flex:1;font-size:13px;line-height:1.7;';
+    var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+    txt.innerHTML=lines.map(function(p){return '<div>'+(p[0]==='-'?p:'- '+p)+'</div>';}).join('');
+    var del=document.createElement('button');del.textContent='✕';del.className='dx';
+    (function(ii){del.onclick=function(){delS(ii);};})(i);
+    var edit=document.createElement('button');edit.textContent='✏️';edit.className='dx';edit.style.background='var(--acc)';
+    (function(ii){edit.onclick=function(){editS(ii);};})(i);
+    var toGesamt=document.createElement('button');
+    toGesamt.textContent='Zu Gesamtschäden';
+    toGesamt.className='dx';
+    toGesamt.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
+    toGesamt.onclick=function(){
+      S.gesamtReturnTo={key:S.key,ugr:S.ugr,bauKey:S.bauKey,bauTitle:S.bauTitle,lastUgr:S.lastUgr.slice()};
+      g('ovSch').classList.remove('open');
+      g('ovBau').classList.remove('open');
+      openGesamtschaeden();
+    };
+    sr.appendChild(txt);
+    sr.appendChild(toGesamt);
+    sr.appendChild(edit);sr.appendChild(del);div.appendChild(sr);
+    // Copy to sibling components of the same type (opt-in, description text only — no photos)
+    var wgMatch=S.key.match(/^(wg_w[12])___(.*)$/);
+    var bMatch=S.key.match(/^(stb\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
+    if(wgMatch){
+      var wgPart=wgMatch[1],ugrSuffixWg=wgMatch[2];
+      var wgTarget=wgPart==='wg_w1'?'wg_w2':'wg_w1';
+      var cpWg=document.createElement('button');
+      cpWg.textContent='📋 Auf anderes Widerlager (durchgehend) übernehmen';
+      cpWg.style.cssText='border:0;background:none;color:var(--acc);font-size:11.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;margin-top:4px;display:block;';
+      (function(it2,tKey,ugr3){
+        cpWg.onclick=function(){
+          copyEntryToTarget(it2,tKey,ugr3);
+          autoSave();
+          render();
+          toast('Übernommen ✓');
+        };
+      })(it,wgTarget,ugrSuffixWg);
+      div.appendChild(cpWg);
+    } else if(bMatch){
+      var stbPrefix2=bMatch[1],bauteilPart=bMatch[2],ugrSuffix2=bMatch[3];
+      var stbIdNum2=parseInt(stbPrefix2.replace('stb',''),10);
+      var stbObj=stbs.filter(function(s){return s.id===stbIdNum2;})[0];
+      var siblingKeys=[],label='';
+      if(stbObj){
+        if(/^w[12]$/.test(bauteilPart)){
+          label='📋 Auf anderes Widerlager übernehmen';
+          siblingKeys=['w1','w2'].filter(function(x){return x!==bauteilPart;}).map(function(x){return stbPrefix2+'_'+x;});
+        } else if(/^oe\d+$/.test(bauteilPart)){
+          label='📋 In andere Öffnungen übernehmen';
+          var curOeN=parseInt(bauteilPart.replace('oe',''),10);
+          for(var j=1;j<=stbObj.oeff;j++){if(j!==curOeN)siblingKeys.push(stbPrefix2+'_oe'+j);}
+        } else if(/^pf\d+$/.test(bauteilPart)){
+          label='📋 Auf andere Pfeiler übernehmen';
+          var curPfN=parseInt(bauteilPart.replace('pf',''),10);
+          var pfCount=stbObj.oeff-1;
+          for(var k=1;k<=pfCount;k++){if(k!==curPfN)siblingKeys.push(stbPrefix2+'_pf'+k);}
+        }
+      }
+      if(siblingKeys.length){
+        var cp=document.createElement('button');
+        cp.textContent=label.replace(/^📋\s*/,'');
+        cp.className='dx';
+        cp.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
+        (function(it2,sKeys,ugr3){
+          cp.onclick=function(){
+            var count=0;
+            sKeys.forEach(function(sk){
+              copyEntryToTarget(it2,sk,ugr3);
+              count++;
+            });
+            autoSave();
+            render();
+            toast('Auf '+count+' weitere Stelle(n) übernommen ✓');
+          };
+        })(it,siblingKeys,ugrSuffix2);
+        sr.appendChild(cp);
+      }
+      // Auf gleiches Bauteil in anderen STB übernehmen (z.B. W1 von STB1 -> W1 von STB2, STB3, ...)
+      if(stbObj&&stbs.length>1){
+        var otherStbKeys=[];
+        stbs.forEach(function(s){
+          if(s.id===stbIdNum2)return;
+          if(/^w[12]$/.test(bauteilPart)){
+            otherStbKeys.push('stb'+s.id+'_'+bauteilPart);
+          } else if(/^oe\d+$/.test(bauteilPart)){
+            var n=parseInt(bauteilPart.replace('oe',''),10);
+            if(n<=s.oeff)otherStbKeys.push('stb'+s.id+'_oe'+n);
+          } else if(/^pf\d+$/.test(bauteilPart)){
+            var n2=parseInt(bauteilPart.replace('pf',''),10);
+            if(n2<=s.oeff-1)otherStbKeys.push('stb'+s.id+'_pf'+n2);
+          }
+        });
+        if(otherStbKeys.length){
+          var cp2=document.createElement('button');
+          cp2.textContent='Auf gleiches Bauteil in anderem STB übernehmen';
+          cp2.className='dx';
+          cp2.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
+          (function(it2,oKeys,ugr3){
+            cp2.onclick=function(){
+              var count=0;
+              oKeys.forEach(function(sk){
+                copyEntryToTarget(it2,sk,ugr3);
+                count++;
+              });
+              autoSave();
+              render();
+              toast('Auf '+count+' weitere STB übernommen ✓');
+            };
+          })(it,otherStbKeys,ugrSuffix2);
+          sr.appendChild(cp2);
+        }
+      }
+    }
+    // Fotos
+    var fotos=it.fotos||[];
+    if(fotos.length){
+      var leiste=document.createElement('div');
+      leiste.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
+      fotos.forEach(function(f,fi){
+        var img=document.createElement('img');img.src=f.data;
+        img.style.cssText='height:80px;border-radius:6px;cursor:pointer;border:2px solid var(--acc);';
+        (function(fi2){img.onclick=function(){openGallery(i,fi2);};})(fi);
+        leiste.appendChild(img);
+      });
+      div.appendChild(leiste);
+    }
+    // Foto button
+    if(fotos.length<10){
+      var fb=document.createElement('button');
+      fb.style.cssText='margin-top:8px;width:100%;padding:8px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;';
+      fb.innerHTML='📷 '+(fotos.length>0?'Weiteres Foto':'Fotos hinzufügen');
+      (function(ii){fb.onclick=function(){openFotoPanel(ii);};})(i);
+      div.appendChild(fb);
+    }
+    el.appendChild(div);
+  });
+}
+
+function delS(i){if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;if(dat[S.key])dat[S.key].splice(i,1);renderSch();render();autoSave();}
+
+function updateBauteilNrUI(){
+  curVbsState={V:false,B:false,S:false};
+  renderVbsRow();
+  var nrRow=g('mBauteilNrRow'),refRow=g('mBauteilRefRow');
+  if(!nrRow||!refRow){updateVerortungDisplay();return;}
+  var bauteilName=S.ugr||'';
+  var dbl=DOPPEL_NR_BAUTEILE[bauteilName];
+  if(dbl){
+    nrRow.style.display='flex';g('mBauteilNrLabel').textContent=dbl.compLabel;g('mBauteilNr').value='';
+    refRow.style.display='flex';g('mBauteilRefLabel').textContent=dbl.refLabel;g('mBauteilRef').value='';
+  } else if(NUMMERIERBARE_BAUTEILE.indexOf(bauteilName)>-1){
+    nrRow.style.display='flex';g('mBauteilNrLabel').textContent='Nr.:';g('mBauteilNr').value='';
+    refRow.style.display='none';
+  } else {
+    nrRow.style.display='none';
+    refRow.style.display='none';
+  }
+  updateVerortungDisplay();
+}
+
+// Ergänzt die Standort-Überschrift oben live um die gerade eingetippte Bauteil-Nummer
+// (z.B. "Öffnung 1 / Hauptträger 2"), damit man beim Eintippen sofort sieht, wohin der
+// Schaden zugeordnet wird — ohne erst zu speichern.
+function updateVerortungDisplay(){
+  var vEl=g('mVerortung');if(!vEl)return;
+  var base=S.schTitle||'';
+  var nrRow=g('mBauteilNrRow');
+  if(nrRow&&nrRow.style.display!=='none'&&S.ugr){
+    var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
+    var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
+    var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+    if(dbl){
+      var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
+      if(nrVal||refVal){
+        var compWord=S.ugr.split(' an ')[0];
+        var full=compWord;
+        if(nrVal)full+=' '+nrVal;
+        full+=' an '+dbl.refWord;
+        if(refVal)full+=' '+refVal;
+        base=base.replace(new RegExp(esc(S.ugr)+'$'),full);
+      }
+    } else if(nrVal){
+      var nrClean=nrVal.toLowerCase()==='alle'?'Alle':nrVal;
+      base=base.replace(new RegExp(esc(S.ugr)+'$'),S.ugr+' '+nrClean);
+    }
+  }
+  // STB-Nummer immer voranstellen (überall, nicht nur im Titel der Schäden-Liste) — z.B.
+  // "STB 1 / Öffnung 1 / Schotterwand rechts" statt nur "Öffnung 1 / Schotterwand rechts".
+  var stbM=(S.key||'').match(/^stb(\d+)_/);
+  if(stbM&&base)base='STB '+stbM[1]+' / '+base;
+  if(S.beidePhase)base='↔ Beide · Schritt '+S.beidePhase+'/2 ('+(S.beidePhase===1?'Links':'Rechts')+')  ·  '+base;
+  vEl.textContent=base;
+}
+
+// Verschiebt Widerlager-Schäden zwischen den STB-eigenen Schlüsseln (stb<id>_w1/_w2)
+// und den gemeinsamen "durchgehend"-Schlüsseln (wg_w1/wg_w2), damit beim Umschalten
+// nichts unsichtbar wird. W1 und W2 bleiben dabei bewusst voneinander getrennt.
+function migrateWiderlagerDurchgehend(turningOn){
+  var allUgr=W_UGR_BETON.concat(W_UGR_MAUERWERK).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var movedTotal=0;
+  if(turningOn){
+    // getrennt -> durchgehend: alle STB-Widerlager je Seite (W1 bzw. W2) in die gemeinsamen wg_-Keys zusammenführen.
+    // Jeder Eintrag wird dabei mit seinem Herkunfts-STB markiert (__origStb), damit er beim
+    // späteren Trennen wieder an die richtige Stelle zurückkommt, statt pauschal im ersten STB zu landen.
+    // W1 und W2 bleiben dabei bewusst getrennt voneinander.
+    function mergeSide(side){
+      stbs.forEach(function(stb){
+        var fromKey='stb'+stb.id+'_'+side,toKey='wg_'+side;
+        allUgr.forEach(function(u){
+          var fromFull=fromKey+'___'+u,toFull=toKey+'___'+u;
+          var items=dat[fromFull];
+          if(items&&items.length){
+            items.forEach(function(it){if(it.__origStb==null)it.__origStb=stb.id;});
+            dat[toFull]=(dat[toFull]||[]).concat(items);
+            movedTotal+=items.length;
+            delete dat[fromFull];
+          }
+        });
+      });
+      if(!dat['__t_wg_'+side]){
+        var t=stbs.map(function(s){return dat['__t_stb'+s.id+'_'+side];}).filter(Boolean)[0];
+        if(t)dat['__t_wg_'+side]=t;
+      }
+    }
+    mergeSide('w1');mergeSide('w2');
+  } else {
+    // durchgehend -> getrennt: jeder Eintrag geht zurück an seinen markierten Herkunfts-STB
+    // (__origStb). Existiert dieser STB nicht mehr (gelöscht) oder ist der Eintrag neu
+    // entstanden, während "durchgehend" aktiv war (keine Markierung), landet er ersatzweise
+    // beim ersten STB — das ist dann die bestmögliche, verlustfreie Zuordnung.
+    if(stbs.length){
+      var validIds={};stbs.forEach(function(s){validIds[s.id]=true;});
+      var firstId=stbs[0].id;
+      function splitSide(side){
+        var fromKey='wg_'+side;
+        allUgr.forEach(function(u){
+          var fromFull=fromKey+'___'+u;
+          var items=dat[fromFull];
+          if(items&&items.length){
+            items.forEach(function(it){
+              var targetId=(it.__origStb!=null&&validIds[it.__origStb])?it.__origStb:firstId;
+              var toFull='stb'+targetId+'_'+side+'___'+u;
+              dat[toFull]=(dat[toFull]||[]);
+              dat[toFull].push(it);
+              movedTotal++;
+            });
+            delete dat[fromFull];
+          }
+        });
+        if(dat['__t_wg_'+side]){
+          stbs.forEach(function(s){
+            var k='stb'+s.id+'_'+side;
+            if(!dat['__t_'+k])dat['__t_'+k]=dat['__t_wg_'+side];
+          });
+        }
+      }
+      splitSide('w1');splitSide('w2');
+    }
+  }
+  return movedTotal;
+}
+
+// Konsistenz-Selbstcheck für dat[] — rein lesend, verändert nichts. Sucht gezielt nach
+// Mustern, die schon zu echten Bugs geführt haben (z.B. der Beide+Bearbeiten-Datenverlust
+// vom 12.07.2026): kaputte Schlüssel, Schäden ohne gesetzten Bauwerkstyp (dadurch in der
+// Navigation unsichtbar, obwohl noch in dat[] vorhanden), leere Beschreibungen. Gedacht
+// zum Aufruf aus der Testdatei (tests_karten_app.py) nach komplexen Abläufen, damit
+// künftige Kombinations-Bugs in genau dieser Kategorie automatisch auffallen, statt erst
+// beim manuellen Testen entdeckt zu werden.
+function validateDatConsistency(){
+  var issues=[];
+  Object.keys(dat).forEach(function(key){
+    if(key.indexOf('__')===0)return; // Zusatz-Schlüssel wie __t_..., __durchgehendW usw.
+    var sepIdx=key.indexOf('___');
+    if(sepIdx===-1){
+      issues.push({type:'malformed_key',key:key,detail:'kein "___"-Trenner gefunden'});
+      return;
+    }
+    var arr=dat[key];
+    if(!Array.isArray(arr)){
+      issues.push({type:'not_an_array',key:key,detail:typeof arr});
+      return;
+    }
+    if(!arr.length)return;
+    var baseKey=key.slice(0,sepIdx);
+    var hatTyp=!!dat['__t_'+baseKey];
+    arr.forEach(function(entry,idx){
+      if(!hatTyp){
+        issues.push({type:'missing_typ',key:key,idx:idx,detail:'Bauwerkstyp für "'+baseKey+'" nicht gesetzt — Eintrag ist in der Navigation unsichtbar'});
+      }
+      if(!entry||!entry.d||!entry.d.trim()){
+        issues.push({type:'empty_description',key:key,idx:idx});
+      }
+    });
+  });
+  return issues;
+}
+
+// WICHTIG: Schlüssel-Konstruktion (bauteilKey+'___'+ugr) muss exakt mit saveS()
+// und render()/mkKa() übereinstimmen — siehe DATENSCHEMA-Kommentar weiter oben.
+function collectAllSchaeden(){
+  var out=[];
+  if(isDurchgehendW()){
+    [{k:'wg_w1',l:'Widerlager 1 (durchgehend)',u:getUgr('wg_w1')},{k:'wg_w2',l:'Widerlager 2 (durchgehend)',u:getUgr('wg_w2')}].forEach(function(b){
+      b.u.forEach(function(u){
+        var items=dat[b.k+'___'+u]||[];
+        items.forEach(function(it,idx){
+          out.push({key:b.k,ugr:u,bereich:b.l,idx:idx,item:it});
+        });
+      });
+    });
+  }
+  stbs.forEach(function(stb,si){
+    var stbLbl='STB '+(si+1);
+    var bases=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      var extraU=['Geländer links','Geländer rechts'];
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      bases.push({k:ok,l:'Öffnung '+i,u:getUgr(ok).concat(extraU)});
+      if(i<stb.oeff)bases.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
+    }
+    if(!isDurchgehendW())bases.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
+    bases.forEach(function(b){
+      b.u.forEach(function(u){
+        var items=dat[b.k+'___'+u]||[];
+        items.forEach(function(it,idx){
+          out.push({key:b.k,ugr:u,bereich:stbLbl+' / '+b.l,idx:idx,item:it});
+        });
+      });
+    });
+  });
+  return out;
+}
+
+// "← Zurück" im Gesamtschäden-Panel: schließt zuerst eine evtl. aufgeklappte
+// Schadensgruppe (statt gleich das ganze Panel zu verlassen) — erst wenn nichts mehr
+// aufgeklappt ist, führt "Zurück" zurück zur konkreten Schadensliste, falls das Panel
+// über "Zu Gesamtschäden" aus einer solchen Liste heraus geöffnet wurde (siehe
+// S.gesamtReturnTo), sonst schließt es zum Hauptbild.
+function zurueckAusGesamtschaeden(){
+  var offeneGruppe=document.querySelector('#gesamtList .gbau-body.open');
+  if(offeneGruppe){
+    offeneGruppe.classList.remove('open');
+    var hdr=offeneGruppe.previousElementSibling;
+    if(hdr&&hdr.classList)hdr.classList.remove('open');
+    return;
+  }
+  var ret=S.gesamtReturnTo;
+  g('ovGesamt').classList.remove('open');
+  if(ret){
+    S.gesamtReturnTo=null;
+    S.bauKey=ret.bauKey;S.bauTitle=ret.bauTitle;S.lastUgr=ret.lastUgr;
+    openSch(ret.key,ret.ugr,ret.bauTitle);
+  }
+}
+
+// Gesamtschäden ist bewusst eine reine Übersicht ohne eigene Filter/Suche: gezielt an
+// einem Bauteil weiterarbeiten (Schaden hinzufügen, "Auf anderes Widerlager übernehmen"
+// usw.) geht über den vorhandenen "← zurück zum Schaden"-Link je Eintrag, der direkt in
+// die normale (voll funktionsfähige) Schadensliste dieses Bauteils springt. Das hält
+// diese Übersicht einfach und ohne eigenen Zusatz-Zustand.
+function openGesamtschaeden(){
+  if(!stbs.length){toast('Noch kein Bauwerk angelegt');return;}
+  var list=collectAllSchaeden();
+  var box=g('gesamtList');box.innerHTML='';
+  if(!list.length){
+    box.innerHTML='<p style="color:var(--faint);font-size:13px;padding:10px;">Keine Schäden erfasst</p>';
+    showPanel('ovGesamt');
+    return;
+  }
+  box.innerHTML='<p style="color:var(--soft);font-size:12px;padding:0 0 8px;">'+list.length+' Schaden(-Einträge) insgesamt</p>';
+
+  // Nach Bauteil (bereich) gruppieren, Reihenfolge des ersten Auftretens beibehalten
+  // (entspricht bereits W1 → Öffnungen/Pfeiler → W2 je STB, siehe collectAllSchaeden)
+  var groups=[],groupIdx={};
+  list.forEach(function(entry){
+    if(!(entry.bereich in groupIdx)){
+      groupIdx[entry.bereich]=groups.length;
+      groups.push({bereich:entry.bereich,entries:[]});
+    }
+    groups[groupIdx[entry.bereich]].entries.push(entry);
+  });
+
+  groups.forEach(function(grp,gi){
+    var gbau=document.createElement('div');gbau.className='gbau';
+    var hdr=document.createElement('div');hdr.className='gbau-hdr';
+    var gt=document.createElement('span');gt.className='gt';
+    gt.appendChild(document.createTextNode(grp.bereich));
+    var garr=document.createElement('span');garr.className='garr';garr.textContent='▶';
+    gt.appendChild(garr);
+    var gc=document.createElement('span');gc.className='gc';gc.textContent='Schäden: '+grp.entries.length;
+    var picCount=grp.entries.reduce(function(sum,en){return sum+((en.item.fotos||[]).length);},0);
+    var gpics=document.createElement('span');gpics.className='gc';gpics.style.cssText='margin-left:6px;background:var(--soft);';gpics.textContent='Bilder: '+picCount;
+    var gdel=document.createElement('button');gdel.textContent='🗑';gdel.className='dx';
+    gdel.style.cssText='margin-left:8px;background:#ffebee;color:#c62828;';
+    (function(g2){gdel.onclick=function(e){
+      e.stopPropagation();
+      if(!confirm('Alle '+g2.entries.length+' Schäden unter „'+g2.bereich+'" wirklich löschen? (inkl. Fotos, nicht rückgängig zu machen)'))return;
+      var seen={};
+      g2.entries.forEach(function(en){
+        var k=en.key+'___'+en.ugr;
+        if(!seen[k]){seen[k]=true;delete dat[k];}
+      });
+      render();autoSave();
+      openGesamtschaeden();
+    };})(grp);
+    var gright=document.createElement('span');gright.style.cssText='display:flex;align-items:center;';
+    gright.appendChild(gc);gright.appendChild(gpics);gright.appendChild(gdel);
+    hdr.appendChild(gt);hdr.appendChild(gright);
+    var body=document.createElement('div');body.className='gbau-body';body.id='gbau-body-'+gi;
+
+    grp.entries.forEach(function(entry){
+      var div=document.createElement('div');div.className='sitem';
+      var lh=document.createElement('div');
+      lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
+      lh.textContent=entry.ugr;div.appendChild(lh);
+      var sr=document.createElement('div');sr.className='sr';
+      var txt=document.createElement('div');txt.style.cssText='flex:1;font-size:13px;line-height:1.7;';
+      var lines=(entry.item.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+      txt.innerHTML=lines.map(function(p){return '<div>'+(p[0]==='-'?p:'- '+p)+'</div>';}).join('');
+      var edit=document.createElement('button');edit.textContent='✏️';edit.className='dx';edit.style.cssText='background:var(--acc);transform:scale(1.8);transform-origin:center;margin-right:14px;';
+      (function(en){edit.onclick=function(e){
+        e.stopPropagation();
+        S.key=en.key+'___'+en.ugr;S.ugr=en.ugr;
+        var parts=en.bereich.split(' / ');
+        var kurz=parts.length>1?parts.slice(1).join(' / '):parts[0];
+        S.schTitle=kurz+' / '+en.ugr;
+        editS(en.idx);
+      };})(entry);
+      var del=document.createElement('button');del.textContent='🗑';del.className='dx';
+      del.style.cssText='background:#ffebee;color:#c62828;transform:scale(1.8);transform-origin:center;margin-right:14px;';
+      (function(en){del.onclick=function(e){
+        e.stopPropagation();
+        if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;
+        var k=en.key+'___'+en.ugr;
+        if(dat[k])dat[k].splice(en.idx,1);
+        render();autoSave();
+        openGesamtschaeden();
+      };})(entry);
+      var toBauteil=document.createElement('button');
+      toBauteil.textContent='← zurück zum Schaden';
+      toBauteil.className='dx';
+      toBauteil.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
+      (function(en){toBauteil.onclick=function(e){
+        e.stopPropagation();
+        g('ovGesamt').classList.remove('open');
+        var shortTitle=shortBauTitleFromKey(en.key)||en.bereich;
+        S.bauKey=en.key;S.bauTitle=shortTitle;S.lastUgr=getUgr(en.key);
+        openSch(en.key+'___'+en.ugr,en.ugr,shortTitle);
+      };})(entry);
+      sr.appendChild(txt);sr.appendChild(toBauteil);sr.appendChild(edit);sr.appendChild(del);div.appendChild(sr);
+      var fotos=entry.item.fotos||[];
+      if(fotos.length){
+        var leiste=document.createElement('div');
+        leiste.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
+        fotos.forEach(function(f){
+          var img=document.createElement('img');img.src=f.data;
+          img.style.cssText='height:80px;border-radius:6px;border:2px solid var(--acc);';
+          leiste.appendChild(img);
+        });
+        div.appendChild(leiste);
+      }
+      body.appendChild(div);
+    });
+
+    hdr.onclick=function(){
+      var isOpen=body.classList.toggle('open');
+      hdr.classList.toggle('open',isOpen);
+    };
+    gbau.appendChild(hdr);gbau.appendChild(body);
+    box.appendChild(gbau);
+  });
+
+  showPanel('ovGesamt');
+}
+
+// ============================================================
+// STANDORT-ÜBERSCHRIFT für Öffnungen und Widerlager (z.B. "STB 1, Öffnung 1" bzw.
+// "STB 1, Widerlager 1, Vorderansicht") — wird automatisch als allererste Zeile jeder
+// Schadensbeschreibung gesetzt, rein lesend aus dem Navigationspfad abgeleitet, nicht
+// manuell editierbar. Lager hat bereits eigene STB/Widerlager/Pfeiler-Felder und wird
+// hier bewusst ausgenommen, um Dopplung zu vermeiden.
+// ============================================================
+// "Nackte" Überschrift OHNE Bauteilname — nur STB/Öffnung bzw. STB/Widerlager. Wird von
+// beiden Varianten unten als gemeinsame Basis verwendet, damit sich der Bauteil-Anteil beim
+// Bearbeiten immer eindeutig wieder heraustrennen lässt (siehe editS()).
+// Passt beim "Auf ... übernehmen" die erste Zeile (die automatische Standort-Überschrift,
+// z.B. "STB 1, Widerlager 1, Geländer links 1,2,4") an den Zielort an — nur STB-/Öffnungs-/
+// Widerlagernummer werden ersetzt, der Bauteil-Anteil (Bereich, Bauteilname, Nummer) bleibt
+// unverändert, da es ja dasselbe Bauteil an einer anderen Stelle ist. Verhindert, dass beim
+// Übertragen eine veraltete STB-Nummer aus dem Ursprungsort stehen bleibt.
+// Übernimmt beim "Übertragen/Übernehmen" den Bauwerkstyp (Beton/Stahl/Mauerwerk/...) auf das
+// Ziel, FALLS dort noch keiner gesetzt ist — sonst würde z.B. ein übertragener Stahl-Schaden
+// in einer Öffnung ohne festgelegten Typ (Standard-Fallback ist Beton) beim Zählen und in der
+// Bauteil-Liste unsichtbar bleiben, bis man den Typ dort von Hand auswählt.
+function copyTypeIfMissing(targetBaseKey){
+  var srcBase=(S.key||'').split('___')[0];
+  if(!srcBase||dat['__t_'+targetBaseKey])return;
+  var t=dat['__t_'+srcBase];
+  if(t)dat['__t_'+targetBaseKey]=t;
+}
+
+// Kopiert einen Eintrag zu einem Zielort (anderes Widerlager/Öffnung/Pfeiler/STB). Bei
+// einem "Beide"-kombinierten Eintrag (Text erwähnt sowohl Links als auch Rechts, siehe
+// isBeideEntry) wird die Kopie an BEIDEN Seiten des Ziels abgelegt — sonst stünde am
+// Zielort z.B. unter "Geländer rechts" nichts, obwohl der kopierte Text Rechts-Schäden
+// beschreibt.
+function copyEntryToTarget(it,targetBaseKey,ugrSuffix){
+  var targetUgrs=[ugrSuffix];
+  if(/ links und rechts$/.test(it.loc||'')){
+    var other=/ links$/.test(ugrSuffix)?ugrSuffix.replace(/ links$/,' rechts'):ugrSuffix.replace(/ rechts$/,' links');
+    if(other!==ugrSuffix)targetUgrs.push(other);
+  }
+  copyTypeIfMissing(targetBaseKey);
+  targetUgrs.forEach(function(u){
+    var targetKey=targetBaseKey+'___'+u;
+    if(!dat[targetKey])dat[targetKey]=[];
+    dat[targetKey].push({d:retargetHeadingLine(it.d,targetBaseKey),fotos:[],loc:it.loc,t:it.t,a:it.a});
+  });
+}
+
+function retargetHeadingLine(desc,targetBaseKey){
+  if(!desc)return desc;
+  var lines=desc.split('\n');
+  var first=lines[0]||'';
+  var oeM=targetBaseKey.match(/^stb(\d+)_oe(\d+)$/);
+  var wM=targetBaseKey.match(/^stb(\d+)_w([12])$/);
+  var pfM=targetBaseKey.match(/^stb(\d+)_pf(\d+)$/);
+  var wgM=targetBaseKey.match(/^wg_w([12])$/);
+  var replaced=first;
+  if(oeM)replaced=first.replace(/^STB \d+, Öffnung \d+/,'STB '+oeM[1]+', Öffnung '+oeM[2]);
+  else if(wM)replaced=first.replace(/^STB \d+, Widerlager [12]/,'STB '+wM[1]+', Widerlager '+wM[2]);
+  else if(pfM)replaced=first.replace(/^STB \d+, Pfeiler \d+/,'STB '+pfM[1]+', Pfeiler '+pfM[2]);
+  else if(wgM)replaced=first.replace(/^(STB \d+, Widerlager [12]|Widerlager [12] \(durchgehend\))/,'Widerlager '+wgM[1]+' (durchgehend)');
+  lines[0]=replaced;
+  return lines.join('\n');
+}
+
+function buildLocationHeadingBare(overrideBaseKey){
+  if(!overrideBaseKey&&/^Lager: /.test(S.ugr||''))return '';
+  var baseKey=overrideBaseKey||(S.key||'').split('___')[0];
+  var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
+  if(oeM)return 'STB '+oeM[1]+', Öffnung '+oeM[2];
+  var wM=baseKey.match(/^stb(\d+)_w([12])$/);
+  if(wM)return 'STB '+wM[1]+', Widerlager '+wM[2];
+  var pfM=baseKey.match(/^stb(\d+)_pf(\d+)$/);
+  if(pfM)return 'STB '+pfM[1]+', Pfeiler '+pfM[2];
+  var wgM=baseKey.match(/^wg_w([12])$/);
+  if(wgM)return 'Widerlager '+wgM[1]+' (durchgehend)';
+  return '';
+}
+
+// Baut den Bauteil-Anteil ("Geländer links" bzw. mit Nummer "Geländer links 1,2,4" bzw.
+// bei Doppel-Nr-Bauteilen "Beulsteife 3 an Hauptträger 2") — mitNr steuert, ob die
+// eingetragene Bauteil-Nummer mit eingerechnet wird.
+function buildBauteilPart(mitNr){
+  if(!S.ugr)return '';
+  if(mitNr){
+    var nrRow=g('mBauteilNrRow');
+    if(nrRow&&nrRow.style.display!=='none'){
+      var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
+      var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+      if(dbl){
+        var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
+        if(nrVal||refVal){
+          var compWord=S.ugr.split(' an ')[0];
+          var full=compWord;
+          if(nrVal)full+=' '+nrVal;
+          full+=' an '+dbl.refWord;
+          if(refVal)full+=' '+refVal;
+          return full;
+        }
+      } else if(nrVal){
+        var nrClean=nrVal.toLowerCase()==='alle'?'Alle':nrVal.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}).join(',');
+        return S.ugr+' '+nrClean;
+      }
+    }
+  }
+  return S.ugr.replace(/^Widerlager\s+/,'');
+}
+
+function buildLocationHeading(){
+  var bare=buildLocationHeadingBare();
+  if(!bare)return '';
+  // Bauteilname (z.B. "Vorderansicht", "Geländer links", "Längsträger") gehört immer in die
+  // Überschrift — für alle Bauteiltypen einheitlich, nur die Bauteil-Nummer selbst steht
+  // stattdessen in der Beschreibung (siehe buildBauteilNrSuffix()).
+  var part=buildBauteilPart(false);
+  return part?bare+', '+part:bare;
+}
+
+// Erweiterte Überschrift NUR für den gespeicherten Beschreibungstext (nicht fürs
+// Foto-Wasserzeichen, das bewusst bei der schlichten buildLocationHeading() bleibt) —
+// hängt bei nummerierbaren Bauteilen (Hauptträger, Querträger usw.) die tatsächliche
+// Nummer mit an, z.B. "STB 1, Öffnung 1, Hauptträger 1".
+// Baut die Bauteil-Nummer als eigene Zeile für die Schadensbeschreibung, z.B.
+// "- Hauptträger Nr.: 2" oder bei Doppel-Nr-Bauteilen "- Beulsteife Nr. 3 an Hauptträger
+// Nr. 2" — auf Wunsch von Andreas steht die Nummer NICHT mehr in der Überschrift, sondern
+// nur noch hier in der Beschreibung selbst.
+// Liefert NUR die reine Nummer als Anhängsel (kein "Nr."-Label, kein Bauteilname) — wird an
+// jede einzelne Schadensart-Zeile direkt angehängt, z.B. "Verguss rissig an Pfosten 1,3,5"
+// statt einer eigenen Zeile.
+function buildBauteilNrSuffix(){
+  if(!S.ugr)return '';
+  var nrRow=g('mBauteilNrRow');
+  if(!nrRow||nrRow.style.display==='none')return '';
+  var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
+  var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+  if(dbl){
+    var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
+    if(!nrVal&&!refVal)return '';
+    var s=nrVal;
+    if(refVal)s+=' an '+dbl.refWord+' '+refVal;
+    return s;
+  }
+  if(!nrVal)return '';
+  return nrVal.toLowerCase()==='alle'?'Alle':nrVal;
+}
+
+// Auf Wunsch von Andreas enthält die Überschrift KEINE Bauteil-Nummer mehr — die Nummer
+// steht stattdessen als eigene Zeile in der Schadensbeschreibung selbst (siehe saveS()).
+function buildTextLocationHeading(){
+  return buildLocationHeading();
+}
+
+function editS(i){
+  var it=dat[S.key]&&dat[S.key][i];
+  if(!it)return;
+  resetBeideState();
+  S.editIdx=i;
+  S.art=it.a;S.vorl=null;
+  S.typ=it.t;
+  mPendingFotos=(it.fotos||[]).slice();
+  renderMFotoLeiste();
+  updateBauteilNrUI();
+  g('mArt').style.display='block';
+  g('mTyp').style.display='none';
+  bldArt();
+  // "Beide"-kombinierte Einträge (Überschrift "... links und rechts", Abschnitte
+  // "Links:"/"Rechts:") haben eine andere Struktur als normale Einträge — die
+  // Heading-/Bauteil-Nr-/Lager-Erkennung unten geht von GENAU EINER Schadensart-Zeile
+  // pro Zeile aus und würde bei zwei zusammengefassten Abschnitten Zahlen aus beiden
+  // Seiten durcheinanderwürfeln bzw. verlieren. Deshalb hier: Rohtext unverändert zur
+  // freien Bearbeitung anbieten, keine automatische Zerlegung in Chips, keine
+  // Bauteil-Nr-Felder (auch wenn das Bauteil an sich nummerierbar wäre).
+  S.editIsBeide=/ links und rechts$/.test(it.loc||'');
+  if(S.editIsBeide){
+    var nrRowB=g('mBauteilNrRow'),refRowB=g('mBauteilRefRow');
+    if(nrRowB)nrRowB.style.display='none';
+    if(refRowB)refRowB.style.display='none';
+    updateVerortungDisplay();
+    g('mDesc').value=it.d||'';
+    curSchadenEntries=[];
+    renderSchadenChips();
+    resetMassnahmeBox();
+    var gboxB=g('genauBox');if(gboxB){gboxB.style.display='none';gboxB.innerHTML='';}
+    pendingGenauArt=null;
+    showPanel('ovMod');
+    updateBeideModalUI();
+    autoGrowMDesc();
+    toast('Kombi-Eintrag (Links+Rechts) — wird als Rohtext bearbeitet, keine automatische Nr./Überschrift-Erkennung');
+    setTimeout(function(){
+      var el=g('mDesc');
+      if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+    },200);
+    return;
+  }
+  // Bestehende V/B/S-Zeile erkennen, aus dem Text lösen und in die Checkboxen zurückübersetzen
+  var lines=(it.d||'').split('\n');
+  var vbsLineRe=/^-?\s*((Verkehrssicherheit|Betriebssicherheit|Standsicherheit)!\s*)+$/;
+  var lastLine=lines[lines.length-1]||'';
+  if(vbsLineRe.test(lastLine.trim())){
+    curVbsState.V=/Verkehrssicherheit!/.test(lastLine);
+    curVbsState.B=/Betriebssicherheit!/.test(lastLine);
+    curVbsState.S=/Standsicherheit!/.test(lastLine);
+    renderVbsRow();
+    lines=lines.slice(0,-1);
+  }
+  // Bei Lager: Messwerte-Zeilen erkennen, aus dem Text herauslösen und in die echten
+  // Zahlenfelder zurückschreiben, damit sie beim Bearbeiten wieder änderbar sind — sonst
+  // stünden sie nur noch als starrer Text da. saveS() baut sie beim erneuten Speichern
+  // aus den (ggf. geänderten) Feldern automatisch wieder vorne an.
+  var lagerDirektM=(S.ugr||'').match(/^Lager: (.+?)(?: - (.+))?$/);
+  if(lagerDirektM&&!lagerDirektM[2]){
+    renderLagerMesswerte();
+    curLagerMesswertFelder.forEach(function(f,idx){
+      var prefix='- '+f.label+':';
+      for(var li=0;li<lines.length;li++){
+        if(lines[li].indexOf(prefix)===0){
+          var rest=lines[li].slice(prefix.length).trim();
+          if(f.unit&&rest.slice(-f.unit.length)===f.unit)rest=rest.slice(0,-f.unit.length).trim();
+          var el=g('lagerMw'+idx);
+          if(el)el.value=rest;
+          lines.splice(li,1);
+          break;
+        }
+      }
+    });
+  }
+  var bareHead=buildLocationHeading();
+  var hatteHeading=!!(bareHead&&lines[0]===bareHead);
+  if(hatteHeading){
+    lines=lines.slice(1);
+  }
+  // Bauteil-Nummer ist an JEDE Schadensart-Zeile direkt angehängt (nicht mehr als eigene
+  // Zeile) — von jeder Zeile wieder abtrennen und den Wert einmalig ins Nr.-Feld
+  // zurückschreiben, damit beim erneuten Speichern dieselbe Nummer wieder angehängt wird.
+  var nrRow2=g('mBauteilNrRow');
+  if(S.ugr&&nrRow2&&nrRow2.style.display!=='none'){
+    var dbl2=DOPPEL_NR_BAUTEILE[S.ugr];
+    var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
+    var foundNr='',foundRef='';
+    lines=lines.map(function(line){
+      var arrowIdx=line.indexOf('  》》');
+      var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
+      var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+      if(dbl2){
+        var re=new RegExp(' (\\S+) an '+esc(dbl2.refWord)+' (\\S+)$');
+        var m=head.match(re);
+        if(m){foundNr=m[1];foundRef=m[2];head=head.slice(0,m.index);}
+      } else {
+        var re2=/ ([\d,]+|Alle)$/;
+        var m2=head.match(re2);
+        if(m2){foundNr=m2[1];head=head.slice(0,m2.index);}
+      }
+      return head+tail;
+    });
+    if(foundNr&&g('mBauteilNr'))g('mBauteilNr').value=foundNr;
+    if(foundRef&&g('mBauteilRef'))g('mBauteilRef').value=foundRef;
+  }
+  updateVerortungDisplay();
+  // Auf Wunsch von Andreas: Ortszeile bleibt auch beim Bearbeiten sichtbar im Feld
+  // (nicht mehr entfernt). Die Chip-Zeilenindizes müssen deshalb um 1 verschoben werden,
+  // da sie sich sonst noch auf die (intern) überschriftfreie "lines"-Liste bezögen, real
+  // im Textfeld aber die Überschrift als zusätzliche erste Zeile physisch vorhanden ist.
+  g('mDesc').value=(hatteHeading?bareHead+'\n':'')+lines.join('\n');
+  // Für Bearbeiten-Modus: jede verbliebene Freitext-Zeile als entfernbaren Chip anbieten
+  // (Label = Zeilentext ohne führendes "- " und ohne evtl. angehängte Maßnahme).
+  var chipOffset=hatteHeading?1:0;
+  curSchadenEntries=lines.map(function(line,li){
+    var clean=line.replace(/^-\s*/,'').split('  》》')[0].split('》》')[0].trim();
+    return {lineIndex:li+chipOffset,label:clean||('Zeile '+(li+1))};
+  }).filter(function(e){return e.label;});
+  renderSchadenChips();
+  resetMassnahmeBox();
+  var gbox2=g('genauBox');if(gbox2){gbox2.style.display='none';gbox2.innerHTML='';}
+  pendingGenauArt=null;
+  showPanel('ovMod');
+  updateBeideModalUI();
+  autoGrowMDesc();
+  toast('Bearbeitungsmodus – Änderungen speichern nicht vergessen');
+  setTimeout(function(){
+    var el=g('mDesc');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+  },200);
+}
+
+// ============================================================
+function renderMFotoLeiste(){
+  var leiste=g('mFotoLeiste');if(!leiste)return;
+  leiste.innerHTML='';
+  mPendingFotos.forEach(function(f,fi){
+    var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block;';
+    var img=document.createElement('img');img.src=f.data;
+    img.style.cssText='height:60px;border-radius:6px;border:2px solid var(--acc);display:block;cursor:pointer;';
+    (function(fi2){img.onclick=function(){openGalleryPhotos(mPendingFotos,fi2);};})(fi);
+    var del=document.createElement('button');
+    del.style.cssText='position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;border:0;background:#e53935;color:#fff;font-size:11px;cursor:pointer;line-height:20px;padding:0;';
+    del.textContent='✕';
+    (function(fi2){del.onclick=function(e){
+      e.stopPropagation();
+      mPendingFotos.splice(fi2,1);
+      renderMFotoLeiste();
+    };})(fi);
+    wrap.appendChild(img);wrap.appendChild(del);leiste.appendChild(wrap);
+  });
+}
+
+// FOTO PANEL
+// ============================================================
+function openFotoPanel(idx){
+  curFotoIdx=idx;
+  var it=dat[S.key]&&dat[S.key][idx];if(!it)return;
+  var loc=it.loc||S.schTitle||'';
+  var stbMfp=(S.key||'').match(/^stb(\d+)_/);
+  g('fpVerortung').textContent=(stbMfp?'STB '+stbMfp[1]+' / ':'')+loc;
+  g('fpCount').textContent=(it.fotos||[]).length+'/10';
+  renderFotoLeiste(it);
+  showPanel('ovFoto');
+}
+
+function renderFotoLeiste(it){
+  var leiste=g('fpLeiste');leiste.innerHTML='';
+  (it.fotos||[]).forEach(function(f,fi){
+    var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block;';
+    var img=document.createElement('img');img.src=f.data;
+    img.style.cssText='height:60px;border-radius:6px;cursor:pointer;border:2px solid var(--acc);display:block;';
+    (function(fi2){img.onclick=function(){openGallery(curFotoIdx,fi2);};})(fi);
+    var del=document.createElement('button');
+    del.style.cssText='position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;border:0;background:#e53935;color:#fff;font-size:11px;cursor:pointer;line-height:20px;padding:0;';
+    del.textContent='✕';
+    (function(fi2){del.onclick=function(e){
+      e.stopPropagation();
+      it.fotos.splice(fi2,1);
+      g('fpCount').textContent=it.fotos.length+'/10';
+      renderFotoLeiste(it);
+      renderSch();autoSave();
+    };})(fi);
+    wrap.appendChild(img);wrap.appendChild(del);leiste.appendChild(wrap);
+  });
+}
+
+var cameraOpen=false;
+var openPanels=[];
+
+// ============================================================
+// RESUME STATE — survives a full page reload if Android kills the
+// background tab while the camera app is open (common on low-memory phones)
+// ============================================================
+function saveResumeState(extra){
+  try{
+    var state={
+      bauKey:S.bauKey,bauTitle:S.bauTitle,ugr:S.lastUgr,
+      schKey:S.key,schTitle:S.schTitle,schUgr:S.ugr,
+      ts:Date.now()
+    };
+    for(var k in extra)state[k]=extra[k];
+    localStorage.setItem('bp_resume',JSON.stringify(state));
+  }catch(e){}
+}
+function clearResumeState(){
+  try{localStorage.removeItem('bp_resume');}catch(e){}
+}
+function tryResume(){
+  var raw,st;
+  try{raw=localStorage.getItem('bp_resume');}catch(e){raw=null;}
+  if(!raw)return;
+  try{st=JSON.parse(raw);}catch(e){st=null;}
+  clearResumeState();
+  if(!st||!st.bauKey||(Date.now()-st.ts)>30*60*1000)return; // ignore if older than 30 min
+  try{
+    openBau(st.bauKey,st.bauTitle,st.ugr);
+    if(st.schKey){
+      S.key=st.schKey;S.schTitle=st.schTitle;S.ugr=st.schUgr||'';
+      g('schTitle').textContent=S.schTitle;
+      renderSch();
+      showPanel('ovSch');
+    }
+    if(st.mode==='foto'&&typeof st.fotoIdx==='number'&&st.fotoIdx>-1){
+      openFotoPanel(st.fotoIdx);
+    } else if(st.mode==='mod'){
+      openMod();
+      if(st.desc){g('mDesc').value=st.desc;autoGrowMDesc();}
+      if(st.pendingFotos&&st.pendingFotos.length){mPendingFotos=st.pendingFotos;renderMFotoLeiste();}
+    }
+    toast('Weiter geht\'s — du warst hier ✓');
+  }catch(e){}
+}
+
+function fpTakeFoto(){
+  var it=dat[S.key]&&dat[S.key][curFotoIdx];
+  if(!it||(it.fotos||[]).length>=10)return;
+  // Save which panels are open
+  openPanels=['ovBau','ovSch','ovMod','ovFoto'].filter(function(id){
+    var el=g(id);return el&&el.classList.contains('open');
+  });
+  saveResumeState({mode:'foto',fotoIdx:curFotoIdx});
+  cameraOpen=true;
+  g('fotoInput').value='';
+  setTimeout(function(){g('fotoInput').click();},50);
+}
+
+function closeFotoPanel(){
+  cameraOpen=false;
+  clearResumeState();
+  hidePanel('ovFoto');
+  renderSch();render();autoSave();
+}
+
+// Foto input handler
+document.addEventListener('DOMContentLoaded',function(){
+  g('fotoInput').addEventListener('change',function(e){
+    var f=e.target.files[0];if(!f)return;
+    var it=dat[S.key]&&dat[S.key][curFotoIdx];if(!it)return;
+    if(!it.fotos)it.fotos=[];
+    if(it.fotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
+
+    // Return to the Schaden view immediately; heavy image work happens after
+    openPanels.forEach(function(id){
+      var el=g(id);if(el)el.classList.add('open');
+    });
+    toast('Foto wird verarbeitet…');
+
+    fotoCounter++;
+    var nr=fotoCounter;
+    var loc=it.loc||S.schTitle||'';
+    var label=fotoLabelFromKey(S.key);
+    // Load via ObjectURL (memory-efficient) instead of reading the full-res file as base64 first
+    var objUrl=URL.createObjectURL(f);
+    var img=new Image();
+    img.onload=function(){
+      // Yield one tick so the browser has already repainted the restored panels
+      setTimeout(function(){
+        try{
+          var cv=document.createElement('canvas');
+          cv.width=Math.min(img.width,1000);
+          cv.height=Math.round(img.height*(cv.width/img.width));
+          var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
+          var fs=Math.max(16,Math.round(cv.width/35));
+          ctx.font='bold '+fs+'px Arial';ctx.textBaseline='bottom';
+          var tw=ctx.measureText(label).width,pad=8;
+          ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
+          ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
+          it.fotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height});
+        }catch(err){
+          toast('Foto konnte nicht verarbeitet werden');
+        }
+        URL.revokeObjectURL(objUrl);
+        g('fpCount').textContent=it.fotos.length+'/10';
+        g('fotoAddBtn').style.display=it.fotos.length>=10?'none':'block';
+        renderFotoLeiste(it);
+        toast('Foto '+nr+' gespeichert ✓');
+        setTimeout(autoSave,0);
+      },0);
+    };
+    img.onerror=function(){
+      URL.revokeObjectURL(objUrl);
+      toast('Foto konnte nicht geladen werden');
+    };
+    img.src=objUrl;
+    g('fotoInput').value='';
+  });
+
+  // Photo capture for a NEW, not-yet-saved Schaden (mFoto button in the entry form)
+  g('mFoto').addEventListener('change',function(e){
+    var f=e.target.files[0];if(!f)return;
+    if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
+    toast('Foto wird verarbeitet…');
+    fotoCounter++;
+    var nr=fotoCounter;
+    var loc=S.schTitle||'';
+    var label=fotoLabelFromKey(S.key);
+    var objUrl=URL.createObjectURL(f);
+    var img=new Image();
+    img.onload=function(){
+      setTimeout(function(){
+        try{
+          var cv=document.createElement('canvas');
+          cv.width=Math.min(img.width,1000);
+          cv.height=Math.round(img.height*(cv.width/img.width));
+          var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
+          var fs=Math.max(16,Math.round(cv.width/35));
+          ctx.font='bold '+fs+'px Arial';ctx.textBaseline='bottom';
+          var tw=ctx.measureText(label).width,pad=8;
+          ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
+          ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
+          mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height});
+        }catch(err){
+          toast('Foto konnte nicht verarbeitet werden');
+        }
+        URL.revokeObjectURL(objUrl);
+        renderMFotoLeiste();
+        toast('Foto '+nr+' hinzugefügt ✓');
+      },0);
+    };
+    img.onerror=function(){
+      URL.revokeObjectURL(objUrl);
+      toast('Foto konnte nicht geladen werden');
+    };
+    img.src=objUrl;
+    g('mFoto').value='';
+  });
+});
+
+// ============================================================
+// GALERIE
+// ============================================================
+function openGallery(schadenIdx,fotoIdx){
+  var it=dat[S.key]&&dat[S.key][schadenIdx];if(!it||!it.fotos||!it.fotos.length)return;
+  openGalleryPhotos(it.fotos,fotoIdx);
+}
+
+// Generische Variante: öffnet die Vollbild-Galerie direkt für eine übergebene Foto-Liste,
+// unabhängig davon, ob die Fotos schon gespeichert sind (dat[S.key][i].fotos) oder noch
+// als mPendingFotos in einem gerade offenen, ungespeicherten Eintrag hängen.
+function openGalleryPhotos(fotos,fotoIdx){
+  if(!fotos||!fotos.length)return;
+  var srcs=fotos.map(function(f){return f.data;});
+  var idx=fotoIdx||0;
+
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;touch-action:none;';
+  // Für den Android-Zurück-Knopf sichtbar machen (siehe popstate-Handler weiter unten) —
+  // sonst kennt der Zurück-Knopf diese Vollbild-Ansicht nicht und schließt stattdessen
+  // fälschlich den dahinterliegenden Bearbeitungsdialog samt allen ungespeicherten Daten.
+  curGalleryOv=ov;
+
+  // Close button (✕, oben rechts wie gewohnt)
+  var cb=document.createElement('button');
+  cb.style.cssText='position:absolute;top:14px;right:14px;z-index:2;border:0;background:rgba(255,255,255,.3);color:#fff;width:48px;height:48px;border-radius:50%;font-size:24px;cursor:pointer;';
+  cb.textContent='✕';
+  cb.onclick=function(){document.body.removeChild(ov);curGalleryOv=null;};
+
+  // Zusätzlicher, deutlich beschrifteter Zurück-Knopf oben links (wie an anderen Stellen
+  // der App), da der reine "✕"-Kreis oben rechts leicht übersehen wird.
+  var backBtn=document.createElement('button');
+  backBtn.style.cssText='position:absolute;top:14px;left:14px;z-index:2;border:0;background:rgba(255,255,255,.3);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;';
+  backBtn.textContent='← Zurück zum Schaden';
+  backBtn.onclick=function(){document.body.removeChild(ov);curGalleryOv=null;};
+
+  // Counter
+  var ctr=document.createElement('div');
+  ctr.style.cssText='position:absolute;top:66px;left:16px;z-index:2;color:#fff;font-size:14px;font-weight:700;background:rgba(0,0,0,.4);padding:4px 12px;border-radius:20px;';
+
+  // Image
+  var imgEl=document.createElement('img');
+  imgEl.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:95vw;max-height:85vh;border-radius:8px;object-fit:contain;';
+
+  // Nav
+  var prev=document.createElement('button');
+  prev.style.cssText='position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:2;border:0;background:rgba(255,255,255,.25);color:#fff;width:48px;height:48px;border-radius:50%;font-size:28px;cursor:pointer;';
+  prev.textContent='‹';
+  var next=document.createElement('button');
+  next.style.cssText='position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2;border:0;background:rgba(255,255,255,.25);color:#fff;width:48px;height:48px;border-radius:50%;font-size:28px;cursor:pointer;';
+  next.textContent='›';
+
+  function show(i){
+    idx=((i%srcs.length)+srcs.length)%srcs.length;
+    imgEl.src=srcs[idx];
+    ctr.textContent=(idx+1)+'/'+srcs.length;
+    prev.style.display=srcs.length>1?'':'none';
+    next.style.display=srcs.length>1?'':'none';
+  }
+  prev.onclick=function(){show(idx-1);};
+  next.onclick=function(){show(idx+1);};
+
+  // Swipe
+  var tx=0;
+  ov.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+  ov.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>40){show(dx<0?idx+1:idx-1);}
+  },{passive:true});
+
+  ov.appendChild(cb);ov.appendChild(backBtn);ov.appendChild(ctr);ov.appendChild(imgEl);
+  ov.appendChild(prev);ov.appendChild(next);
+  document.body.appendChild(ov);
+  show(idx);
+}
+
+// ============================================================
+// SCHADEN MODAL
+// ============================================================
+// ============================================================
+// LAGER-MESSWERTE (STB/Widerlager/Lager, Umgebungs-/Bauteiltemperatur, Verschiebeweg)
+// Werden bei jeder neuen Lager-Schadenserfassung als eigene, antippbare Zahlenfelder
+// oberhalb der Schadensbeschreibung angeboten. Die Schadensbeschreibung selbst bleibt
+// dabei leer/frei für den eigentlichen Befund — die Messwerte werden erst beim
+// Speichern automatisch als erste Zeilen vor den Text gesetzt (siehe saveS()).
+// ============================================================
+var LAGER_MESSWERT_BASIS=[
+  {label:'STB',unit:''},
+  {label:'Widerlager',unit:''},
+  {label:'Pfeiler',unit:''},
+  {label:'Lager',unit:''},
+  {label:'Umgebungstemperatur',unit:'°C'},
+  {label:'Bauteiltemperatur',unit:'°C'},
+  {label:'Verschiebeweg nach W1',unit:'mm'},
+  {label:'Verschiebeweg nach W2',unit:'mm'}
+];
+// Zusätzliche Messwertfelder, die nur bei bestimmten Lagertypen sinnvoll sind
+var LAGER_MESSWERT_EXTRA_TYP={
+  'Elastomerlager':[{label:'Höhe Elastomerkissen',unit:'mm'}]
+};
+var curLagerMesswertFelder=[]; // die für die aktuelle Erfassung tatsächlich angezeigten Felder
+
+function renderLagerMesswerte(){
+  var mArt=g('mArt');if(!mArt)return;
+  var lagerTyp=(S.typ||'').replace(/^Lager:/,'');
+  curLagerMesswertFelder=LAGER_MESSWERT_BASIS.concat(LAGER_MESSWERT_EXTRA_TYP[lagerTyp]||[]);
+  var box=document.createElement('div');
+  box.id='lagerMesswerte';
+  box.style.cssText='background:var(--accs);border:1.5px solid var(--acc);border-radius:8px;padding:10px 10px 4px;margin-bottom:12px;';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='font-size:12px;color:var(--acc);font-weight:700;margin-bottom:8px;';
+  hdr.textContent='📏 Messwerte — Ziffern eintragen';
+  box.appendChild(hdr);
+  var stbM=(S.key||'').match(/^stb(\d+)_/);
+  // Einfache Liste: jedes Feld gleich aufgebaut, Label links, Eingabefeld rechts.
+  // Keine Chips, keine Sonderlogik, keine automatische Auswahl/Löschung — nur reine
+  // Texteingabe, von oben nach unten lesbar.
+  curLagerMesswertFelder.forEach(function(f,idx){
+    var row=document.createElement('div');row.className='irow';row.style.justifyContent='flex-start';
+    var lbl=document.createElement('label');lbl.style.cssText='flex:0 0 auto;min-width:160px;font-size:12.5px;';lbl.textContent=f.label+':';
+    var input=document.createElement('input');input.type='text';input.inputMode='decimal';input.placeholder='0';input.id='lagerMw'+idx;
+    input.style.cssText='width:90px;flex:none;';
+    var unit=document.createElement('span');unit.textContent=f.unit;
+    row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
+    box.appendChild(row);
+    // STB-Nummer aus dem aktuellen Navigationspfad automatisch vorbelegen (bleibt änderbar)
+    if(f.label==='STB'&&stbM)input.value=stbM[1];
+  });
+  mArt.insertBefore(box,mArt.firstChild);
+}
+
+function openMod(){
+  S.editIdx=-1;
+  S.editIsBeide=false;
+  S.art='';S.vorl=null;
+  // Auf Wunsch von Andreas: die Ortszeile (z.B. "STB 1, Öffnung 1, Querträger") steht
+  // jetzt sofort sichtbar im Beschreibungsfeld, nicht erst nach dem Speichern. Wird beim
+  // Speichern (buildFormDesc) erkannt und nicht doppelt eingefügt.
+  var neueHeadingZeile=buildTextLocationHeading();
+  g('mDesc').value=neueHeadingZeile?neueHeadingZeile+'\n':'';
+  curSchadenEntries=[];
+  renderSchadenChips();
+  var lagerDirektM=(S.ugr||'').match(/^Lager: (.+?)(?: - (.+))?$/);
+  var isLagerDirekt=!!(lagerDirektM&&!lagerDirektM[2]);
+  autoGrowMDesc();
+  mPendingFotos=[];
+  renderMFotoLeiste();
+  updateBauteilNrUI();
+  g('mArt').style.display='block';
+  g('mTyp').style.display='none';
+  bldArt();
+  if(isLagerDirekt)renderLagerMesswerte();
+  resetMassnahmeBox();
+  var gbox=g('genauBox');if(gbox){gbox.style.display='none';gbox.innerHTML='';}
+  pendingGenauArt=null;
+  updateBeideModalUI();
+  showPanel('ovMod');
+}
+
+function takeMFoto(){
+  if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
+  saveResumeState({mode:'mod',desc:g('mDesc').value,pendingFotos:mPendingFotos});
+  g('mFoto').value='';
+  document.getElementById('mFoto').click();
+}
+
+function bldArt(){
+  var u=S.ugr||(S.key?S.key.split('___')[1]||'':'');
+  var arts;
+  var lagerM=u.match(/^Lager: (.+?)(?: - (.+))?$/);
+  var fugenM=u.match(/^Fugen: (.+)$/);
+  if(u==='Geländer links'||u==='Geländer rechts'){
+    S.typ='Geländer';
+    arts=(SC['Geländer']||[]).slice();
+  } else if(lagerM){
+    if(lagerM[2]){
+      // Historische Einzelbauteil-Unterschlüssel (vor der Vereinfachung) — bleiben für
+      // bereits gespeicherte alte Daten nutzbar, werden für neue Einträge nicht mehr angelegt.
+      S.typ='Lager:'+lagerM[1]+':'+lagerM[2];
+      arts=lagerBauteilSchaeden(lagerM[2]).slice();
+    } else {
+      // Vereinfachte Lagererfassung: Bauteile direkt als anklickbare Liste in der
+      // Schadensbeschreibung — kein separater Bauteil-Auswahlbildschirm mehr davor.
+      S.typ='Lager:'+lagerM[1];
+      arts=['Allgemein'].concat(LAGER_BAUTEILE[lagerM[1]]||[]);
+    }
+  } else if(fugenM){
+    S.typ='Fugen:'+fugenM[1];
+    arts=(FUGEN_SC[fugenM[1]]||[]).slice();
+  } else {
+    var baseKey=S.key?S.key.split('___')[0]:'';
+    var parentTyp=dat['__t_'+baseKey]||'';
+    S.typ=resolveSchadenTyp(baseKey,u,parentTyp);
+    arts=(SC[S.typ]||[]).slice();
+    if(/Untersicht$/.test(u))arts=arts.concat(UNTERSICHT_EXTRA);
+  }
+  g('mArt').innerHTML='';
+  var lbl=document.createElement('label');
+  lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;display:block;margin:10px 0 8px;';
+  lbl.textContent='Schadensart';
+  g('mArt').appendChild(lbl);
+  // Zweispaltig statt einspaltig gestapelt — nimmt weniger Höhe ein, damit das
+  // Beschreibungsfeld darunter (der eigentliche "Bearbeitungsbereich") ohne so viel
+  // Scrollen sichtbar wird. Nur für diese Liste, nicht für andere .sb-Buttons in der App.
+  var artGrid=document.createElement('div');
+  artGrid.id='mArtGrid';
+  artGrid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+  g('mArt').appendChild(artGrid);
+  arts.forEach(function(a){
+    var b=document.createElement('button');b.className='sb';b.textContent=a;b.style.marginBottom='0';
+    (function(art){b.onclick=function(){selArt(art,this);};})(a);
+    artGrid.appendChild(b);
+  });
+}
+
+var curVbsState={V:false,B:false,S:false};
+function vbsSuffix(){
+  var map={V:'Verkehrssicherheit',B:'Betriebssicherheit',S:'Standsicherheit'};
+  var parts=[];
+  ['V','B','S'].forEach(function(l){if(curVbsState[l])parts.push(map[l]+'!');});
+  return parts.join(' ');
+}
+function renderVbsRow(){
+  var box=g('mVbsRow');if(!box)return;
+  box.innerHTML='';
+  var lbl=document.createElement('span');lbl.textContent='Sicherheit:';lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;align-self:center;margin-right:2px;';
+  box.appendChild(lbl);
+  ['V','B','S'].forEach(function(letter){
+    var b=document.createElement('button');b.type='button';b.textContent=letter;
+    var on=curVbsState[letter];
+    b.style.cssText='flex:1;padding:7px;border:1.5px solid var(--acc);border-radius:6px;background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--acc)')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;';
+    b.onclick=function(){curVbsState[letter]=!curVbsState[letter];renderVbsRow();};
+    box.appendChild(b);
+  });
+}
+
+function selArt(a,btn){
+  S.art=a;
+  var old=g('artInline');if(old)old.parentNode.removeChild(old);
+  g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  var vl=VL[a]||[];
+  var wrap=document.createElement('div');wrap.id='artInline';
+  wrap.style.cssText='margin:4px 0 12px;padding:12px;background:var(--accs);border-left:3px solid var(--acc);border-radius:0 8px 8px 0;';
+  var hasInp=vl.some(function(v){return v.i&&v.i.length>0;});
+  if(!vl.length){
+    addConfirmBtn(wrap,a,function(){appendDesc(a);wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});});
+  } else if(!hasInp){
+    vl.forEach(function(v){
+      var vb=document.createElement('button');vb.className='sb';vb.style.marginBottom='6px';vb.textContent=v.l;
+      (function(vv){vb.onclick=function(){appendDesc(vv.t);wrap.parentNode.removeChild(wrap);g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});};})(v);
+      wrap.appendChild(vb);
+    });
+  } else if(vl.length===1){
+    S.vorl=vl[0];buildInpFields(wrap,vl[0]);
+  } else {
+    vl.forEach(function(v){
+      var vb=document.createElement('button');vb.className='sb';vb.style.marginBottom='6px';vb.textContent=v.l;
+      (function(vv){vb.onclick=function(){
+        var oi=g('vorlInline');if(oi)oi.parentNode.removeChild(oi);
+        wrap.querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');
+        if(!vv.i||!vv.i.length){appendDesc(vv.t);return;}
+        S.vorl=vv;
+        var iw=document.createElement('div');iw.id='vorlInline';
+        iw.style.cssText='margin-top:8px;padding:10px;background:var(--sur);border:1px solid var(--acc);border-radius:8px;';
+        buildInpFields(iw,vv);
+        this.parentNode.insertBefore(iw,this.nextSibling);
+        var f=g('vi0');if(f)f.focus();
+      };})(v);
+      wrap.appendChild(vb);
+    });
+  }
+  if(btn)btn.parentNode.insertBefore(wrap,btn.nextSibling);else g('mArt').appendChild(wrap);
+  // Falls die Kachel in der zweispaltigen Schadensart-Liste sitzt: die aufklappende Box
+  // über beide Spalten hinweg volle Breite einnehmen lassen, statt in einer Spalte
+  // gequetscht zu werden.
+  if(btn&&btn.parentNode&&btn.parentNode.id==='mArtGrid')wrap.style.gridColumn='1 / -1';
+  // Zur angetippten Kachel selbst scrollen (nicht zur neuen, teils recht großen Box
+  // darunter) — das hält die Scrollbewegung minimal, damit z.B. die Lager-Messwerte-
+  // Felder oben möglichst sichtbar bleiben statt weit nach oben aus dem Bild zu rutschen.
+  (btn||wrap).scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function addConfirmBtn(container,label,cb){
+  var b=document.createElement('button');
+  b.style.cssText='width:100%;padding:12px;background:var(--acc);color:#fff;border:0;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;font-size:15px;';
+  b.textContent='✓ '+label;b.onclick=cb;container.appendChild(b);
+}
+
+function buildInpFields(container,vorl){
+  var p=document.createElement('div');p.style.cssText='font-size:12px;color:var(--acc);font-weight:600;margin-bottom:10px;';
+  p.textContent=vorl.t.replace(/\{[0-9]\}/g,'___');container.appendChild(p);
+  vorl.i.forEach(function(inp,i){
+    var row=document.createElement('div');row.className='irow';
+    var lbl=document.createElement('label');lbl.textContent=inp.l+':';
+    var input=document.createElement('input');input.type='text';input.inputMode='decimal';input.id='vi'+i;input.placeholder='0';
+    var unit=document.createElement('span');unit.textContent=inp.u;
+    row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
+    var isLast=(i===vorl.i.length-1);
+    if(!isLast){
+      var nextBtn=document.createElement('button');
+      nextBtn.type='button';
+      nextBtn.textContent='OK →';
+      nextBtn.style.cssText='margin-left:6px;padding:6px 12px;border:1.5px solid var(--acc);border-radius:6px;background:var(--accs);color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;';
+      (function(ii){nextBtn.onclick=function(){noc(ii,vorl.i.length);};})(i);
+      row.appendChild(nextBtn);
+    }
+    container.appendChild(row);
+    input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();noc(i,vorl.i.length);}});
+  });
+  var ok=document.createElement('button');
+  ok.style.cssText='width:100%;padding:12px;background:var(--acc);color:#fff;border:0;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;font-size:15px;margin-top:8px;';
+  ok.textContent='✓ OK';ok.onclick=confVorl;container.appendChild(ok);
+  setTimeout(function(){var f=g('vi0');if(f)f.focus();},100);
+}
+
+// ============================================================
+// MASSNAHMEN-VORSCHLÄGE (aus BauSys-Maßnahmenkatalog, ohne Preise)
+// Rein additiv, unabhängig von den Schadenskatalogen oben. Wird bei passender
+// Schadensart als Knopf "🔧 Maßnahme" angeboten; Text wird nur auf Wunsch
+// per Tastendruck in die Schadensbeschreibung übernommen, nie automatisch.
+// ============================================================
+var MASSNAHMEN={
+  'Bewuchs/Vegetation':'Bewuchs entfernen',
+  'Schweißnahtriss':'Schweiß-Anschluß instandsetzen',
+  'Schweißnahtschaden':'Schweiß-Anschluß instandsetzen',
+  'Korrosion':'Korrosionsschutz bereichsweise instandsetzen',
+  'Korrosionsschutzschäden':'Korrosionsschutz bereichsweise instandsetzen',
+  'Lose/fehlende Verbindungsmittel':'Niet-/HV-Schrauben-Anschluß instandsetzen',
+  'Lose/fehlende Nietverbindung':'Niet-Anschluß instandsetzen',
+  'Lose Verbindungsmittel an Pfosten':'Niet-/HV-Schrauben-Anschluß instandsetzen',
+  'Fehlende Verbindungsmittel an Pfosten':'Niet-/HV-Schrauben-Anschluß instandsetzen',
+  'Verguss rissig an Pfosten':'Risse verpressen',
+  'Verguss brüchig an Pfosten':'Risse verpressen',
+  // Beton/Stahlbeton — gilt bauteilübergreifend (Widerlager, Flügel, Kammerwand,
+  // Pfeiler, Überbau, Gewölbe), da dieselbe Schadensart-Liste dort überall verwendet wird
+  'Senkrecht rissig':'Risse verpressen',
+  'Waagerecht rissig':'Risse verpressen',
+  'Diagonal rissig':'Risse verpressen',
+  'Längs rissig':'Risse verpressen',
+  'Quer rissig':'Risse verpressen',
+  'Schräg rissig':'Risse verpressen',
+  'Netzrissig':'Risse verpressen',
+  'Unregelmäßig rissig':'Risse verpressen',
+  'Betonabplatzung':'Oberfläche ausbessern',
+  'Betonabplatzung mit freiliegender Bewehrung':'Oberfläche ausbessern und beschichten',
+  'Hohlstellen':'Oberfläche torkretieren',
+  // Mauerwerk — andere Reparaturtechnik als Beton (Verfugen/Steinergänzung statt Verpressen)
+  'Steinausbrüche':'Ausbrüche ergänzen und neu verfugen',
+  'Abschalung':'Einzelne Steine ergänzen und teilweise verfugen',
+  'Abplatzung':'Einzelne Steine ergänzen und teilweise verfugen',
+  'Mörtelfugenschäden/offene Fugen':'Einzelne Steine ergänzen und teilweise verfugen',
+  // Lager
+  'Vergussmörtel/Lagersockel rissig':'Unterguß-Rand ausbessern',
+  'Vergussmörtel rissig':'Unterguß-Rand ausbessern',
+  'Lagersockel':'Unterguß-Rand ausbessern',
+  'Verguss':'Unterguß-Rand ausbessern',
+  'Obere Ankerplatte':'Korrosionsschutz bereichsweise instandsetzen',
+  'Untere Ankerplatte':'Korrosionsschutz bereichsweise instandsetzen',
+  'Obere Lagerplatte':'Korrosionsschutz bereichsweise instandsetzen',
+  'Untere Lagerplatte':'Korrosionsschutz bereichsweise instandsetzen',
+  'Verbindungsmittel/Befestigungsmittel':'Korrosionsschutz bereichsweise instandsetzen',
+  'Rolle':'Korrosionsschutz bereichsweise instandsetzen',
+  'Führungsleiste':'Korrosionsschutz bereichsweise instandsetzen',
+  'Gleitplatte':'Korrosionsschutz bereichsweise instandsetzen',
+  'Druckstück':'Korrosionsschutz bereichsweise instandsetzen',
+  'Führungskonstruktion':'Korrosionsschutz bereichsweise instandsetzen',
+  'Festhaltekonstruktion':'Korrosionsschutz bereichsweise instandsetzen',
+  'Typenschild':'Korrosionsschutz bereichsweise instandsetzen',
+  'Typenschild fehlt/unleserlich':'Typenschild ersetzen',
+  'Gleitteil (PTFE)':'Fachgerecht instandsetzen',
+  'Korrosionsbeginn':'Lager ausrichten und beschichten',
+  'Elastomer-Zustand':'Verschleiß-Teile ersetzen und beschichten',
+  // Generische Maßnahmen (kein exakter Katalog-Einzeltreffer, aber sinnvoller Standardhinweis)
+  'Verformung/Verschiebung/Verkippung':'Fachgerecht instandsetzen',
+  'Verformung':'Fachgerecht instandsetzen',
+  'Anfahrschramme':'Fachgerecht instandsetzen',
+  'Anfahrkratzer':'Fachgerecht instandsetzen',
+  'Höhenversatz':'Fachgerecht instandsetzen',
+  'Dichtprofil rissig/beschädigt':'Fachgerecht instandsetzen',
+  'Dichtprofil fehlend':'Fachgerecht instandsetzen',
+  'Lamelle verformt/beschädigt':'Fachgerecht instandsetzen',
+  'Verschmutzt/verstopft':'Fachgerecht instandsetzen',
+  'Finger verformt/verbogen':'Fachgerecht instandsetzen',
+  'Finger gebrochen/fehlend':'Fachgerecht instandsetzen',
+  'Aussinterungen':'Fachgerecht instandsetzen',
+  'Grobkornstellen':'Fachgerecht instandsetzen',
+  'Poren und Lunker':'Fachgerecht instandsetzen',
+  // Restliche Schadensbegriffe ohne eigenen Katalog-Treffer — einheitlich generisch abgedeckt.
+  // Ausgenommen bewusst: reine Mess-/Kennzeichnungsfelder ohne echten Schadenszustand
+  // (Lager Nr./Achse, Temperaturen, Verschiebung Richtung W, Verschiebung 0mm links/rechts,
+  // Spaltmaß an Knagge, Verbindungsmittel) — dort ergibt "instandsetzen" fachlich keinen Sinn.
+  'Abgenutzt':'Fachgerecht instandsetzen',
+  'Abnutzung':'Fachgerecht instandsetzen',
+  'Abstand Geländer zu Gleismitte':'Fachgerecht instandsetzen',
+  'Asphalt rissig':'Fachgerecht instandsetzen',
+  'Ausbrüche/Abplatzungen':'Fachgerecht instandsetzen',
+  'Deckel brüchig':'Fachgerecht instandsetzen',
+  'Fehlt/unleserlich':'Fachgerecht instandsetzen',
+  'Fußleiste Korrosionsschutzschäden/Korrosion':'Fachgerecht instandsetzen',
+  'Fußleiste Verbindungsmittel locker/fehlen':'Fachgerecht instandsetzen',
+  'Fußleiste fehlt/liegt auf':'Fachgerecht instandsetzen',
+  'Leicht verschmutzt':'Fachgerecht instandsetzen',
+  'Risse/Versprödung':'Fachgerecht instandsetzen',
+  'Rissig':'Fachgerecht instandsetzen',
+  'Teilzerstört':'Fachgerecht instandsetzen',
+  'Trittsteine fehlen':'Fachgerecht instandsetzen',
+  'Trittsteine locker':'Fachgerecht instandsetzen',
+  'Trittsteine nicht fachgerecht':'Fachgerecht instandsetzen',
+  'Verformt/beschädigt':'Fachgerecht instandsetzen',
+  'Versatz':'Fachgerecht instandsetzen',
+  'Verschleiß':'Fachgerecht instandsetzen',
+  'Verschmutzung':'Fachgerecht instandsetzen',
+  'Wandung brüchig':'Fachgerecht instandsetzen'
+};
+// Manche Schadensbegriffe tauchen sowohl im Beton- als auch im Mauerwerk-Katalog auf,
+// brauchen dort aber unterschiedliche Reparaturtechnik (Beton=verpressen, Mauerwerk=
+// Steine ergänzen+verfugen) — deshalb hier je nach aktuellem Bauwerkstyp (S.typ) übersteuern.
+var MASSNAHMEN_TYP_OVERRIDE={
+  'Mauerwerk|Senkrecht rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'Mauerwerk|Waagerecht rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'Mauerwerk|Diagonal rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'MauerwerkLQS|Längs rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'MauerwerkLQS|Quer rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'MauerwerkLQS|Schräg rissig':'Steine ergänzen, verpressen und nachverfugen',
+  'Mauerwerk|Hohlstellen':'Einzelne Steine ergänzen und teilweise verfugen',
+  'MauerwerkLQS|Hohlstellen':'Einzelne Steine ergänzen und teilweise verfugen'
+};
+
+// ============================================================
+// [BETA] SCHADENS-KONKRETISIERUNG (aus BauSys-Schadenskatalog)
+// Optionaler zweiter Schritt nach der Schadensart-Wahl: verfeinert die
+// Beschreibung mit einem präziseren Begriff und kann dabei die vorgeschlagene
+// Maßnahme anpassen (z.B. "angerissen" = beobachten, "durchgerissen" =
+// instandsetzen). Wird komplett übersprungen, wenn nicht genutzt — Standard-
+// Schadensart-Text und -Maßnahme bleiben in dem Fall wie bisher.
+// ============================================================
+var GENAUIGKEIT={
+  'Schweißnahtriss':[
+    {term:'angerissen',massnahme:'Rissentwicklung beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'ab/durchgerissen',massnahme:'Schweiß-Anschluß instandsetzen'}
+  ],
+  'Schweißnahtschaden':[
+    {term:'angerissen',massnahme:'Rissentwicklung beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'ab/durchgerissen',massnahme:'Schweiß-Anschluß instandsetzen'}
+  ],
+  'Korrosion':[
+    {term:'Flugrost',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'Roststelle(n)',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'starke Rostbildung',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'durchgerostet',massnahme:'Korrosionsschutz bereichsweise instandsetzen'}
+  ],
+  'Lose/fehlende Verbindungsmittel':[
+    {term:'lose',massnahme:'Niet-/HV-Schrauben-Anschluß instandsetzen'},
+    {term:'fehlt',massnahme:'Niet-/HV-Schrauben-Anschluß instandsetzen'},
+    {term:'abgerostet',massnahme:'Niet-/HV-Schrauben-Anschluß instandsetzen'}
+  ],
+  'Bewuchs/Vegetation':[
+    {term:'störender Bewuchs',massnahme:'Bewuchs entfernen'},
+    {term:'Inspektion durch Bewuchs behindert',massnahme:'Bewuchs entfernen'}
+  ]
+};
+var pendingGenauArt=null;
+
+var curSchadenEntries=[]; // {lineIndex, label} je neu eingefügter Schadensart-Zeile in dieser Erfassung
+
+function appendDesc(text){
+  var ta=g('mDesc');var cur=ta.value.trim();
+  ta.value=cur?cur+'\n- '+text:'- '+text;
+  autoGrowMDesc();
+  ta.scrollIntoView({behavior:'smooth',block:'center'});
+  // S.art hält immer den ursprünglichen Katalog-Begriff, auch wenn "text" hier
+  // bereits durch eine Vorlage (Länge, Bestätigen-Dialog usw.) umgeformt wurde —
+  // deshalb für die Zuordnung S.art verwenden, nicht den übergebenen Text.
+  var newLineIndex=ta.value.split('\n').length-1;
+  var artKey=S.art||text;
+  curSchadenEntries.push({lineIndex:newLineIndex,label:artKey});
+  renderSchadenChips();
+  // Wenn zu dieser Schadensart noch eine Konkretisierung (Genauigkeit) folgt, die
+  // Maßnahmen-Box NICHT sofort mit der generischen Standard-Maßnahme zeigen — die
+  // Konkretisierung liefert gleich danach die passendere, spezifischere Maßnahme. Sonst
+  // wirkt es so, als würde die Maßnahme schon feststehen, bevor die Detaillierung
+  // überhaupt gewählt wurde.
+  if(!GENAUIGKEIT[artKey]){
+    updateMassnahmeBtn(text,artKey);
+  }
+  updateGenauBox(artKey);
+}
+
+// Zeigt jede bisher in diesem Eintrag eingefügte Schadensart als kleinen Chip mit "✕" an,
+// damit eine einzelne falsch gewählte Zeile gezielt entfernt werden kann — ohne die
+// komplette Beschreibung über "🗑 Löschen" leeren zu müssen.
+function renderSchadenChips(){
+  var host=g('schadenChips');
+  if(!host)return;
+  host.innerHTML='';
+  if(!curSchadenEntries.length){host.style.display='none';return;}
+  host.style.display='flex';
+  curSchadenEntries.forEach(function(entry){
+    var chip=document.createElement('div');
+    chip.style.cssText='display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--s2);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px;color:var(--ink);';
+    var lbl=document.createElement('span');lbl.textContent=entry.label;
+    var del=document.createElement('button');del.type='button';del.textContent='✕';
+    del.title='Diese Schadensart-Zeile entfernen';
+    del.style.cssText='border:0;background:#e53935;color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;line-height:20px;padding:0;flex:none;';
+    del.onclick=function(){removeSchadenEntry(entry);};
+    chip.appendChild(lbl);chip.appendChild(del);
+    host.appendChild(chip);
+  });
+}
+
+function removeSchadenEntry(entry){
+  var ta=g('mDesc');
+  var lines=ta.value.split('\n');
+  var idx=entry.lineIndex;
+  if(idx<0||idx>=lines.length)return;
+  lines.splice(idx,1);
+  ta.value=lines.join('\n');
+  autoGrowMDesc();
+  curSchadenEntries=curSchadenEntries.filter(function(e){return e!==entry;});
+  curSchadenEntries.forEach(function(e){if(e.lineIndex>idx)e.lineIndex--;});
+  // Verwaiste Maßnahmen-Zuordnung für diese Schadensart mit entfernen
+  if(massnahmeRows[entry.label]){
+    var row=massnahmeRows[entry.label].row;
+    if(row&&row.parentNode)row.parentNode.removeChild(row);
+    delete massnahmeRows[entry.label];
+    var mb=g('massnahmeBox');
+    if(mb&&!mb.children.length)mb.style.display='none';
+  }
+  Object.keys(massnahmeRows).forEach(function(k){if(massnahmeRows[k].lineIndex>idx)massnahmeRows[k].lineIndex--;});
+  renderSchadenChips();
+  toast('Zeile entfernt');
+}
+
+function updateGenauBox(text){
+  var box=g('genauBox');
+  if(!box)return;
+  var opts=GENAUIGKEIT[text];
+  if(!opts){box.style.display='none';box.innerHTML='';pendingGenauArt=null;return;}
+  pendingGenauArt=text;
+  box.style.display='block';
+  box.innerHTML='<div style="font-size:13px;color:var(--acc);font-weight:800;margin-bottom:7px;">🔍 Genauer beschreiben? (optional)</div>';
+  var row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;';
+  opts.forEach(function(o){
+    var b=document.createElement('button');b.className='sb';b.textContent=o.term;
+    b.style.cssText='font-size:13px;font-weight:700;padding:9px 14px;border:2px solid var(--acc);background:#fff;';
+    b.onclick=function(){
+      var ta=g('mDesc');
+      ta.value=ta.value.trim()+' ('+o.term+')';
+      autoGrowMDesc();
+      if(o.massnahme)renderMassnahmeBox(o.massnahme,text);
+      box.style.display='none';
+    };
+    row.appendChild(b);
+  });
+  var skip=document.createElement('button');skip.textContent='Überspringen';
+  skip.style.cssText='font-size:13px;padding:9px 14px;border:2px solid var(--line);background:transparent;color:var(--soft);border-radius:20px;cursor:pointer;font-family:inherit;';
+  skip.onclick=function(){box.style.display='none';};
+  row.appendChild(skip);
+  box.appendChild(row);
+  // Erscheint direkt nach einer Schadensart-Auswahl, aber die Textfeld-Bestätigung
+  // scrollt gleichzeitig zum Beschreibungsfeld — ohne diesen Extra-Scroll bliebe die Box
+  // dabei oft knapp über dem sichtbaren Bereich und würde leicht übersehen.
+  setTimeout(function(){box.scrollIntoView({behavior:'smooth',block:'center'});},50);
+}
+
+// Begriffe, bei denen NUR die eine passende Maßnahme sinnvoll ist — kein zusätzlicher
+// "Fachgerecht instandsetzen"-Alternativknopf (macht dort fachlich keinen Sinn).
+var MASSNAHME_KEINE_ALTERNATIVE={'Bewuchs/Vegetation':true};
+// Bei diesen Schadensarten sollen IMMER genau diese beiden Maßnahmen zur Auswahl stehen —
+// unabhängig davon, welcher Schweregrad (Konkretisierung) gewählt wurde. Auf Wunsch von
+// Andreas: bei jedem Schweißnahtschaden sollen sowohl die Beobachtungs- als auch die
+// Instandsetzungs-Maßnahme wählbar sein, nicht nur die zum Schweregrad passende.
+var SCHADENSART_FIXED_MASSNAHMEN={
+  'Schweißnahtriss':['Rissentwicklung beobachten, bei nächster Prüfung erneut kontrollieren','Schweiß-Anschluß fachgerecht instandsetzen'],
+  'Schweißnahtschaden':['Rissentwicklung beobachten, bei nächster Prüfung erneut kontrollieren','Schweiß-Anschluß fachgerecht instandsetzen']
+};
+var massnahmeRows={}; // Schadensart -> zugehörige Zeile im Container (für Mehrfachauswahl bei kombinierten Schäden)
+
+function updateMassnahmeBtn(text,artKey){
+  artKey=artKey||text;
+  var m=MASSNAHMEN_TYP_OVERRIDE[S.typ+'|'+text]||MASSNAHMEN[text]||MASSNAHMEN_TYP_OVERRIDE[S.typ+'|'+artKey]||MASSNAHMEN[artKey];
+  renderMassnahmeBox(m,artKey);
+}
+
+function renderMassnahmeBox(m,schadensArt){
+  var box=g('massnahmeBox');
+  var fixedList=SCHADENSART_FIXED_MASSNAHMEN[schadensArt];
+  if(!box||(!m&&!fixedList))return;
+  // Immer nur EIN Vorschlag gleichzeitig sichtbar (wie die "Genauer beschreiben"-Box):
+  // eine evtl. noch offene Empfehlung zu einer vorherigen Schadensart wird hier verworfen,
+  // sobald eine neue Schadensart drankommt — nicht mehr eingefügte Vorschläge bleiben dann
+  // einfach unsichtbar (kein Text wird automatisch nachgetragen).
+  box.innerHTML='';
+  massnahmeRows={};
+  box.style.display='flex';
+  var rowWrap=document.createElement('div');
+  rowWrap.style.cssText='display:flex;flex-direction:column;gap:6px;';
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:13px;color:var(--acc);font-weight:800;';
+  lbl.textContent='🔧 Maßnahme zu „'+schadensArt+'" (optional):';
+  rowWrap.appendChild(lbl);
+  var optionsList=fixedList||[m];
+  optionsList.forEach(function(opt,oi){
+    var btn=document.createElement('button');
+    btn.className='sb';
+    if(oi===0)btn.style.cssText='width:100%;border:2px solid #2e7d32;background:#e8f5e9;color:#2e7d32;border-radius:7px;padding:11px;font-size:13px;font-weight:700;';
+    else btn.style.cssText='width:100%;border:2px solid var(--acc);background:#fff;color:var(--ink);border-radius:7px;padding:11px;font-size:13px;font-weight:700;';
+    btn.textContent='Maßnahme einfügen: „'+opt+'"';
+    btn.onclick=function(){insertMassnahme(opt,schadensArt);};
+    rowWrap.appendChild(btn);
+  });
+  if(!fixedList){
+    var alt='Fachgerecht instandsetzen';
+    if(m!==alt&&!MASSNAHME_KEINE_ALTERNATIVE[schadensArt]){
+      var b2=document.createElement('button');
+      b2.className='sb';
+      b2.style.cssText='width:100%;border:2px solid var(--acc);background:#fff;color:var(--ink);border-radius:7px;padding:11px;font-size:13px;font-weight:700;';
+      b2.textContent='Maßnahme einfügen: „'+alt+'"';
+      b2.onclick=function(){insertMassnahme(alt,schadensArt);};
+      rowWrap.appendChild(b2);
+    }
+  }
+  var skip=document.createElement('button');skip.textContent='Überspringen';
+  skip.style.cssText='width:100%;font-size:13px;padding:9px 14px;border:2px solid var(--line);background:transparent;color:var(--soft);border-radius:20px;cursor:pointer;font-family:inherit;';
+  skip.onclick=function(){box.style.display='none';box.innerHTML='';delete massnahmeRows[schadensArt];};
+  rowWrap.appendChild(skip);
+  box.appendChild(rowWrap);
+  // Zeilenposition der soeben hinzugefügten Schadensart-Zeile merken (aktuell letzte Zeile),
+  // damit die Maßnahme später direkt dahinter eingefügt werden kann statt ans Textende.
+  var lineIndex=g('mDesc').value.split('\n').length-1;
+  massnahmeRows[schadensArt]={row:rowWrap,lineIndex:lineIndex};
+  // Wie bei der "Genauer beschreiben"-Box: aktiv in den sichtbaren Bereich scrollen, sonst
+  // bleibt sie nach dem Scroll zum Beschreibungsfeld leicht oberhalb des Bildschirms hängen.
+  setTimeout(function(){box.scrollIntoView({behavior:'smooth',block:'center'});},50);
+}
+
+function insertMassnahme(text,schadensArt){
+  var ta=g('mDesc');
+  var entry=massnahmeRows[schadensArt];
+  if(entry&&entry.lineIndex!=null){
+    var lines=ta.value.split('\n');
+    var idx=Math.min(entry.lineIndex,lines.length-1);
+    lines[idx]=lines[idx]+' 》》 Maßnahme: '+text+' 《《';
+    ta.value=lines.join('\n');
+  } else {
+    var cur=ta.value.trim();
+    ta.value=cur?cur+' 》》 Maßnahme: '+text+' 《《':'- Maßnahme: '+text+' 《《';
+  }
+  realignMassnahmen();
+  var box=g('massnahmeBox');
+  var row=entry?entry.row:null;
+  if(row&&row.parentNode)box.removeChild(row);
+  delete massnahmeRows[schadensArt];
+  if(!box.children.length)box.style.display='none';
+}
+
+// Richtet alle Zeilen mit "》》 Maßnahme: ..." auf eine gemeinsame Spalte aus (mit Mindestabstand),
+// damit die Maßnahmen bei mehreren Schäden im selben Eintrag sauber untereinanderstehen.
+// Funktioniert zuverlässig, weil #mDesc auf eine Monospace-Schrift gestellt ist.
+function realignMassnahmen(){
+  var ta=g('mDesc');
+  var GAP=3; // Mindestabstand in Zeichen vor dem Pfeil
+  var lines=ta.value.split('\n');
+  var maxLen=0;
+  var parsed=lines.map(function(line){
+    var idx=line.indexOf('》》');
+    if(idx===-1)return null;
+    var content=line.slice(0,idx).replace(/\s+$/,'');
+    var suffix=line.slice(idx+2).replace(/^\s*/,'');
+    if(content.length>maxLen)maxLen=content.length;
+    return {content:content,suffix:suffix};
+  });
+  var target=maxLen+GAP;
+  for(var i=0;i<lines.length;i++){
+    if(parsed[i]){
+      lines[i]=parsed[i].content+' '.repeat(target-parsed[i].content.length)+'》》 '+parsed[i].suffix;
+    }
+  }
+  ta.value=lines.join('\n');
+  autoGrowMDesc();
+}
+
+function resetMassnahmeBox(){
+  var box=g('massnahmeBox');
+  if(box){box.style.display='none';box.innerHTML='';}
+  massnahmeRows={};
+}
+
+// Bringt #mDesc beim Antippen sichtbar in den Vordergrund, ohne die Bildschirmtastatur
+// zu ignorieren: sofort nur ein sanftes "nearest" (kein hartes Zentrieren blind ins Leere),
+// und sobald die Tastatur tatsächlich eingeblendet ist (visualViewport-Resize), nochmal
+// präzise auf den dann wirklich sichtbaren Bereich zentrieren.
+// Lässt #mDesc automatisch mit dem Inhalt mitwachsen (bis zu einer Höchsthöhe, danach
+// scrollt es innerhalb des Feldes weiter) — wird sowohl bei manueller Eingabe (oninput)
+// als auch nach jeder programmatischen Textänderung (Schadensart/Maßnahme/Konkretisierung) aufgerufen.
+function autoGrowMDesc(){
+  var el=g('mDesc');
+  if(!el)return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+
+function scrollMDescIntoView(){
+  var el=g('mDesc');
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(window.visualViewport){
+    var handler=function(){
+      if(document.activeElement===el){
+        el.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+      window.visualViewport.removeEventListener('resize',handler);
+    };
+    window.visualViewport.addEventListener('resize',handler);
+    // Falls kein Resize-Event feuert (z.B. Desktop-Browser ohne Tastatur), nach kurzer
+    // Zeit selbst aufräumen, damit kein alter Handler hängen bleibt.
+    setTimeout(function(){window.visualViewport.removeEventListener('resize',handler);},1500);
+  }
+}
+
+function noc(i,tot){if(i<tot-1){var n=g('vi'+(i+1));if(n){n.focus();return;}}confVorl();}
+
+function confVorl(){
+  if(!S.vorl)return;
+  var t=S.vorl.t;
+  var extra='';
+  S.vorl.i.forEach(function(inp,i){
+    var f=g('vi'+i);
+    var val=f?f.value.trim():'';
+    if(inp.opt){
+      if(val!=='')extra+=inp.suffix.replace('{'+i+'}',val);
+    } else {
+      t=t.replace('{'+i+'}',val||'___');
+    }
+  });
+  t+=extra;
+  appendDesc(t);
+  var ai=g('artInline');if(ai)ai.parentNode.removeChild(ai);
+  var vi=g('vorlInline');if(vi)vi.parentNode.removeChild(vi);
+  g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});
+  S.vorl=null;
+}
+
+// Baut den vollständigen Beschreibungstext aus dem aktuellen Formularzustand (Bauteil-Nr,
+// Lager-Messwerte, Standort-Überschrift, VBS-Zeile) — ausgelagert aus saveS(), damit die
+// "Beide"-Erfassung dieselbe Logik zweimal (einmal je Seite) verwenden kann, ohne dabei
+// schon in dat[] zu schreiben.
+function buildFormDesc(){
+  var desc=g('mDesc').value.trim();
+  var locHeading=buildTextLocationHeading();
+  // Die Ortszeile steht seit Juli 2026 schon während der Erfassung sichtbar im Feld
+  // (siehe openMod()/editS()) — hier vor der weiteren Verarbeitung wieder herauslösen,
+  // damit sie nicht versehentlich eine Bauteil-Nr. angehängt bekommt oder als
+  // Lager-Messwert-Zeile behandelt wird, und am Ende sauber wieder genau einmal voranstellen.
+  if(locHeading){
+    var descLines=desc.split('\n');
+    if(descLines[0]===locHeading){
+      desc=descLines.slice(1).join('\n').trim();
+    }
+  }
+  var nrSuffix=buildBauteilNrSuffix();
+  if(nrSuffix&&desc){
+    desc=desc.split('\n').map(function(line){
+      var arrowIdx=line.indexOf('  》》');
+      if(arrowIdx>=0)return line.slice(0,arrowIdx)+' '+nrSuffix+line.slice(arrowIdx);
+      return line+' '+nrSuffix;
+    }).join('\n');
+  }
+  var mwBox=g('lagerMesswerte');
+  if(mwBox){
+    // Widerlager und Pfeiler: sobald eines der beiden ausgefüllt ist, wird das jeweils
+    // andere komplett aus der gespeicherten Beschreibung weggelassen (nicht nur leer),
+    // da bei einem Lager immer nur eins von beiden zutrifft.
+    var wIdx=-1,pIdx=-1;
+    curLagerMesswertFelder.forEach(function(f,idx){
+      if(f.label==='Widerlager')wIdx=idx;
+      if(f.label==='Pfeiler')pIdx=idx;
+    });
+    var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim():'';
+    var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim():'';
+    var mwLines=curLagerMesswertFelder.filter(function(f,idx){
+      if(idx===wIdx&&!wVal&&pVal)return false;
+      if(idx===pIdx&&!pVal&&wVal)return false;
+      return true;
+    }).map(function(f){
+      var idx=curLagerMesswertFelder.indexOf(f);
+      var el=g('lagerMw'+idx);
+      var val=el?el.value.trim():'';
+      return '- '+f.label+': '+val+(f.unit||'');
+    }).join('\n');
+    desc=desc?mwLines+'\n'+desc:mwLines;
+  }
+  if(locHeading)desc=desc?locHeading+'\n'+desc:locHeading;
+  if(!desc)return '';
+  var vbsTxt=vbsSuffix();
+  if(vbsTxt)desc=desc+'\n- '+vbsTxt;
+  return desc;
+}
+
+// Entfernt die erste Zeile (Standort-/Bauteil-Überschrift) aus einem Beschreibungstext —
+// wird für die "Beide"-Zusammenführung gebraucht, da dort eine gemeinsame Überschrift
+// ("... links und rechts") vor die beiden Abschnitte "Links:"/"Rechts:" gesetzt wird.
+function stripHeadingLine(desc){
+  var lines=(desc||'').split('\n');
+  lines.shift();
+  return lines.join('\n');
+}
+
+// Schritt 1→2 des "Beide"-Ablaufs: der gerade fertig ausgefüllte Links-Teil wird
+// zwischengespeichert, danach wird die Erfassungsmaske komplett zurückgesetzt und auf die
+// Rechts-Seite desselben Bauteils umgeschaltet — der Nutzer erfasst dort ganz normal die
+// (ggf. andersartigen) Schäden für Rechts.
+function startBeidePhase2(desc){
+  S.beideLinksDesc=desc;
+  S.beideLinksFotos=mPendingFotos.slice();
+  S.beideLinksTyp=S.typ;S.beideLinksArt=S.art;
+  S.beidePhase=2;
+  S.key=S.beideBaseKey+'___'+S.beideBaseName+' rechts';
+  S.ugr=S.beideBaseName+' rechts';
+  S.schTitle=S.beideBereich+' / '+S.ugr;
+  openMod();
+  toast('Links gespeichert — jetzt Rechts erfassen');
+}
+
+function saveS(keepOpen){
+  if(S.beidePhase===1){
+    var descL=buildFormDesc();
+    if(!descL){toast('Bitte Schaden wählen und bestätigen');return;}
+    startBeidePhase2(descL);
+    return;
+  }
+  if(S.editIdx>=0&&S.editIsBeide){
+    var rawDesc=g('mDesc').value.trim();
+    if(!rawDesc){toast('Beschreibung darf nicht leer sein');return;}
+    if(!dat[S.key]||!dat[S.key][S.editIdx]){toast('Fehler: Eintrag nicht gefunden');return;}
+    dat[S.key][S.editIdx].d=rawDesc;
+    dat[S.key][S.editIdx].fotos=mPendingFotos.slice();
+    S.editIdx=-1;S.editIsBeide=false;
+    mPendingFotos=[];
+    clearResumeState();
+    renderSch();render();autoSave();
+    toast('Änderung gespeichert ✓');
+    hidePanel('ovMod');
+    if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
+    return;
+  }
+  var desc=buildFormDesc();
+  if(!desc){toast('Bitte Schaden wählen und bestätigen');return;}
+  if(!S.key){toast('Fehler: kein Bauteil gewählt');return;}
+  if(S.beidePhase===2){
+    var bare=buildLocationHeadingBare(S.beideBaseKey);
+    var combinedHeading=(bare?bare+', ':'')+S.beideBaseName+' links und rechts';
+    var combinedDesc=combinedHeading+'\nLinks:\n'+stripHeadingLine(S.beideLinksDesc)+'\nRechts:\n'+stripHeadingLine(desc);
+    var fkLinks=S.beideBaseKey+'___'+S.beideBaseName+' links';
+    var fkRechts=S.beideBaseKey+'___'+S.beideBaseName+' rechts';
+    if(!dat[fkLinks])dat[fkLinks]=[];
+    if(!dat[fkRechts])dat[fkRechts]=[];
+    var loc=S.beideBereich+' / '+S.beideBaseName+' links und rechts';
+    // Zwei unabhängige Kopien (kein geteiltes Objekt) — dieselbe Logik wie die bestehenden
+    // "Übernehmen"-Kopierfunktionen im Rest der App: nach dem Anlegen lässt sich jede Kopie
+    // für sich bearbeiten/löschen, ohne die jeweils andere zu verändern.
+    dat[fkLinks].push({d:combinedDesc,fotos:(S.beideLinksFotos||[]).slice(),loc:loc,t:S.typ,a:S.art});
+    dat[fkRechts].push({d:combinedDesc,fotos:mPendingFotos.slice(),loc:loc,t:S.typ,a:S.art});
+    resetBeideState();
+    mPendingFotos=[];
+    clearResumeState();
+    renderSch();render();autoSave();
+    toast('Gespeichert ✓ (Links + Rechts)');
+    hidePanel('ovMod');
+    if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
+    return;
+  }
+  if(!dat[S.key])dat[S.key]=[];
+  var entry={d:desc,fotos:mPendingFotos.slice(),loc:S.schTitle||'',t:S.typ,a:S.art};
+  if(S.editIdx>=0&&dat[S.key][S.editIdx]){
+    dat[S.key][S.editIdx]=entry;
+    S.editIdx=-1;
+    toast('Änderung gespeichert ✓');
+  } else {
+    dat[S.key].push(entry);
+    toast(keepOpen?'Gespeichert ✓ — nächsten Schaden erfassen':'Gespeichert ✓');
+  }
+  mPendingFotos=[];
+  clearResumeState();
+  renderSch();render();autoSave();
+  if(keepOpen){
+    openMod(); // S.key/S.ugr/S.bauKey/S.schTitle/S.typ bleiben unverändert (openMod() fasst sie nicht an)
+  } else {
+    hidePanel('ovMod');
+    if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
+  }
+}
+
+function saveAndNext(){saveS(true);}
+
+// ============================================================
+// PANEL MANAGEMENT - simple show/hide, no history manipulation
+// ============================================================
+var panelStack=[];
+
+function showPanel(id){
+  g(id).classList.add('open');
+  if(panelStack.indexOf(id)===-1)panelStack.push(id);
+}
+
+function hidePanel(id){
+  g(id).classList.remove('open');
+  panelStack=panelStack.filter(function(p){return p!==id;});
+}
+
+// Back button - only close top panel
+window.addEventListener('popstate',function(){
+  history.pushState(null,null,location.href);
+  // Vollbild-Fotoansicht hat Vorrang: Zurück-Knopf soll nur das Foto schließen, nicht den
+  // dahinterliegenden Bearbeitungsdialog samt allen ungespeicherten Eingaben verwerfen.
+  if(curGalleryOv&&curGalleryOv.parentNode){
+    curGalleryOv.parentNode.removeChild(curGalleryOv);
+    curGalleryOv=null;
+    return;
+  }
+  if(cameraOpen){
+    // Camera returned - restore all saved panels
+    openPanels.forEach(function(id){
+      var el=g(id);if(el)el.classList.add('open');
+    });
+    return;
+  }
+  // Priority order
+  var order=['ovFoto','ovMod','ovSch','ovBauSchaeden','ovBau','ovGesamt'];
+  for(var i=0;i<order.length;i++){
+    var el=g(order[i]);
+    if(el&&el.classList.contains('open')){
+      if(order[i]==='ovGesamt'){zurueckAusGesamtschaeden();return;}
+      el.classList.remove('open');
+      return;
+    }
+  }
+});
+
+// Restore panels when page becomes visible after camera
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&cameraOpen){
+    openPanels.forEach(function(id){
+      var el=g(id);if(el)el.classList.add('open');
+    });
+  }
+});
+
+// Keep 2 states in history so back never exits app
+history.pushState(null,null,location.href);
+history.pushState(null,null,location.href);
+
+// ============================================================
+// HELPERS
+// ============================================================
+function doNew(){
+  if(!confirm('Neues Protokoll? Alle Daten werden gelöscht!'))return;
+  dat={};stbs=[];nxtId=1;fotoCounter=0;bauwerkLocked=false;
+  ['f_str','f_km','f_br','f_pr'].forEach(function(id){var el=g(id);if(el)el.value='';});
+  g('f_dat').value=new Date().toISOString().split('T')[0];
+  try{['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
+  render();setKopfCollapsed(false);toast('Neues Protokoll gestartet');
+}
+
+// ============================================================
+// SICHERUNG / WIEDERHERSTELLUNG (Backup gegen Datenverlust)
+// ============================================================
+var BACKUP_KEYS=['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'];
+
+function doBackup(){
+  autoSave();
+  var payload={meta:{tool:'bruecken-karten-app',exported:new Date().toISOString()},data:{}};
+  BACKUP_KEYS.forEach(function(k){
+    var v=null;
+    try{v=localStorage.getItem(k);}catch(e){}
+    payload.data[k]=v;
+  });
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
+  triggerDownload(blob,'bp_sicherung_'+stamp+'.json');
+}
+
+function handleRestoreFile(file){
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var payload=JSON.parse(reader.result);
+      var data=payload.data||payload;
+      if(!confirm('Aktuelle Daten werden durch die Sicherung ersetzt. Fortfahren?'))return;
+      BACKUP_KEYS.forEach(function(k){
+        if(data[k]!=null){try{localStorage.setItem(k,data[k]);}catch(e){}}
+        else{try{localStorage.removeItem(k);}catch(e){}}
+      });
+      toast('Wiederhergestellt — Seite wird neu geladen ✓');
+      setTimeout(function(){location.reload();},800);
+    }catch(err){
+      toast('Datei konnte nicht gelesen werden');
+    }
+  };
+  reader.readAsText(file);
+  g('restoreInput').value='';
+}
+
+// Return key in description
+document.addEventListener('DOMContentLoaded',function(){
+  g('mDesc').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      var ta=this,pos=ta.selectionStart,val=ta.value,ins='\n- ';
+      ta.value=val.substring(0,pos)+ins+val.substring(pos);
+      ta.selectionStart=ta.selectionEnd=pos+ins.length;
+      autoGrowMDesc();
+    }
+  });
+  ['f_str','f_km','f_br','f_dat','f_pr'].forEach(function(id){
+    var el=g(id);if(el)el.addEventListener('change',autoSave);
+  });
+});
+
+// Dark mode
+(function(){
+  var btn=g('darkBtn');
+  function apply(d){document.body.classList.toggle('dark',d);if(btn)btn.textContent=d?'🌙':'☀️';try{localStorage.setItem('bpd',d?'1':'0');}catch(e){}}
+  try{apply(localStorage.getItem('bpd')==='1');}catch(e){}
+  if(btn)btn.onclick=function(){apply(!document.body.classList.contains('dark'));};
+})();
+
+// Init
+g('f_dat').value=new Date().toISOString().split('T')[0];
+function reconcileWiderlagerData(){
+  // Selbstheilung: falls durch eine frühere Version bereits Einträge unter dem
+  // jeweils "falschen" Schlüsselschema liegen (z.B. durch Umschalten vor diesem Fix),
+  // hier einmalig beim Laden nachträglich zusammenführen, ohne dass Daten verloren gehen.
+  if(!stbs.length)return;
+  if(isDurchgehendW()){
+    var stray=migrateWiderlagerDurchgehend(true); // holt evtl. liegen gebliebene stb*_w1/_w2-Reste in wg_w1/wg_w2
+    if(stray>0)autoSave();
+  } else {
+    var strayBack=0;
+    var allUgr=W_UGR_BETON.concat(W_UGR_MAUERWERK).filter(function(v,i,a){return a.indexOf(v)===i;});
+    ['wg_w1','wg_w2'].forEach(function(wgKey){
+      allUgr.forEach(function(u){
+        if((dat[wgKey+'___'+u]||[]).length)strayBack++;
+      });
+    });
+    if(strayBack>0){
+      migrateWiderlagerDurchgehend(false);
+      autoSave();
+    }
+  }
+}
+
+loadSaved();
+reconcileWiderlagerData();
+render();
+tryResume();
+try{setKopfCollapsed(localStorage.getItem('bp_kopfCollapsed')==='1');}catch(e){}
+
+// Minimal ZIP creator (pure JS, no dependencies)
+function PureZip(){
+  this.files=[];
+}
+PureZip.prototype.file=function(name,data,opts){
+  this.files.push({name:name,data:data,opts:opts||{}});
+};
+PureZip.prototype.generateAsync=function(opts){
+  var self=this;
+  return new Promise(function(resolve){
+    var parts=[];
+    var centralDir=[];
+    var offset=0;
+    self.files.forEach(function(f){
+      var nameBytes=strToBytes(f.name);
+      var dataBytes=f.opts.base64?base64ToBytes(f.data):strToBytes(f.data);
+      var crc=crc32(dataBytes);
+      var localHeader=makeLocalHeader(nameBytes,dataBytes,crc);
+      centralDir.push({nameBytes:nameBytes,dataBytes:dataBytes,crc:crc,offset:offset});
+      parts.push(localHeader);
+      parts.push(dataBytes);
+      offset+=localHeader.length+dataBytes.length;
+    });
+    var cdStart=offset;
+    centralDir.forEach(function(e){
+      parts.push(makeCentralDir(e.nameBytes,e.dataBytes,e.crc,e.offset));
+    });
+    var cdEnd=offset;
+    centralDir.forEach(function(e){
+      cdEnd+=46+e.nameBytes.length;
+    });
+    parts.push(makeEndRecord(centralDir.length,cdEnd-offset,cdStart));
+    resolve(new Blob(parts.map(function(p){return p instanceof Uint8Array?p:new Uint8Array(p);}),{type:'application/zip'}));
+  });
+};
+function strToBytes(s){
+  var bytes=[];
+  for(var i=0;i<s.length;i++){
+    var c=s.codePointAt(i);
+    if(c>0xFFFF)i++; // consumed a surrogate pair
+    if(c<0x80){
+      bytes.push(c);
+    } else if(c<0x800){
+      bytes.push(0xc0|(c>>6), 0x80|(c&0x3f));
+    } else if(c<0x10000){
+      bytes.push(0xe0|(c>>12), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    } else {
+      bytes.push(0xf0|(c>>18), 0x80|((c>>12)&0x3f), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    }
+  }
+  return new Uint8Array(bytes);
+}
+function base64ToBytes(b64){
+  var bin=atob(b64);
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return bytes;
+}
+function crc32(data){
+  var table=crc32.table||(function(){var t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=((c&1)?0xedb88320:0)^(c>>>1);t[n]=c;}return crc32.table=t;})();
+  var crc=0xffffffff;
+  for(var i=0;i<data.length;i++)crc=(crc>>>8)^table[(crc^data[i])&0xff];
+  return (crc^0xffffffff)>>>0;
+}
+function u16(n){return [n&0xff,(n>>8)&0xff];}
+function u32(n){return [n&0xff,(n>>8)&0xff,(n>>16)&0xff,(n>>24)&0xff];}
+function makeLocalHeader(name,data,crc){
+  var h=[0x50,0x4b,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+  h=h.concat(u32(crc));
+  h=h.concat(u32(data.length));
+  h=h.concat(u32(data.length));
+  h=h.concat(u16(name.length));
+  h=h.concat([0x00,0x00]);
+  return new Uint8Array(h.concat(Array.from(name)));
+}
+function makeCentralDir(name,data,crc,offset){
+  var h=[0x50,0x4b,0x01,0x02,0x14,0x00,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+  h=h.concat(u32(crc));
+  h=h.concat(u32(data.length));
+  h=h.concat(u32(data.length));
+  h=h.concat(u16(name.length));
+  h=h.concat([0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]);
+  h=h.concat(u32(offset));
+  return new Uint8Array(h.concat(Array.from(name)));
+}
+function makeEndRecord(count,cdSize,cdOffset){
+  var h=[0x50,0x4b,0x05,0x06,0x00,0x00,0x00,0x00];
+  h=h.concat(u16(count));
+  h=h.concat(u16(count));
+  h=h.concat(u32(cdSize));
+  h=h.concat(u32(cdOffset));
+  h=h.concat([0x00,0x00]);
+  return new Uint8Array(h);
+}
+
+// Download all photos as ZIP
+function downloadFotos(){
+  var zip=new PureZip();
+  var count=0;
+  function processFotoBlist(blist){
+    blist.forEach(function(b){
+      b.u.forEach(function(u){
+        (dat[b.k+'___'+u]||[]).forEach(function(it){
+          (it.fotos||[]).forEach(function(foto){
+            count++;
+            var ext=foto.data.indexOf('jpeg')>-1||foto.data.indexOf('jpg')>-1?'jpg':'png';
+            var b64=foto.data.split(',')[1];
+            zip.file('Foto_'+(foto.nr||count)+'.'+ext, b64, {base64:true});
+          });
+        });
+      });
+    });
+  }
+  if(isDurchgehendW()){
+    processFotoBlist([{k:'wg_w1',u:getUgr('wg_w1')},{k:'wg_w2',u:getUgr('wg_w2')}]);
+  }
+  stbs.forEach(function(stb){
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      var extraU=['Geländer links','Geländer rechts'];
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      blist.push({k:ok,u:getUgr(ok).concat(extraU)});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:PF_UGR});
+    }
+    processFotoBlist(blist);
+  });
+  if(!count){toast('Keine Fotos vorhanden');return;}
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    triggerDownload(blob,'Fotos_Pruefprotokoll.zip',count+' Fotos heruntergeladen ✓');
+  });
+}
+
+
+
+function xmlEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function docxPara(text,style){
+  return '<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>':'')+'<w:r><w:t xml:space="preserve">'+xmlEsc(text)+'</w:t></w:r></w:p>';
+}
+function docxImagePara(rId,widthPx,heightPx,caption){
+  var maxCx=5029200; // ~5.5in max width so photos fit the printed page
+  var cx=Math.round((widthPx||900)*9525),cy=Math.round((heightPx||600)*9525);
+  if(cx>maxCx){var sc=maxCx/cx;cx=maxCx;cy=Math.round(cy*sc);}
+  var picId=rId.replace('rId','');
+  var drawing='<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'+
+    '<wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+    '<wp:docPr id="'+picId+'" name="Bild'+picId+'"/>'+
+    '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Bild'+picId+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="'+rId+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+    '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  return drawing+(caption?docxPara(caption,null):'');
+}
+
+function doExport(includeImages){
+  if(includeImages===undefined)includeImages=true;
+  var str=g('f_str').value||'—',km=g('f_km').value||'—',br=g('f_br').value||'—',dt=g('f_dat').value||'—',pr=g('f_pr').value||'—';
+  var missing=[];
+  if(!g('f_str').value)missing.push('Strecke');
+  if(!g('f_km').value)missing.push('Kilometer');
+  if(!g('f_br').value)missing.push('Brückenname');
+  if(!g('f_pr').value)missing.push('Prüfer');
+  if(missing.length&&!confirm('Folgende Angaben fehlen noch: '+missing.join(', ')+'.\nTrotzdem exportieren?'))return;
+
+  var body='';
+  body+=docxPara('Brückenprüfungsprotokoll','Title');
+  body+=docxPara('Strecke: '+str+'    Kilometer: '+km,null);
+  body+=docxPara('Brücke: '+br,null);
+  body+=docxPara('Datum: '+dt+'    Prüfer: '+pr,null);
+
+  var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],mediaFiles=[],relCounter=1;
+
+  function exportBauteilBlock(b){
+    var allU=b.u.slice();
+    if(b.extra){
+      allU.push('Geländer links','Geländer rechts');
+      LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){allU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
+    }
+    var hasItems=false;
+    allU.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
+    if(!hasItems)return;
+    body+=docxPara(b.l,'Heading2');
+    allU.forEach(function(u){
+      var items=dat[b.k+'___'+u]||[];
+      if(!items.length)return;
+      body+=docxPara(u,'Heading3');
+      items.forEach(function(it){
+        var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+        lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
+        if(includeImages){
+          (it.fotos||[]).forEach(function(foto){
+            relCounter++;
+            var rId='rId'+relCounter;
+            var mediaName='image'+relCounter+'.jpg';
+            var b64=(foto.data.split(',')[1])||'';
+            mediaFiles.push({name:mediaName,base64:b64});
+            rels.push({id:rId,target:'media/'+mediaName,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
+            body+=docxImagePara(rId,foto.w,foto.h,foto.loc||('Foto '+(foto.nr||'')));
+          });
+        } else if((it.fotos||[]).length){
+          body+=docxPara('📷 '+it.fotos.length+' Foto(s) vorhanden (nicht im Dokument, siehe separater Bilder-Export)',null);
+        }
+      });
+    });
+  }
+
+  if(isDurchgehendW()){
+    body+=docxPara('Widerlager (durchgehend, für alle STB)','Heading1');
+    exportBauteilBlock({k:'wg_w1',l:'Widerlager 1',u:getUgr('wg_w1')});
+    exportBauteilBlock({k:'wg_w2',l:'Widerlager 2',u:getUgr('wg_w2')});
+  }
+
+  stbs.forEach(function(stb,si){
+    body+=docxPara('STB '+(si+1),'Heading1');
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      blist.push({k:ok,l:'Öffnung '+i,u:getUgr(ok),extra:true});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
+    }
+    if(!isDurchgehendW())blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
+
+    blist.forEach(function(b){exportBauteilBlock(b);});
+  });
+
+  body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
+
+  var documentXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '+
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<w:body>'+body+'</w:body></w:document>';
+
+  var contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="jpg" ContentType="image/jpeg"/>'+
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+    '</Types>';
+
+  var rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+    '</Relationships>';
+
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="'+r.type+'" Target="'+r.target+'"/>';}).join('')+
+    '</Relationships>';
+
+  var stylesXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="444444"/></w:rPr></w:style>'+
+    '</w:styles>';
+
+  var zip=new PureZip();
+  zip.file('[Content_Types].xml',contentTypes);
+  zip.file('_rels/.rels',rootRels);
+  zip.file('word/document.xml',documentXml);
+  zip.file('word/styles.xml',stylesXml);
+  zip.file('word/_rels/document.xml.rels',docRels);
+  mediaFiles.forEach(function(m){zip.file('word/media/'+m.name,m.base64,{base64:true});});
+
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var docxBlob=new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    var filename='Pruefprotokoll_'+str+'_'+km+'_'+dt+(includeImages?'':'_ohneBilder')+'.docx';
+    var file;
+    try{ file=new File([docxBlob],filename,{type:docxBlob.type}); }catch(e){ file=null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).then(function(){
+        toast('Protokoll geteilt ✓');
+      }).catch(function(err){
+        // User cancelled the share sheet, or it failed — fall back to a normal download
+        if(err && err.name==='AbortError')return;
+        triggerDownload(docxBlob,filename,'Protokoll wird heruntergeladen ✓');
+      });
+    } else {
+      triggerDownload(docxBlob,filename,'Protokoll wird heruntergeladen ✓');
+    }
+  }).catch(function(){
+    toast('Export fehlgeschlagen — bitte erneut versuchen');
+  });
+}
+function triggerDownload(blob,filename,successMsg){
+  // data:-URI statt blob:-URI verwenden — funktioniert zuverlässig auch dann, wenn die
+  // App als lokale Datei (file://) geöffnet wurde, wo Chrome blob:-Downloads aus
+  // Sicherheitsgründen sonst kommentarlos blockiert.
+  var reader=new FileReader();
+  reader.onload=function(){
+    var a=document.createElement('a');
+    a.href=reader.result;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast(successMsg||'Herunterladen gestartet ✓');
+  };
+  reader.onerror=function(){
+    toast('Download fehlgeschlagen — bitte erneut versuchen');
+  };
+  reader.readAsDataURL(blob);
+}
+
+// ============================================================
+// SUCHE
+// ============================================================
+function buildSearchIndex(){
+  var idx=[];
+  stbs.forEach(function(stb,si){
+    var lbl='STB '+(si+1);
+    var bases=[{k:'stb'+stb.id+'_w1',l:'Widerlager 1 (W1)',ugrFn:function(k){return getUgr(k);}},
+               {k:'stb'+stb.id+'_w2',l:'Widerlager 2 (W2)',ugrFn:function(k){return getUgr(k);}}];
+    (function(sid,lbl){
+      idx.push({txt:lbl+' Widerlager 1 (W1)',fn:function(){openBau('stb'+sid+'_w1','W1',getUgr('stb'+sid+'_w1'));}});
+      idx.push({txt:lbl+' Widerlager 2 (W2)',fn:function(){openBau('stb'+sid+'_w2','W2',getUgr('stb'+sid+'_w2'));}});
+    })(stb.id,lbl);
+    for(var i=1;i<=stb.oeff;i++){
+      (function(sid,lbl,i){
+        var key='stb'+sid+'_oe'+i;
+        idx.push({txt:lbl+' Öffnung '+i,fn:function(){openBau(key,'Öffnung '+i,getUgr(key));}});
+        bases.push({k:key,l:'Öffnung '+i});
+      })(stb.id,lbl,i);
+      if(i<stb.oeff){
+        (function(sid,lbl,i){
+          var key='stb'+sid+'_pf'+i;
+          idx.push({txt:lbl+' Pfeiler '+i,fn:function(){openBau(key,'Pf '+i,PF_UGR);}});
+          bases.push({k:key,l:'Pf '+i});
+        })(stb.id,lbl,i);
+      }
+    }
+    // Schadenstexte durchsuchbar machen
+    bases.forEach(function(bse){
+      Object.keys(dat).forEach(function(dk){
+        if(dk.indexOf(bse.k+'___')!==0)return;
+        var ugrName=dk.substring((bse.k+'___').length);
+        (dat[dk]||[]).forEach(function(it){
+          if(!it||!it.d)return;
+          var firstLine=(it.d.split('\n')[0]||'').replace(/^-\s*/,'');
+          idx.push({
+            txt:lbl+' '+bse.l+' / '+ugrName+': '+firstLine,
+            fn:(function(k,u,l){return function(){openSch(k,u,lbl+' '+l);};})(dk,ugrName,bse.l)
+          });
+        });
+      });
+    });
+  });
+  return idx;
+}
+(function(){
+  var inp=g('bauSearch'),res=g('bauSearchResults');
+  if(!inp||!res)return;
+  inp.addEventListener('input',function(){
+    var q=inp.value.trim().toLowerCase().replace(/\s+/g,'');
+    res.innerHTML='';
+    if(!q){res.style.display='none';return;}
+    var matches=buildSearchIndex().filter(function(e){
+      return e.txt.toLowerCase().replace(/\s+/g,'').indexOf(q)>-1;
+    }).slice(0,8);
+    if(!matches.length){res.style.display='none';return;}
+    matches.forEach(function(m){
+      var b=document.createElement('div');
+      b.textContent=m.txt;
+      b.style.cssText='padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--ink);';
+      b.onclick=function(){m.fn();inp.value='';res.style.display='none';};
+      res.appendChild(b);
+    });
+    res.style.display='block';
+  });
+  inp.addEventListener('blur',function(){setTimeout(function(){res.style.display='none';},150);});
+})();
+
+// DARK MODE
+(function(){
+  var btn=document.getElementById('darkBtn');
+  function apply(d){document.body.classList.toggle('dark',d);btn.textContent=d?'🌙':'☀️';try{localStorage.setItem('bpd',d?'1':'0');}catch(e){}}
+  try{apply(localStorage.getItem('bpd')==='1');}catch(e){}
+  btn.onclick=function(){apply(!document.body.classList.contains('dark'));};
+})();
+
+// NEW PROTOCOL — see doNew() in HELPERS section above
+
+// Offline-Fähigkeit: Service Worker registrieren (nur wirksam bei Aufruf über
+// http/https, z.B. GitHub Pages — bei lokal geöffneter Datei ohne Effekt).
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+</script>
+</body>
+</html>
