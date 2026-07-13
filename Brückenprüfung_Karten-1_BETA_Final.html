@@ -1454,6 +1454,11 @@ function renderSch(){
   }
   items.forEach(function(it,i){
     var div=document.createElement('div');div.className='sitem';
+    // Laufende Nummer dieses Schadens innerhalb der Liste
+    var numBadge=document.createElement('div');
+    numBadge.style.cssText='display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:2px 9px;margin-bottom:6px;';
+    numBadge.textContent='Nr. '+(i+1);
+    div.appendChild(numBadge);
     // Location
     if(it.loc){
       var lh=document.createElement('div');
@@ -1882,6 +1887,9 @@ function collectAllSchaeden(){
       });
     });
   });
+  // Fortlaufende Nummer über das gesamte Bauwerk (für Gesamtschäden-Übersicht und
+  // Referenzierung, z.B. im Bericht) — Reihenfolge entspricht der Anzeige.
+  out.forEach(function(entry,gi){entry.num=gi+1;});
   return out;
 }
 
@@ -1964,6 +1972,10 @@ function openGesamtschaeden(){
 
     grp.entries.forEach(function(entry){
       var div=document.createElement('div');div.className='sitem';
+      var numBadge=document.createElement('div');
+      numBadge.style.cssText='display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:2px 9px;margin-bottom:6px;';
+      numBadge.textContent='Nr. '+entry.num;
+      div.appendChild(numBadge);
       var lh=document.createElement('div');
       lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
       lh.textContent=entry.ugr;div.appendChild(lh);
@@ -3532,7 +3544,13 @@ function doBackup(){
     payload.photos=photoMap;
     var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
     var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
-    triggerDownload(blob,'bp_sicherung_'+stamp+'.json');
+    // Strecke/Kilometer wie beim docx-Export mit in den Dateinamen aufnehmen, damit
+    // Sicherungen auch anhand des Dateinamens dem richtigen Bauwerk zuzuordnen sind.
+    var sStr=g('f_str')?(g('f_str').value||'').trim():'';
+    var sKm=g('f_km')?(g('f_km').value||'').trim():'';
+    function sani(s){return s.replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
+    var locPart=(sStr||sKm)?('_'+sani(sStr||'ohneStrecke')+'_'+sani(sKm||'ohneKm')):'';
+    triggerDownload(blob,'bp_sicherung'+locPart+'_'+stamp+'.json');
   }).catch(function(){
     toast('⚠️ Fotos konnten nicht in die Sicherung aufgenommen werden!');
   });
