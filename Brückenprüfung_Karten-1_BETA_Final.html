@@ -2789,6 +2789,9 @@ function openMod(){
 // ============================================================
 var liveCamStream=null;
 var liveCamPhotoCount=0;
+var liveCamTrack=null;
+var liveCamZoom=1;
+var liveCamZoomCaps=null; // {min,max,step} falls die Kamera echten Zoom unterstützt, sonst null (Digital-Zoom-Rückfall)
 
 function openLiveCamera(){
   if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
@@ -2799,6 +2802,13 @@ function openLiveCamera(){
   navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(stream){
     liveCamStream=stream;
     liveCamPhotoCount=0;
+    liveCamZoom=1;
+    liveCamTrack=stream.getVideoTracks()[0]||null;
+    liveCamZoomCaps=null;
+    try{
+      var caps=liveCamTrack&&liveCamTrack.getCapabilities?liveCamTrack.getCapabilities():null;
+      if(caps&&caps.zoom)liveCamZoomCaps=caps.zoom; // {min,max,step} — echter Kamera-Zoom verfügbar
+    }catch(e){}
     buildLiveCamOverlay(stream);
   }).catch(function(err){
     toast('⚠️ Kamera konnte nicht geöffnet werden (Berechtigung erlaubt?) — bitte "Foto aufnehmen" nutzen');
@@ -2811,12 +2821,17 @@ function buildLiveCamOverlay(stream){
   ov.id='liveCamOverlay';
   ov.style.cssText='position:fixed;inset:0;background:#000;z-index:1100;display:flex;flex-direction:column;touch-action:none;';
 
+  var videoWrap=document.createElement('div');
+  videoWrap.id='liveCamVideoWrap';
+  videoWrap.style.cssText='flex:1;min-height:0;overflow:hidden;position:relative;background:#000;touch-action:none;';
   var video=document.createElement('video');
   video.id='liveCamVideo';
   video.autoplay=true;video.playsInline=true;video.muted=true;
-  video.style.cssText='flex:1;width:100%;min-height:0;object-fit:cover;background:#000;';
+  video.style.cssText='width:100%;height:100%;object-fit:cover;background:#000;transform-origin:center center;';
   try{video.srcObject=stream;}catch(e){}
-  ov.appendChild(video);
+  videoWrap.appendChild(video);
+  ov.appendChild(videoWrap);
+  attachPinchZoom(videoWrap);
 
   var bar=document.createElement('div');
   bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(0,0,0,.6);flex-shrink:0;';
@@ -2832,6 +2847,23 @@ function buildLiveCamOverlay(stream){
   bar.appendChild(counter);bar.appendChild(doneBtn);
   ov.appendChild(bar);
 
+  var zoomBar=document.createElement('div');
+  zoomBar.style.cssText='display:flex;align-items:center;justify-content:center;gap:18px;padding:6px 0;background:rgba(0,0,0,.6);flex-shrink:0;';
+  var zoomMinus=document.createElement('button');
+  zoomMinus.type='button';zoomMinus.textContent='－';
+  zoomMinus.style.cssText='width:38px;height:38px;border-radius:50%;border:1.5px solid #fff;background:rgba(255,255,255,.15);color:#fff;font-size:18px;font-weight:700;cursor:pointer;';
+  zoomMinus.onclick=function(){changeLiveCamZoom(-1);};
+  var zoomLabel=document.createElement('div');
+  zoomLabel.id='liveCamZoomLabel';
+  zoomLabel.style.cssText='color:#fff;font-size:13px;font-weight:700;min-width:44px;text-align:center;';
+  zoomLabel.textContent='1.0x';
+  var zoomPlus=document.createElement('button');
+  zoomPlus.type='button';zoomPlus.textContent='＋';
+  zoomPlus.style.cssText='width:38px;height:38px;border-radius:50%;border:1.5px solid #fff;background:rgba(255,255,255,.15);color:#fff;font-size:18px;font-weight:700;cursor:pointer;';
+  zoomPlus.onclick=function(){changeLiveCamZoom(1);};
+  zoomBar.appendChild(zoomMinus);zoomBar.appendChild(zoomLabel);zoomBar.appendChild(zoomPlus);
+  ov.appendChild(zoomBar);
+
   var shutterWrap=document.createElement('div');
   shutterWrap.style.cssText='display:flex;justify-content:center;align-items:center;padding:18px 0 28px;background:rgba(0,0,0,.6);flex-shrink:0;';
   var shutter=document.createElement('button');
@@ -2846,6 +2878,66 @@ function buildLiveCamOverlay(stream){
   document.body.appendChild(ov);
 }
 
+function changeLiveCamZoom(dir){
+  var min=1,max=3,step=0.25;
+  if(liveCamZoomCaps){min=liveCamZoomCaps.min;max=liveCamZoomCaps.max;step=liveCamZoomCaps.step||((max-min)/8||0.1);}
+  liveCamZoom=Math.min(max,Math.max(min,liveCamZoom+dir*step));
+  applyLiveCamZoom();
+}
+
+// Zoom per Zwei-Finger-Geste (Auseinanderziehen = rein, Zusammenziehen = raus) — läuft
+// parallel zu den +/- Knöpfen und nutzt dieselbe applyLiveCamZoom()-Logik, betrifft also
+// automatisch auch die Foto-Aufnahme (Crop bei Digital-Zoom bzw. echter Kamera-Zoom).
+var liveCamPinchStartDist=null;
+var liveCamPinchStartZoom=1;
+
+function touchDist(touches){
+  var dx=touches[0].clientX-touches[1].clientX;
+  var dy=touches[0].clientY-touches[1].clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+function attachPinchZoom(el){
+  el.addEventListener('touchstart',function(e){
+    if(e.touches.length===2){
+      liveCamPinchStartDist=touchDist(e.touches);
+      liveCamPinchStartZoom=liveCamZoom;
+    }
+  },{passive:true});
+  el.addEventListener('touchmove',function(e){
+    if(e.touches.length===2&&liveCamPinchStartDist){
+      e.preventDefault();
+      var min=1,max=3;
+      if(liveCamZoomCaps){min=liveCamZoomCaps.min;max=liveCamZoomCaps.max;}
+      var dist=touchDist(e.touches);
+      var factor=dist/liveCamPinchStartDist;
+      liveCamZoom=Math.min(max,Math.max(min,liveCamPinchStartZoom*factor));
+      applyLiveCamZoom();
+    }
+  },{passive:false});
+  el.addEventListener('touchend',function(e){
+    if(e.touches.length<2)liveCamPinchStartDist=null;
+  });
+  el.addEventListener('touchcancel',function(){liveCamPinchStartDist=null;});
+}
+
+function applyLiveCamZoom(){
+  var label=g('liveCamZoomLabel');
+  if(label)label.textContent=liveCamZoom.toFixed(2).replace(/0$/,'').replace(/\.$/,'')+'x';
+  var video=g('liveCamVideo');
+  if(liveCamZoomCaps&&liveCamTrack){
+    // Echter Kamera-Zoom (optisch/hybrid) — das Videobild kommt schon gezoomt an,
+    // deshalb hier KEINE zusätzliche CSS-Skalierung.
+    try{liveCamTrack.applyConstraints({advanced:[{zoom:liveCamZoom}]});}catch(e){}
+    if(video)video.style.transform='none';
+  } else {
+    // Digital-Zoom-Rückfall, falls die Kamera keinen echten Zoom meldet: Vorschau optisch
+    // vergrößern (CSS), beim Aufnehmen wird passend dazu die Bildmitte ausgeschnitten
+    // (siehe captureLiveCamPhoto), damit das Foto genau dem Vorschaubild entspricht.
+    if(video)video.style.transform='scale('+liveCamZoom+')';
+  }
+}
+
 function captureLiveCamPhoto(){
   if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');closeLiveCamera();return;}
   var video=g('liveCamVideo');
@@ -2854,11 +2946,16 @@ function captureLiveCamPhoto(){
   var nr=fotoCounter;
   var label=fotoLabelFromKey(S.key);
   try{
+    var srcW=video.videoWidth,srcH=video.videoHeight,sx=0,sy=0,cropW=srcW,cropH=srcH;
+    if(!liveCamZoomCaps&&liveCamZoom>1){
+      cropW=srcW/liveCamZoom;cropH=srcH/liveCamZoom;
+      sx=(srcW-cropW)/2;sy=(srcH-cropH)/2;
+    }
     var cv=document.createElement('canvas');
-    cv.width=Math.min(video.videoWidth,1000);
-    cv.height=Math.round(video.videoHeight*(cv.width/video.videoWidth));
+    cv.width=Math.min(cropW,1000);
+    cv.height=Math.round(cropH*(cv.width/cropW));
     var ctx=cv.getContext('2d');
-    ctx.drawImage(video,0,0,cv.width,cv.height);
+    ctx.drawImage(video,sx,sy,cropW,cropH,0,0,cv.width,cv.height);
     var fs=Math.max(16,Math.round(cv.width/35));
     ctx.font='bold '+fs+'px Arial';ctx.textBaseline='bottom';
     var tw=ctx.measureText(label).width,pad=8;
@@ -2889,6 +2986,7 @@ function closeLiveCamera(){
     liveCamStream.getTracks().forEach(function(t){try{t.stop();}catch(e){}});
     liveCamStream=null;
   }
+  liveCamTrack=null;liveCamZoom=1;liveCamZoomCaps=null;liveCamPinchStartDist=null;
   var ov=g('liveCamOverlay');
   if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
   renderMFotoLeiste();
