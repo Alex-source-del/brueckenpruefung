@@ -259,8 +259,8 @@ body.dark #mDesc{color:var(--ink);}
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
       <label style="font-size:12px;color:var(--soft);font-weight:600;">📷 Foto</label>
       <div style="display:flex;gap:6px;margin-top:5px;">
-        <div onclick="takeMFoto()" style="flex:1;border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;">📷 Foto aufnehmen</div>
-        <button type="button" id="mCamModeBtn" onclick="toggleCameraMode()" style="flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;font-family:inherit;">🎥 Kameramodus</button>
+        <div id="mTakeFotoBtn" onclick="takeMFoto()" style="flex:1;border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;">📷 Foto aufnehmen</div>
+        <button type="button" id="mCamModeBtn" onclick="openLiveCamera()" style="flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;font-family:inherit;">🎥 Live-Kamera (mehrere Fotos)</button>
       </div>
       <input type="file" id="mFoto" accept="image/*" capture="environment" style="display:none">
       <div id="mFotoLeiste" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
@@ -1465,12 +1465,19 @@ function renderSch(){
     el.innerHTML='<p style="color:var(--faint);font-size:13px;font-style:italic;padding:6px 0;">Keine Schäden</p>';
     return;
   }
+  // Gleiche fortlaufende Nummer wie in der Gesamtschäden-Übersicht (nicht neu ab 1 pro
+  // Bauteil-Liste) — damit "Schaden Nr.: X" überall in der App dieselbe Zahl bedeutet.
+  var baseKeyForNr=(S.key||'').split('___')[0];
+  var nrLookup={};
+  collectAllSchaeden().forEach(function(e){
+    if(e.key===baseKeyForNr&&e.ugr===S.ugr)nrLookup[e.idx]=e.num;
+  });
   items.forEach(function(it,i){
     var div=document.createElement('div');div.className='sitem';
-    // Laufende Nummer dieses Schadens innerhalb der Liste
+    // Laufende Nummer dieses Schadens (Bauwerk-weit, siehe collectAllSchaeden)
     var numBadge=document.createElement('div');
     numBadge.style.cssText='display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:2px 9px;margin-bottom:6px;';
-    numBadge.textContent='Schaden Nr.: '+(i+1);
+    numBadge.textContent='Schaden Nr.: '+(nrLookup[i]!=null?nrLookup[i]:(i+1));
     div.appendChild(numBadge);
     // Location
     if(it.loc){
@@ -2230,7 +2237,6 @@ function editS(i){
   // freien Bearbeitung anbieten, keine automatische Zerlegung in Chips, keine
   // Bauteil-Nr-Felder (auch wenn das Bauteil an sich nummerierbar wäre).
   S.editIsBeide=/ links und rechts$/.test(it.loc||'');
-  mCameraModeOn=false;renderCamModeBtn();
   updateSchadenNrBadge();
   if(S.editIsBeide){
     var nrRowB=g('mBauteilNrRow'),refRowB=g('mBauteilRefRow');
@@ -2581,7 +2587,6 @@ document.addEventListener('DOMContentLoaded',function(){
         URL.revokeObjectURL(objUrl);
         renderMFotoLeiste();
         toast('Foto '+nr+' hinzugefügt ✓');
-        if(mCameraModeOn)setTimeout(function(){if(mCameraModeOn)takeMFoto();},400);
       },0);
     };
     img.onerror=function(){
@@ -2726,19 +2731,26 @@ function renderLagerMesswerte(){
 
 // Zeigt die laufende Schaden-Nr. (innerhalb der aktuellen Bauteil/Untergruppen-Liste)
 // oben im "Schaden erfassen"-Modal an — bei neuen Schäden die nächste freie Nummer,
-// beim Bearbeiten die tatsächliche Position des Eintrags. Rein informativ.
+// beim Bearbeiten die tatsächliche Position des Eintrags. Bauwerk-weit fortlaufend, exakt
+// dieselbe Nummer wie in der Bauteil-Liste und in der Gesamtschäden-Übersicht (siehe
+// collectAllSchaeden) — nicht mehr lokal pro Bauteil neu ab 1.
 function updateSchadenNrBadge(){
   var el=g('mSchadenNr');if(!el)return;
-  var items=(S.key&&dat[S.key])||[];
-  var nr=S.editIdx>=0?S.editIdx+1:items.length+1;
-  el.textContent='Schaden Nr.: '+nr;
+  if(S.editIdx>=0){
+    var baseKeyForNr=(S.key||'').split('___')[0];
+    var found=collectAllSchaeden().filter(function(e){
+      return e.key===baseKeyForNr&&e.ugr===S.ugr&&e.idx===S.editIdx;
+    })[0];
+    el.textContent='Schaden Nr.: '+(found?found.num:(S.editIdx+1));
+  } else {
+    el.textContent='Schaden Nr.: '+(collectAllSchaeden().length+1);
+  }
 }
 
 function openMod(){
   S.editIdx=-1;
   S.editIsBeide=false;
   S.art='';S.vorl=null;
-  mCameraModeOn=false;renderCamModeBtn();
   updateSchadenNrBadge();
   g('mDesc').value='';
   curSchadenEntries=[];
@@ -2766,24 +2778,120 @@ function openMod(){
   showPanel('ovMod');
 }
 
-// Kameramodus: bleibt nach jedem bestätigten Foto aktiv und öffnet automatisch die
-// Kamera für das nächste, statt dass man nach jedem einzelnen Foto erneut auf
-// "Foto aufnehmen" tippen muss. Explizit über "Kameramodus beenden" wieder ausschaltbar.
-var mCameraModeOn=false;
-function toggleCameraMode(){
-  mCameraModeOn=!mCameraModeOn;
-  renderCamModeBtn();
-  if(mCameraModeOn)takeMFoto();
-}
-function renderCamModeBtn(){
-  var b=g('mCamModeBtn');if(!b)return;
-  if(mCameraModeOn){
-    b.textContent='⏹ Kameramodus beenden';
-    b.style.cssText='flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--acc);color:#fff;font-size:13px;font-weight:700;font-family:inherit;';
-  } else {
-    b.textContent='🎥 Kameramodus';
-    b.style.cssText='flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;font-family:inherit;';
+// ============================================================
+// LIVE-KAMERA: Kamerabild direkt in der Seite (statt Wechsel zur separaten
+// Android-Kamera-App). Grund: nach jedem Foto über die App-Kamera verlässt die Seite
+// kurz den Vordergrund — Android/Chrome erlaubt aus Sicherheitsgründen KEIN
+// automatisches Wiederöffnen ohne echtes Antippen, das "Kameramodus bleibt an"-Gefühl
+// ließ sich darüber also nicht zuverlässig umsetzen (siehe Verlauf mit Andreas, Juli 2026).
+// Mit der Live-Kamera bleibt man auf einem Bildschirm und braucht nur noch EIN Antippen
+// des Auslösers pro Foto — kein App-Wechsel, kein Sprung mehr.
+// ============================================================
+var liveCamStream=null;
+var liveCamPhotoCount=0;
+
+function openLiveCamera(){
+  if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    toast('⚠️ Live-Kamera wird hier nicht unterstützt — bitte "Foto aufnehmen" nutzen');
+    return;
   }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(stream){
+    liveCamStream=stream;
+    liveCamPhotoCount=0;
+    buildLiveCamOverlay(stream);
+  }).catch(function(err){
+    toast('⚠️ Kamera konnte nicht geöffnet werden (Berechtigung erlaubt?) — bitte "Foto aufnehmen" nutzen');
+  });
+}
+
+function buildLiveCamOverlay(stream){
+  var old=g('liveCamOverlay');if(old)old.parentNode.removeChild(old);
+  var ov=document.createElement('div');
+  ov.id='liveCamOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:#000;z-index:1100;display:flex;flex-direction:column;touch-action:none;';
+
+  var video=document.createElement('video');
+  video.id='liveCamVideo';
+  video.autoplay=true;video.playsInline=true;video.muted=true;
+  video.style.cssText='flex:1;width:100%;min-height:0;object-fit:cover;background:#000;';
+  try{video.srcObject=stream;}catch(e){}
+  ov.appendChild(video);
+
+  var bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(0,0,0,.6);flex-shrink:0;';
+  var counter=document.createElement('div');
+  counter.id='liveCamCounter';
+  counter.style.cssText='color:#fff;font-weight:700;font-size:14px;';
+  counter.textContent='0 Foto(s) in dieser Runde';
+  var doneBtn=document.createElement('button');
+  doneBtn.type='button';
+  doneBtn.textContent='✓ Fertig';
+  doneBtn.style.cssText='border:0;border-radius:20px;padding:10px 18px;font-size:14px;font-weight:700;background:var(--acc);color:#fff;font-family:inherit;cursor:pointer;';
+  doneBtn.onclick=closeLiveCamera;
+  bar.appendChild(counter);bar.appendChild(doneBtn);
+  ov.appendChild(bar);
+
+  var shutterWrap=document.createElement('div');
+  shutterWrap.style.cssText='display:flex;justify-content:center;align-items:center;padding:18px 0 28px;background:rgba(0,0,0,.6);flex-shrink:0;';
+  var shutter=document.createElement('button');
+  shutter.type='button';
+  shutter.id='liveCamShutter';
+  shutter.setAttribute('aria-label','Foto aufnehmen');
+  shutter.style.cssText='width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:var(--acc);cursor:pointer;';
+  shutter.onclick=captureLiveCamPhoto;
+  shutterWrap.appendChild(shutter);
+  ov.appendChild(shutterWrap);
+
+  document.body.appendChild(ov);
+}
+
+function captureLiveCamPhoto(){
+  if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');closeLiveCamera();return;}
+  var video=g('liveCamVideo');
+  if(!video||!video.videoWidth){toast('Kamerabild noch nicht bereit — kurz warten');return;}
+  fotoCounter++;
+  var nr=fotoCounter;
+  var label=fotoLabelFromKey(S.key);
+  try{
+    var cv=document.createElement('canvas');
+    cv.width=Math.min(video.videoWidth,1000);
+    cv.height=Math.round(video.videoHeight*(cv.width/video.videoWidth));
+    var ctx=cv.getContext('2d');
+    ctx.drawImage(video,0,0,cv.width,cv.height);
+    var fs=Math.max(16,Math.round(cv.width/35));
+    ctx.font='bold '+fs+'px Arial';ctx.textBaseline='bottom';
+    var tw=ctx.measureText(label).width,pad=8;
+    ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
+    ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
+    mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height,fid:genFid()});
+    liveCamPhotoCount++;
+    var counter=g('liveCamCounter');
+    if(counter)counter.textContent=liveCamPhotoCount+' Foto(s) in dieser Runde';
+    flashLiveCam();
+  }catch(err){
+    toast('Foto konnte nicht verarbeitet werden');
+  }
+  if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');closeLiveCamera();}
+}
+
+function flashLiveCam(){
+  var ov=g('liveCamOverlay');if(!ov)return;
+  var flash=document.createElement('div');
+  flash.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;background:#fff;opacity:.55;pointer-events:none;transition:opacity .25s;';
+  ov.appendChild(flash);
+  requestAnimationFrame(function(){flash.style.opacity='0';});
+  setTimeout(function(){if(flash.parentNode)flash.parentNode.removeChild(flash);},300);
+}
+
+function closeLiveCamera(){
+  if(liveCamStream){
+    liveCamStream.getTracks().forEach(function(t){try{t.stop();}catch(e){}});
+    liveCamStream=null;
+  }
+  var ov=g('liveCamOverlay');
+  if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
+  renderMFotoLeiste();
 }
 
 function takeMFoto(){
