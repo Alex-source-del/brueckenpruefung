@@ -145,12 +145,8 @@ body.dark #mDesc{color:var(--ink);}
   <div class="fl"><label>Datum</label><input id="f_dat" type="date"></div>
   <div class="fl"><label>Prüfer</label><input id="f_pr" placeholder="Name"></div>
 </div>
-<div style="padding:10px 12px 0;position:relative;display:flex;gap:8px;align-items:flex-start;">
-  <div style="flex:1;position:relative;">
-    <input id="bauSearch" placeholder="🔍 Bauteil suchen (z.B. STB 2 Ö3)" style="width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 12px;font-family:inherit;font-size:13px;background:var(--s2);color:var(--ink);outline:none;">
-    <div id="bauSearchResults" style="position:absolute;left:0;right:0;top:100%;background:var(--sur);border:1px solid var(--line);border-radius:0 0 7px 7px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:40;display:none;max-height:220px;overflow-y:auto;"></div>
-  </div>
-  <button onclick="S.gesamtReturnTo=null;openGesamtschaeden()" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">📋 Gesamtschäden</button>
+<div style="padding:10px 12px 0;">
+  <button onclick="S.gesamtReturnTo=null;openGesamtschaeden()" style="width:100%;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:var(--radius-sm);padding:11px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">📋 Gesamtschäden</button>
 </div>
 
 <!-- GESAMTSCHÄDEN PANEL -->
@@ -947,18 +943,7 @@ function render(){
       inner.appendChild(mkKa(w2Key,isDurchgehendW()?'W2 (durchgehend)':'W2','wid'));
     }
     for(var i=stb.oeff;i>=1;i--){
-      if(i===stb.oeff&&!bauwerkLocked&&stb.oeff<5){
-        var pairRow=document.createElement('div');pairRow.style.cssText='display:flex;';
-        var addOeTile=document.createElement('div');
-        addOeTile.style.cssText='width:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1.5px solid var(--line);background:var(--accs);color:var(--acc);font-size:15px;font-weight:700;cursor:pointer;';
-        addOeTile.textContent='+';
-        (function(sid){addOeTile.onclick=function(){addOeff(sid);};})(stb.id);
-        var oeTile=mkOe(stb,i);oeTile.style.flex='1';
-        pairRow.appendChild(addOeTile);pairRow.appendChild(oeTile);
-        inner.appendChild(pairRow);
-      } else {
-        inner.appendChild(mkOe(stb,i));
-      }
+      inner.appendChild(mkOe(stb,i));
       if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),'pf'));
     }
     if(!dgActive){
@@ -966,16 +951,29 @@ function render(){
       inner.appendChild(mkKa(w1Key,isDurchgehendW()?'W1 (durchgehend)':'W1','wid'));
     }
     col.appendChild(inner);
-    if(si===stbs.length-1&&!bauwerkLocked&&stbs.length<5){
-      var addStbTile=document.createElement('div');
-      addStbTile.style.cssText='margin-top:6px;border:1.5px solid var(--acc);border-radius:7px;background:var(--accs);color:var(--acc);text-align:center;padding:8px;font-size:12px;font-weight:700;cursor:pointer;';
-      addStbTile.textContent='+ STB';
-      addStbTile.onclick=addStb;
-      col.appendChild(addStbTile);
-    }
     grid.appendChild(col);
   });
   var sa=g('stbBtnArea');if(sa){sa.innerHTML='';
+    // "Öffnung hinzufügen" und "STB hinzufügen": auf Wunsch von Andreas als durchgehende
+    // Leisten (wie "Widerlager durchgehend" / "Bauwerk fertig — Speichern"), nicht mehr
+    // als kleine Kästchen/Quadrate innerhalb der schmalen Spalten.
+    if(!bauwerkLocked){
+      stbs.forEach(function(stb,si){
+        if(stb.oeff>=5)return;
+        var addOeBar=document.createElement('button');
+        addOeBar.textContent='+ Öffnung zu STB '+(si+1)+' hinzufügen';
+        addOeBar.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid var(--acc);border-radius:var(--radius-sm);background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+        (function(sid){addOeBar.onclick=function(){addOeff(sid);};})(stb.id);
+        sa.appendChild(addOeBar);
+      });
+      if(stbs.length<5){
+        var addStbBar=document.createElement('button');
+        addStbBar.textContent='+ STB hinzufügen';
+        addStbBar.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid var(--acc);border-radius:var(--radius-sm);background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+        addStbBar.onclick=addStb;
+        sa.appendChild(addStbBar);
+      }
+    }
     if(stbs.length>1){
       var dgBtn=document.createElement('button');
       dgBtn.textContent=isDurchgehendW()?'🔗 Widerlager getrennt anzeigen':'🔗 Widerlager durchgehend (mehrere Überbauten, ein Widerlager)';
@@ -2795,6 +2793,8 @@ var liveCamPhotoCount=0;
 var liveCamTrack=null;
 var liveCamZoom=1;
 var liveCamZoomCaps=null; // {min,max,step} falls die Kamera echten Zoom unterstützt, sonst null (Digital-Zoom-Rückfall)
+var liveCamTorchOn=false;
+var liveCamTorchSupported=false; // true, wenn das Gerät einen steuerbaren Blitz/Taschenlampe an der Kamera meldet
 
 function openLiveCamera(){
   if(mPendingFotos.length>=10){toast('Max. 10 Fotos erreicht');return;}
@@ -2806,16 +2806,33 @@ function openLiveCamera(){
     liveCamStream=stream;
     liveCamPhotoCount=0;
     liveCamZoom=1;
+    liveCamTorchOn=false;
     liveCamTrack=stream.getVideoTracks()[0]||null;
     liveCamZoomCaps=null;
+    liveCamTorchSupported=false;
     try{
       var caps=liveCamTrack&&liveCamTrack.getCapabilities?liveCamTrack.getCapabilities():null;
       if(caps&&caps.zoom)liveCamZoomCaps=caps.zoom; // {min,max,step} — echter Kamera-Zoom verfügbar
+      if(caps&&caps.torch)liveCamTorchSupported=true; // Blitz/Taschenlampe steuerbar
     }catch(e){}
     buildLiveCamOverlay(stream);
   }).catch(function(err){
     toast('⚠️ Kamera konnte nicht geöffnet werden (Berechtigung erlaubt?) — bitte "Foto aufnehmen" nutzen');
   });
+}
+
+function toggleLiveCamTorch(){
+  if(!liveCamTrack||!liveCamTorchSupported)return;
+  var wantOn=!liveCamTorchOn;
+  try{
+    liveCamTrack.applyConstraints({advanced:[{torch:wantOn}]});
+    liveCamTorchOn=wantOn;
+  }catch(e){
+    toast('Blitz konnte nicht geschaltet werden');
+    return;
+  }
+  var btn=g('liveCamTorchBtn');
+  if(btn)btn.style.background=liveCamTorchOn?'var(--acc)':'rgba(0,0,0,.5)';
 }
 
 function buildLiveCamOverlay(stream){
@@ -2863,9 +2880,22 @@ function buildLiveCamOverlay(stream){
   doneBtn.onclick=closeLiveCamera;
   ov.appendChild(doneBtn);
 
+  // Blitz/Taschenlampe: nur anzeigen, wenn das Gerät das tatsächlich unterstützt
+  // (nicht jedes Tablet hat eine steuerbare Rückkamera-Beleuchtung).
+  if(liveCamTorchSupported){
+    var torchBtn=document.createElement('button');
+    torchBtn.type='button';
+    torchBtn.id='liveCamTorchBtn';
+    torchBtn.textContent='🔦';
+    torchBtn.setAttribute('aria-label','Blitz/Taschenlampe umschalten');
+    torchBtn.style.cssText='position:absolute;top:58px;left:10px;z-index:2;width:38px;height:38px;border-radius:50%;border:1.5px solid #fff;background:rgba(0,0,0,.5);color:#fff;font-size:16px;cursor:pointer;';
+    torchBtn.onclick=toggleLiveCamTorch;
+    ov.appendChild(torchBtn);
+  }
+
   // Zoom-Leiste: schwebt unten über dem Bild, mit weichem Verlauf statt festem schwarzem Balken
   var zoomBar=document.createElement('div');
-  zoomBar.style.cssText='position:absolute;left:0;right:0;bottom:104px;z-index:2;display:flex;align-items:center;justify-content:center;gap:18px;pointer-events:none;';
+  zoomBar.style.cssText='position:absolute;left:0;right:0;bottom:24px;z-index:2;display:flex;align-items:center;justify-content:center;gap:18px;pointer-events:none;';
   var zoomMinus=document.createElement('button');
   zoomMinus.type='button';zoomMinus.textContent='－';
   zoomMinus.style.cssText='pointer-events:auto;width:38px;height:38px;border-radius:50%;border:1.5px solid #fff;background:rgba(0,0,0,.45);color:#fff;font-size:18px;font-weight:700;cursor:pointer;';
@@ -2881,20 +2911,64 @@ function buildLiveCamOverlay(stream){
   zoomBar.appendChild(zoomMinus);zoomBar.appendChild(zoomLabel);zoomBar.appendChild(zoomPlus);
   ov.appendChild(zoomBar);
 
-  // Auslöser: schwebt ganz unten über dem Bild, mit weichem Verlauf im Hintergrund als
-  // dezente Kontrasthilfe (kein voller schwarzer Balken mehr)
-  var shutterWrap=document.createElement('div');
-  shutterWrap.style.cssText='position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;justify-content:center;align-items:flex-end;padding-bottom:18px;height:110px;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0));pointer-events:none;';
+  // Auslöser: frei verschiebbar (per Antippen-und-Ziehen), damit er bei Bedarf aus dem
+  // Weg geräumt werden kann, falls er gerade etwas Wichtiges im Bild verdeckt. Ein
+  // normales Antippen (ohne nennenswerte Bewegung) löst weiterhin ganz normal aus.
+  // Startposition: unten mittig, wie bisher.
   var shutter=document.createElement('button');
   shutter.type='button';
   shutter.id='liveCamShutter';
-  shutter.setAttribute('aria-label','Foto aufnehmen');
-  shutter.style.cssText='pointer-events:auto;width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:var(--acc);cursor:pointer;';
-  shutter.onclick=captureLiveCamPhoto;
-  shutterWrap.appendChild(shutter);
-  ov.appendChild(shutterWrap);
+  shutter.setAttribute('aria-label','Foto aufnehmen (antippen), verschiebbar (ziehen)');
+  shutter.style.cssText='position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:var(--acc);cursor:pointer;z-index:3;touch-action:none;box-shadow:0 2px 10px rgba(0,0,0,.4);';
+  ov.appendChild(shutter);
+  attachShutterDrag(shutter,ov);
 
   document.body.appendChild(ov);
+}
+
+// Erkennt, ob der Auslöser nur angetippt (→ Foto) oder gezogen (→ verschieben) wurde.
+// Läuft sowohl mit Touch (Tablet) als auch Maus (zum Testen).
+function attachShutterDrag(btn,container){
+  var dragging=false,moved=false,startX=0,startY=0,startLeft=0,startTop=0;
+  function begin(clientX,clientY){
+    dragging=true;moved=false;
+    startX=clientX;startY=clientY;
+    var r=btn.getBoundingClientRect();
+    startLeft=r.left;startTop=r.top;
+  }
+  function move(clientX,clientY){
+    if(!dragging)return;
+    var dx=clientX-startX,dy=clientY-startY;
+    if(Math.abs(dx)>6||Math.abs(dy)>6)moved=true;
+    if(!moved)return;
+    var cr=container.getBoundingClientRect();
+    var w=btn.offsetWidth,h=btn.offsetHeight;
+    var newLeft=Math.max(4,Math.min(cr.width-w-4,startLeft+dx-cr.left));
+    var newTop=Math.max(4,Math.min(cr.height-h-4,startTop+dy-cr.top));
+    btn.style.left=newLeft+'px';
+    btn.style.top=newTop+'px';
+    btn.style.bottom='auto';
+    btn.style.transform='none';
+  }
+  function end(){
+    if(!dragging)return;
+    dragging=false;
+    if(!moved)captureLiveCamPhoto();
+  }
+  btn.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1)return;
+    begin(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:true});
+  btn.addEventListener('touchmove',function(e){
+    if(e.touches.length!==1||!dragging)return;
+    e.preventDefault();
+    move(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  btn.addEventListener('touchend',end);
+  btn.addEventListener('touchcancel',function(){dragging=false;});
+  btn.addEventListener('mousedown',function(e){begin(e.clientX,e.clientY);});
+  window.addEventListener('mousemove',function(e){if(dragging)move(e.clientX,e.clientY);});
+  window.addEventListener('mouseup',end);
 }
 
 function changeLiveCamZoom(dir){
@@ -2985,6 +3059,10 @@ function captureLiveCamPhoto(){
     var counter=g('liveCamCounter');
     if(counter)counter.textContent=liveCamPhotoCount+' Foto(s)';
     flashLiveCam();
+    // Blitz/Taschenlampe nach jedem Foto automatisch wieder ausschalten — die Aufnahme
+    // selbst (drawImage oben) ist zu diesem Zeitpunkt bereits mit Licht im Kasten,
+    // das Ausschalten hier betrifft nur das nächste Bild.
+    if(liveCamTorchOn)toggleLiveCamTorch();
   }catch(err){
     toast('Foto konnte nicht verarbeitet werden');
   }
@@ -3006,6 +3084,7 @@ function closeLiveCamera(){
     liveCamStream=null;
   }
   liveCamTrack=null;liveCamZoom=1;liveCamZoomCaps=null;liveCamPinchStartDist=null;
+  liveCamTorchOn=false;liveCamTorchSupported=false;
   var ov=g('liveCamOverlay');
   if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
   renderMFotoLeiste();
