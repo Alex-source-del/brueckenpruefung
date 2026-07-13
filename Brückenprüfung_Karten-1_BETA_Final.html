@@ -1987,7 +1987,8 @@ function openGesamtschaeden(){
     showPanel('ovGesamt');
     return;
   }
-  box.innerHTML='<p style="color:var(--acc);font-size:19px;font-weight:800;padding:2px 0 12px;">'+list.length+' Schaden(-Einträge) insgesamt</p>';
+  var gesamtBilder=list.reduce(function(sum,en){return sum+((en.item.fotos||[]).length);},0);
+  box.innerHTML='<p style="padding:2px 0 12px;"><span class="gc">Schäden: '+list.length+'</span><span class="gc" style="margin-left:6px;background:var(--soft);">Bilder: '+gesamtBilder+'</span></p>';
 
   // Nach Bauteil (bereich) gruppieren, Reihenfolge des ersten Auftretens beibehalten
   // (entspricht bereits W1 → Öffnungen/Pfeiler → W2 je STB, siehe collectAllSchaeden)
