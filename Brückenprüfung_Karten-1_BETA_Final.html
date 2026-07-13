@@ -1988,7 +1988,8 @@ function openGesamtschaeden(){
     return;
   }
   var gesamtBilder=list.reduce(function(sum,en){return sum+((en.item.fotos||[]).length);},0);
-  box.innerHTML='<p style="padding:2px 0 12px;"><span class="gc">Schäden: '+list.length+'</span><span class="gc" style="margin-left:6px;background:var(--soft);">Bilder: '+gesamtBilder+'</span></p>';
+  var badgeBase='background:var(--acc);color:#fff;border-radius:14px;padding:2px 11px;font-size:13px;font-weight:700;';
+  box.innerHTML='<p style="padding:2px 0 12px;"><span style="'+badgeBase+'">Schäden: '+list.length+'</span><span style="'+badgeBase+'margin-left:6px;background:var(--soft);">Bilder: '+gesamtBilder+'</span></p>';
 
   // Nach Bauteil (bereich) gruppieren, Reihenfolge des ersten Auftretens beibehalten
   // (entspricht bereits W1 → Öffnungen/Pfeiler → W2 je STB, siehe collectAllSchaeden)
