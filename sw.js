@@ -3,7 +3,7 @@
 // Da beide Apps als einzelne HTML-Dateien mit eingebetteten Bildern/CSS/JS
 // ausgeliefert werden, genügt es, genau diese eine Anfrage pro App zu cachen.
 
-const CACHE_NAME = 'bp-offline-v1';
+const CACHE_NAME = 'bp-offline-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

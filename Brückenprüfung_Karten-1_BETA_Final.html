@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Brückenprüfung [BETA]</title>
 <style>
-:root{--bg:#f0f4f8;--sur:#fff;--s2:#e8eef4;--ink:#16202b;--soft:#5b6b7c;--faint:#8a99a8;--line:#dde5ee;--acc:#0e7c66;--accs:#e3f3ef;--red:#c0392b;--reds:#fdecea;}
+:root{--bg:#f4f6f9;--sur:#fff;--s2:#f0f3f7;--ink:#16202b;--soft:#5b6b7c;--faint:#8a99a8;--line:#e2e8ef;--acc:#0e7c66;--accs:#e3f3ef;--red:#c0392b;--reds:#fdecea;}
 body.dark{--bg:#111518;--sur:#1a2028;--s2:#232c36;--ink:#e8eef4;--soft:#8fa3b3;--faint:#5a6e7e;--line:#2a3540;--acc:#13a386;--accs:#0e2e28;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
-header{background:var(--acc);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+header{background:var(--sur);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:0 1px 2px rgba(16,32,43,.05);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
 header h1{font-size:15px;font-weight:700;flex:1;}
-.hbtn{border:0;background:rgba(255,255,255,.2);color:#fff;width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:14px;}
+.hbtn{border:0;background:var(--s2);color:var(--ink);width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:14px;}
 /* KOPF */
 .kopf{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:var(--sur);border-bottom:1px solid var(--line);}
 .kopf .full{grid-column:1/-1;}
@@ -129,7 +129,7 @@ body.dark #mDesc{color:var(--ink);}
 </head>
 <body>
 <header>
-  <div style="width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;flex-shrink:0;">BP</div>
+  <div style="width:30px;height:30px;background:linear-gradient(135deg,var(--acc),#13a386);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:#fff;flex-shrink:0;">BP</div>
   <h1>Brückenprüfung <span style="font-size:12px;background:#ff9800;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">BETA</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
@@ -234,12 +234,12 @@ body.dark #mDesc{color:var(--ink);}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mBauteilNrRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilNrLabel" style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
-        <input id="mBauteilNr" type="text" inputmode="decimal" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay()" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <input id="mBauteilNr" type="text" inputmode="text" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
         <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
       </div>
       <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
-        <input id="mBauteilRef" type="text" inputmode="decimal" placeholder="z.B. 2" oninput="updateVerortungDisplay()" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <input id="mBauteilRef" type="text" inputmode="text" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
@@ -482,6 +482,14 @@ var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträge
 // Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
 // Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts'];
+// Sonderfall innerhalb der nummerierbaren Bauteile: Bei den meisten (Hauptträger, Querträger
+// usw.) ist die Nr. eine Instanz-Kennung ("welcher Hauptträger") — passt gut einmalig in die
+// Überschrift. Bei Geländer ist die Nr. dagegen KEINE Instanz (es gibt nur "Geländer links"
+// als durchgehendes Bauteil), sondern bedeutet "welche Pfosten sind betroffen" — das kann
+// sich je Schadensart innerhalb desselben Eintrags unterscheiden (z.B. Verguss an Pfosten
+// 1,3,5, aber Bewuchs an allen). Deshalb bleibt hier die alte Zeilen-Logik: Nr. wird an
+// jede einzelne Schadenszeile angehängt statt einmalig in die Überschrift.
+var NR_PRO_SYMPTOMZEILE_BAUTEILE=['Geländer links','Geländer rechts'];
 // Bauteile mit zwei Nummern (eigene Nr. + Bezugs-Nr.), z.B. "Beulsteife Nr. 3 an Hauptträger Nr. 2"
 // Auf weitere Stahlbauteile erweiterbar, einfach hier ergänzen
 var DOPPEL_NR_BAUTEILE={
@@ -685,15 +693,15 @@ function buildLagerFotoLabel(){
 }
 
 function fotoLabelFromKey(key){
-  // Bevorzugt dieselbe automatische Standort-Überschrift wie in der Schadensbeschreibung
-  // (inkl. Bauteil-Nummer bei nummerierbaren Stahlbauteilen, STB/Widerlager/Bereich, oder
-  // bei Lager die eigene STB/Widerlager-bzw.-Pfeiler/Lager-Nummer-Beschriftung) — Foto und
-  // Text zeigen jetzt bewusst wieder dieselbe vollständige Überschrift. Fällt bei allem, was
-  // keine der beiden Funktionen abdeckt (z.B. Fugen), auf die alte schlüsselbasierte
-  // Herleitung zurück.
+  // Bevorzugt dieselbe automatische Standort-Überschrift wie in der Schadensbeschreibung,
+  // aber bewusst OHNE Bauteil-Nummer (Fotos sollen laut Andreas nie Zahlen zeigen, auch
+  // nicht bei nummerierbaren Stahlbauteilen wie Hauptträger) — deshalb hier ausdrücklich
+  // die "bare" Variante buildLocationHeading(), nicht buildTextLocationHeading(). Fällt
+  // bei allem, was keine der beiden Funktionen abdeckt (z.B. Fugen), auf die alte
+  // schlüsselbasierte Herleitung zurück.
   var lagerLabel=buildLagerFotoLabel();
   if(lagerLabel)return lagerLabel;
-  var auto=buildTextLocationHeading();
+  var auto=buildLocationHeading();
   if(auto)return auto;
   if(!key)return S.schTitle||'';
   var m=key.match(/^stb(\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
@@ -709,6 +717,98 @@ function fotoLabelFromKey(key){
 }
 var mPendingFotos=[];
 
+// ============================================================
+// FOTO-SPEICHER (IndexedDB) — löst das localStorage-Limit (5–10 MB) ab.
+// Laufzeit-Verhalten bleibt unverändert: jedes Foto-Objekt behält im
+// Arbeitsspeicher weiterhin sein `data`-Feld (Base64), damit Render,
+// Export, Galerie und Übertragungs-Logik nichts davon merken. Nur beim
+// Persistieren (autoSave/loadSaved/Backup) wird `data` ausgelagert.
+// ============================================================
+var IDB_NAME='bp_foto_db',IDB_STORE='fotos',idbInst=null;
+var persistedFotoIds=new Set(); // fids, die schon sicher in IndexedDB liegen
+function genFid(){return 'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,9);}
+function idbOpen(){
+  if(idbInst)return Promise.resolve(idbInst);
+  return new Promise(function(resolve,reject){
+    if(!window.indexedDB){reject(new Error('IndexedDB nicht verfügbar'));return;}
+    var req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=function(){
+      var db=req.result;
+      if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE,{keyPath:'fid'});
+    };
+    req.onsuccess=function(){idbInst=req.result;resolve(idbInst);};
+    req.onerror=function(){reject(req.error);};
+  });
+}
+function idbPutFoto(fid,data){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).put({fid:fid,data:data});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error);};
+    });
+  });
+}
+function idbGetFoto(fid){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(IDB_STORE,'readonly');
+      var req=tx.objectStore(IDB_STORE).get(fid);
+      req.onsuccess=function(){resolve(req.result?req.result.data:null);};
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+function idbGetAllFotos(){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(IDB_STORE,'readonly');
+      var req=tx.objectStore(IDB_STORE).getAll();
+      req.onsuccess=function(){
+        var map={};(req.result||[]).forEach(function(r){map[r.fid]=r.data;});
+        resolve(map);
+      };
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+function idbDeleteFoto(fid){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve){
+      var tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).delete(fid);
+      tx.oncomplete=function(){persistedFotoIds.delete(fid);resolve();};
+      tx.onerror=function(){resolve();};
+    });
+  }).catch(function(){});
+}
+function idbClearAllFotos(){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve){
+      var tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).clear();
+      tx.oncomplete=function(){persistedFotoIds.clear();resolve();};
+      tx.onerror=function(){resolve();};
+    });
+  }).catch(function(){});
+}
+// Alle Foto-Objekte aus einem dat-Objekt einsammeln (für Persist/Hydrate/Backup)
+// WICHTIG: dat enthält neben den Bauteil-Arrays auch Meta-Keys wie '__durchgehendW'
+// (Boolean) oder '__t_...' (String) — nur echte Arrays dürfen durchlaufen werden,
+// sonst crasht .forEach() und autoSave() bricht komplett ab.
+function collectAllFotoObjs(datObj){
+  var out=[];
+  Object.keys(datObj||{}).forEach(function(key){
+    var arr=datObj[key];
+    if(!Array.isArray(arr))return;
+    arr.forEach(function(it){
+      (it.fotos||[]).forEach(function(f){out.push(f);});
+    });
+  });
+  return out;
+}
+
 function g(id){return document.getElementById(id);}
 function toast(m){var t=g('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
@@ -717,14 +817,39 @@ function toast(m){var t=g('toast');t.textContent=m;t.classList.add('show');setTi
 // ============================================================
 function autoSave(){
   try{
-    localStorage.setItem('bp_dat',JSON.stringify(dat));
+    // Fotos bekommen beim Speichern eine fid und werden aus dem localStorage-JSON
+    // ausgeklammert (Replacer unten) — die eigentlichen Bilddaten wandern separat
+    // und asynchron in IndexedDB (siehe persistFotosToIdb unten). So bleibt bp_dat
+    // klein und die 5–10-MB-Grenze von localStorage wird nicht mehr durch Fotos
+    // gesprengt.
+    collectAllFotoObjs(dat).forEach(function(f){if(!f.fid)f.fid=genFid();});
+    var datStr=JSON.stringify(dat,function(k,v){
+      if(k==='data'&&this&&this.fid)return undefined;
+      return v;
+    });
+    localStorage.setItem('bp_dat',datStr);
     localStorage.setItem('bp_stbs',JSON.stringify(stbs));
     localStorage.setItem('bp_nxtId',''+nxtId);
     localStorage.setItem('bp_fc',''+fotoCounter);
     localStorage.setItem('bp_locked',bauwerkLocked?'1':'0');
     var k={str:g('f_str').value,km:g('f_km').value,br:g('f_br').value,dat:g('f_dat').value,pr:g('f_pr').value};
     localStorage.setItem('bp_kopf',JSON.stringify(k));
-  }catch(e){}
+    persistFotosToIdb();
+  }catch(e){
+    toast('⚠️ Speichern fehlgeschlagen — bitte sofort per „Sichern" exportieren!');
+  }
+}
+// Schreibt alle noch nicht gesicherten Fotos asynchron in IndexedDB. Fotos, die
+// bereits als persistiert markiert sind (persistedFotoIds), werden übersprungen,
+// damit nicht bei jedem autoSave() alles neu geschrieben wird.
+function persistFotosToIdb(){
+  var todo=collectAllFotoObjs(dat).filter(function(f){return f.data&&f.fid&&!persistedFotoIds.has(f.fid);});
+  if(!todo.length)return;
+  Promise.all(todo.map(function(f){
+    return idbPutFoto(f.fid,f.data).then(function(){persistedFotoIds.add(f.fid);}).catch(function(){
+      toast('⚠️ Foto konnte nicht dauerhaft gespeichert werden!');
+    });
+  }));
 }
 function loadSaved(){
   try{
@@ -740,6 +865,31 @@ function loadSaved(){
       if(k.pr)g('f_pr').value=k.pr;
     }
   }catch(e){}
+  hydrateFotosFromIdb();
+}
+// Lädt die eigentlichen Bilddaten aus IndexedDB nach (neues Format: fid ohne
+// data) UND migriert automatisch altes Format (fid fehlt, data direkt im
+// localStorage-JSON) beim allerersten Laden nach dem Umbau — ohne Zutun des
+// Nutzers. Läuft asynchron im Hintergrund, damit der App-Start nicht blockiert.
+function hydrateFotosFromIdb(){
+  var all=collectAllFotoObjs(dat);
+  if(!all.length)return;
+  var toFetch=all.filter(function(f){return f.fid&&!f.data;});
+  var legacy=all.filter(function(f){return f.data&&!f.fid;});
+  if(toFetch.length)toast('Fotos werden geladen…');
+  idbGetAllFotos().then(function(map){
+    var missing=0;
+    toFetch.forEach(function(f){
+      if(map[f.fid]!=null){f.data=map[f.fid];persistedFotoIds.add(f.fid);}
+      else missing++;
+    });
+    legacy.forEach(function(f){f.fid=genFid();}); // altes Format: fid nachtragen, wird bei nächstem autoSave persistiert
+    if(toFetch.length||legacy.length){render();renderSch();}
+    if(missing>0)toast('⚠️ '+missing+' Foto(s) konnten nicht geladen werden');
+    if(legacy.length)autoSave(); // altes Format sofort migrieren
+  }).catch(function(){
+    toast('⚠️ Fotos konnten nicht aus dem Speicher geladen werden');
+  });
 }
 
 // ============================================================
@@ -1437,7 +1587,14 @@ function renderSch(){
   });
 }
 
-function delS(i){if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;if(dat[S.key])dat[S.key].splice(i,1);renderSch();render();autoSave();}
+function delS(i){
+  if(!confirm('Diesen Schaden wirklich löschen? (inkl. Fotos)'))return;
+  if(dat[S.key]){
+    var removed=dat[S.key].splice(i,1)[0];
+    (removed&&removed.fotos||[]).forEach(function(f){if(f.fid)idbDeleteFoto(f.fid);});
+  }
+  renderSch();render();autoSave();
+}
 
 function updateBauteilNrUI(){
   curVbsState={V:false,B:false,S:false};
@@ -1465,32 +1622,29 @@ function updateBauteilNrUI(){
 function updateVerortungDisplay(){
   var vEl=g('mVerortung');if(!vEl)return;
   var base=S.schTitle||'';
-  var nrRow=g('mBauteilNrRow');
-  if(nrRow&&nrRow.style.display!=='none'&&S.ugr){
-    var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
-    var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
-    var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
-    if(dbl){
-      var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
-      if(nrVal||refVal){
-        var compWord=S.ugr.split(' an ')[0];
-        var full=compWord;
-        if(nrVal)full+=' '+nrVal;
-        full+=' an '+dbl.refWord;
-        if(refVal)full+=' '+refVal;
-        base=base.replace(new RegExp(esc(S.ugr)+'$'),full);
-      }
-    } else if(nrVal){
-      var nrClean=nrVal.toLowerCase()==='alle'?'Alle':nrVal;
-      base=base.replace(new RegExp(esc(S.ugr)+'$'),S.ugr+' '+nrClean);
-    }
-  }
+  // Auf Wunsch von Andreas: die Bauteil-Nr. (z.B. "Hauptträger 1") erscheint NICHT mehr
+  // in der grünen Überschriftzeile — nur noch einmalig als erste Zeile in der
+  // Schadensbeschreibung selbst (siehe updateHeadingLineInDesc()/buildTextLocationHeading()).
   // STB-Nummer immer voranstellen (überall, nicht nur im Titel der Schäden-Liste) — z.B.
   // "STB 1 / Öffnung 1 / Schotterwand rechts" statt nur "Öffnung 1 / Schotterwand rechts".
   var stbM=(S.key||'').match(/^stb(\d+)_/);
   if(stbM&&base)base='STB '+stbM[1]+' / '+base;
   if(S.beidePhase)base='↔ Beide · Schritt '+S.beidePhase+'/2 ('+(S.beidePhase===1?'Links':'Rechts')+')  ·  '+base;
   vEl.textContent=base;
+}
+
+// Aktualisiert die erste Zeile der Schadensbeschreibung (die Standort-/Bauteil-Überschrift,
+// z.B. "STB 1, Öffnung 1, Hauptträger 1") live, sobald sich das Nr.-Feld ändert — ohne den
+// restlichen, bereits eingetippten Text anzufassen. Wird beim ersten Öffnen einer neuen
+// Erfassung (openMod) sowie bei jeder Änderung des Nr.-/Ref.-Felds aufgerufen.
+function updateHeadingLineInDesc(){
+  var ta=g('mDesc');if(!ta)return;
+  var heading=buildTextLocationHeading();
+  if(!heading)return;
+  var lines=ta.value.split('\n');
+  lines[0]=heading;
+  ta.value=lines.join('\n');
+  autoGrowMDesc();
 }
 
 // Verschiebt Widerlager-Schäden zwischen den STB-eigenen Schlüsseln (stb<id>_w1/_w2)
@@ -1858,7 +2012,7 @@ function buildLocationHeadingBare(overrideBaseKey){
 // eingetragene Bauteil-Nummer mit eingerechnet wird.
 function buildBauteilPart(mitNr){
   if(!S.ugr)return '';
-  if(mitNr){
+  if(mitNr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)===-1){
     var nrRow=g('mBauteilNrRow');
     if(nrRow&&nrRow.style.display!=='none'){
       var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
@@ -1886,8 +2040,9 @@ function buildLocationHeading(){
   var bare=buildLocationHeadingBare();
   if(!bare)return '';
   // Bauteilname (z.B. "Vorderansicht", "Geländer links", "Längsträger") gehört immer in die
-  // Überschrift — für alle Bauteiltypen einheitlich, nur die Bauteil-Nummer selbst steht
-  // stattdessen in der Beschreibung (siehe buildBauteilNrSuffix()).
+  // Überschrift — für alle Bauteiltypen einheitlich. Diese "bare" Variante bleibt bewusst
+  // ohne Bauteil-Nr. (wird u.a. fürs Foto-Wasserzeichen genutzt); die Nr. steht nur in der
+  // erweiterten Variante buildTextLocationHeading() (für die Schadensbeschreibung selbst).
   var part=buildBauteilPart(false);
   return part?bare+', '+part:bare;
 }
@@ -1895,35 +2050,13 @@ function buildLocationHeading(){
 // Erweiterte Überschrift NUR für den gespeicherten Beschreibungstext (nicht fürs
 // Foto-Wasserzeichen, das bewusst bei der schlichten buildLocationHeading() bleibt) —
 // hängt bei nummerierbaren Bauteilen (Hauptträger, Querträger usw.) die tatsächliche
-// Nummer mit an, z.B. "STB 1, Öffnung 1, Hauptträger 1".
-// Baut die Bauteil-Nummer als eigene Zeile für die Schadensbeschreibung, z.B.
-// "- Hauptträger Nr.: 2" oder bei Doppel-Nr-Bauteilen "- Beulsteife Nr. 3 an Hauptträger
-// Nr. 2" — auf Wunsch von Andreas steht die Nummer NICHT mehr in der Überschrift, sondern
-// nur noch hier in der Beschreibung selbst.
-// Liefert NUR die reine Nummer als Anhängsel (kein "Nr."-Label, kein Bauteilname) — wird an
-// jede einzelne Schadensart-Zeile direkt angehängt, z.B. "Verguss rissig an Pfosten 1,3,5"
-// statt einer eigenen Zeile.
-function buildBauteilNrSuffix(){
-  if(!S.ugr)return '';
-  var nrRow=g('mBauteilNrRow');
-  if(!nrRow||nrRow.style.display==='none')return '';
-  var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
-  var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
-  if(dbl){
-    var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
-    if(!nrVal&&!refVal)return '';
-    var s=nrVal;
-    if(refVal)s+=' an '+dbl.refWord+' '+refVal;
-    return s;
-  }
-  if(!nrVal)return '';
-  return nrVal.toLowerCase()==='alle'?'Alle':nrVal;
-}
-
-// Auf Wunsch von Andreas enthält die Überschrift KEINE Bauteil-Nummer mehr — die Nummer
-// steht stattdessen als eigene Zeile in der Schadensbeschreibung selbst (siehe saveS()).
+// Nummer einmalig mit an, z.B. "STB 1, Öffnung 1, Hauptträger 1". Die Nummer steht damit
+// NUR noch hier (einmal, am Anfang) und nicht mehr zusätzlich an jeder Schadenszeile.
 function buildTextLocationHeading(){
-  return buildLocationHeading();
+  var bare=buildLocationHeadingBare();
+  if(!bare)return '';
+  var part=buildBauteilPart(true);
+  return part?bare+', '+part:bare;
 }
 
 function editS(i){
@@ -2000,46 +2133,68 @@ function editS(i){
       }
     });
   }
-  var bareHead=buildLocationHeading();
-  var hatteHeading=!!(bareHead&&lines[0]===bareHead);
-  if(hatteHeading){
+  var bareOhneBauteil=buildLocationHeadingBare();
+  var hatteHeading=false;
+  if(bareOhneBauteil&&lines[0]&&lines[0].indexOf(bareOhneBauteil+', ')===0){
+    hatteHeading=true;
+    var bauteilTeil=lines[0].slice((bareOhneBauteil+', ').length);
     lines=lines.slice(1);
-  }
-  // Bauteil-Nummer ist an JEDE Schadensart-Zeile direkt angehängt (nicht mehr als eigene
-  // Zeile) — von jeder Zeile wieder abtrennen und den Wert einmalig ins Nr.-Feld
-  // zurückschreiben, damit beim erneuten Speichern dieselbe Nummer wieder angehängt wird.
-  var nrRow2=g('mBauteilNrRow');
-  if(S.ugr&&nrRow2&&nrRow2.style.display!=='none'){
-    var dbl2=DOPPEL_NR_BAUTEILE[S.ugr];
-    var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
-    var foundNr='',foundRef='';
-    lines=lines.map(function(line){
-      var arrowIdx=line.indexOf('  》》');
-      var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
-      var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+    // Bauteil-Nr. aus dem Bauteil-Teil der Überschrift zurückgewinnen (steht seit Juli
+    // 2026 nur noch dort, einmalig — nicht mehr an jeder einzelnen Schadenszeile). Alte,
+    // vor dieser Umstellung gespeicherte Einträge haben dort keine Nummer stehen (der
+    // Bauteil-Teil entspricht dann einfach S.ugr) — dann bleibt das Nr.-Feld leer, wie
+    // gehabt manuell nachtragbar.
+    var nrRow2=g('mBauteilNrRow');
+    if(S.ugr&&nrRow2&&nrRow2.style.display!=='none'){
+      var dbl2=DOPPEL_NR_BAUTEILE[S.ugr];
+      var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
       if(dbl2){
-        var re=new RegExp(' (\\S+) an '+esc(dbl2.refWord)+' (\\S+)$');
-        var m=head.match(re);
-        if(m){foundNr=m[1];foundRef=m[2];head=head.slice(0,m.index);}
+        var compWord2=S.ugr.split(' an ')[0];
+        var reHead=new RegExp('^'+esc(compWord2)+'(?: (\\S+))? an '+esc(dbl2.refWord)+'(?: (\\S+))?$');
+        var mHead=bauteilTeil.match(reHead);
+        if(mHead){
+          if(mHead[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHead[1];
+          if(mHead[2]&&g('mBauteilRef'))g('mBauteilRef').value=mHead[2];
+        }
       } else {
-        var re2=/ ([\d,]+|Alle)$/;
-        var m2=head.match(re2);
-        if(m2){foundNr=m2[1];head=head.slice(0,m2.index);}
+        var reHead2=new RegExp('^'+esc(S.ugr)+' (.+)$');
+        var mHead2=bauteilTeil.match(reHead2);
+        if(mHead2&&g('mBauteilNr'))g('mBauteilNr').value=mHead2[1];
       }
-      return head+tail;
-    });
-    if(foundNr&&g('mBauteilNr'))g('mBauteilNr').value=foundNr;
-    if(foundRef&&g('mBauteilRef'))g('mBauteilRef').value=foundRef;
+    }
   }
   updateVerortungDisplay();
+  // Sonderfall Geländer: die Nr. steht hier NICHT in der Überschrift (siehe
+  // NR_PRO_SYMPTOMZEILE_BAUTEILE), sondern an jeder einzelnen Schadenszeile — von dort
+  // wieder ablösen und einmalig ins Nr.-Feld zurückschreiben (identisch zur alten Logik
+  // vor der Juli-2026-Umstellung), damit sie beim erneuten Speichern wieder angehängt wird.
+  if(S.ugr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)>=0){
+    var nrRowGel=g('mBauteilNrRow');
+    if(nrRowGel&&nrRowGel.style.display!=='none'){
+      var foundNrGel='';
+      lines=lines.map(function(line){
+        var arrowIdx=line.indexOf('  》》');
+        var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
+        var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+        var reGel=/ ([\d,]+|Alle)$/;
+        var mGel=head.match(reGel);
+        if(mGel){foundNrGel=mGel[1];head=head.slice(0,mGel.index);}
+        return head+tail;
+      });
+      if(foundNrGel&&g('mBauteilNr'))g('mBauteilNr').value=foundNrGel;
+    }
+  }
   // Auf Wunsch von Andreas: Ortszeile bleibt auch beim Bearbeiten sichtbar im Feld
-  // (nicht mehr entfernt). Die Chip-Zeilenindizes müssen deshalb um 1 verschoben werden,
-  // da sie sich sonst noch auf die (intern) überschriftfreie "lines"-Liste bezögen, real
-  // im Textfeld aber die Überschrift als zusätzliche erste Zeile physisch vorhanden ist.
-  g('mDesc').value=(hatteHeading?bareHead+'\n':'')+lines.join('\n');
+  // (nicht mehr entfernt) und wird — inklusive der gerade aus dem Text zurückgewonnenen
+  // Bauteil-Nr. — frisch neu aufgebaut. Die Chip-Zeilenindizes müssen deshalb um 1
+  // verschoben werden, da sie sich sonst noch auf die (intern) überschriftfreie
+  // "lines"-Liste bezögen, real im Textfeld aber die Überschrift als zusätzliche erste
+  // Zeile physisch vorhanden ist.
+  var frischeHeading=hatteHeading?buildTextLocationHeading():'';
+  g('mDesc').value=(frischeHeading?frischeHeading+'\n':'')+lines.join('\n');
   // Für Bearbeiten-Modus: jede verbliebene Freitext-Zeile als entfernbaren Chip anbieten
   // (Label = Zeilentext ohne führendes "- " und ohne evtl. angehängte Maßnahme).
-  var chipOffset=hatteHeading?1:0;
+  var chipOffset=frischeHeading?1:0;
   curSchadenEntries=lines.map(function(line,li){
     var clean=line.replace(/^-\s*/,'').split('  》》')[0].split('》》')[0].trim();
     return {lineIndex:li+chipOffset,label:clean||('Zeile '+(li+1))};
@@ -2104,7 +2259,8 @@ function renderFotoLeiste(it){
     del.textContent='✕';
     (function(fi2){del.onclick=function(e){
       e.stopPropagation();
-      it.fotos.splice(fi2,1);
+      var removed=it.fotos.splice(fi2,1)[0];
+      if(removed&&removed.fid)idbDeleteFoto(removed.fid);
       g('fpCount').textContent=it.fotos.length+'/10';
       renderFotoLeiste(it);
       renderSch();autoSave();
@@ -2214,7 +2370,7 @@ document.addEventListener('DOMContentLoaded',function(){
           var tw=ctx.measureText(label).width,pad=8;
           ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
           ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
-          it.fotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height});
+          it.fotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height,fid:genFid()});
         }catch(err){
           toast('Foto konnte nicht verarbeitet werden');
         }
@@ -2257,7 +2413,7 @@ document.addEventListener('DOMContentLoaded',function(){
           var tw=ctx.measureText(label).width,pad=8;
           ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,cv.height-fs-pad*2,tw+pad*2,fs+pad*2);
           ctx.fillStyle='#fff';ctx.fillText(label,pad,cv.height-pad);
-          mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height});
+          mPendingFotos.push({data:cv.toDataURL('image/jpeg',.75),nr:nr,loc:label,w:cv.width,h:cv.height,fid:genFid()});
         }catch(err){
           toast('Foto konnte nicht verarbeitet werden');
         }
@@ -2410,19 +2566,21 @@ function openMod(){
   S.editIdx=-1;
   S.editIsBeide=false;
   S.art='';S.vorl=null;
-  // Auf Wunsch von Andreas: die Ortszeile (z.B. "STB 1, Öffnung 1, Querträger") steht
-  // jetzt sofort sichtbar im Beschreibungsfeld, nicht erst nach dem Speichern. Wird beim
-  // Speichern (buildFormDesc) erkannt und nicht doppelt eingefügt.
-  var neueHeadingZeile=buildTextLocationHeading();
-  g('mDesc').value=neueHeadingZeile?neueHeadingZeile+'\n':'';
+  g('mDesc').value='';
   curSchadenEntries=[];
   renderSchadenChips();
   var lagerDirektM=(S.ugr||'').match(/^Lager: (.+?)(?: - (.+))?$/);
   var isLagerDirekt=!!(lagerDirektM&&!lagerDirektM[2]);
-  autoGrowMDesc();
   mPendingFotos=[];
   renderMFotoLeiste();
   updateBauteilNrUI();
+  // Auf Wunsch von Andreas: die Ortszeile (z.B. "STB 1, Öffnung 1, Hauptträger") steht
+  // jetzt sofort sichtbar im Beschreibungsfeld, nicht erst nach dem Speichern — inklusive
+  // Bauteil-Nr., sobald sie eingetippt wird (siehe updateHeadingLineInDesc()). Muss NACH
+  // updateBauteilNrUI() passieren, damit die Sichtbarkeit des Nr.-Felds schon feststeht.
+  var neueHeadingZeile=buildTextLocationHeading();
+  g('mDesc').value=neueHeadingZeile?neueHeadingZeile+'\n':'';
+  autoGrowMDesc();
   g('mArt').style.display='block';
   g('mTyp').style.display='none';
   bldArt();
@@ -3027,22 +3185,33 @@ function buildFormDesc(){
   var desc=g('mDesc').value.trim();
   var locHeading=buildTextLocationHeading();
   // Die Ortszeile steht seit Juli 2026 schon während der Erfassung sichtbar im Feld
-  // (siehe openMod()/editS()) — hier vor der weiteren Verarbeitung wieder herauslösen,
-  // damit sie nicht versehentlich eine Bauteil-Nr. angehängt bekommt oder als
-  // Lager-Messwert-Zeile behandelt wird, und am Ende sauber wieder genau einmal voranstellen.
+  // (siehe openMod()/editS()) und enthält bei den meisten nummerierbaren Bauteilen (z.B.
+  // Hauptträger) jetzt auch die Bauteil-Nr. einmalig ("Hauptträger 1") — hier vor der
+  // weiteren Verarbeitung wieder herauslösen, damit sie nicht versehentlich als
+  // Lager-Messwert-Zeile behandelt wird, und am Ende sauber wieder genau einmal
+  // voranstellen.
   if(locHeading){
     var descLines=desc.split('\n');
     if(descLines[0]===locHeading){
       desc=descLines.slice(1).join('\n').trim();
     }
   }
-  var nrSuffix=buildBauteilNrSuffix();
-  if(nrSuffix&&desc){
-    desc=desc.split('\n').map(function(line){
-      var arrowIdx=line.indexOf('  》》');
-      if(arrowIdx>=0)return line.slice(0,arrowIdx)+' '+nrSuffix+line.slice(arrowIdx);
-      return line+' '+nrSuffix;
-    }).join('\n');
+  // Sonderfall Geländer: hier steht die Nr. NICHT in der Überschrift (siehe
+  // NR_PRO_SYMPTOMZEILE_BAUTEILE weiter oben), sondern wie gehabt an jeder einzelnen
+  // Schadenszeile, weil sich die betroffenen Pfosten je Schadensart unterscheiden können.
+  if(S.ugr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)>=0&&desc){
+    var nrRowZeile=g('mBauteilNrRow');
+    if(nrRowZeile&&nrRowZeile.style.display!=='none'){
+      var nrValZeile=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+      if(nrValZeile){
+        var nrCleanZeile=nrValZeile.toLowerCase()==='alle'?'Alle':nrValZeile;
+        desc=desc.split('\n').map(function(line){
+          var arrowIdx=line.indexOf('  》》');
+          if(arrowIdx>=0)return line.slice(0,arrowIdx)+' '+nrCleanZeile+line.slice(arrowIdx);
+          return line+' '+nrCleanZeile;
+        }).join('\n');
+      }
+    }
   }
   var mwBox=g('lagerMesswerte');
   if(mwBox){
@@ -3128,6 +3297,11 @@ function saveS(keepOpen){
   if(S.beidePhase===2){
     var bare=buildLocationHeadingBare(S.beideBaseKey);
     var combinedHeading=(bare?bare+', ':'')+S.beideBaseName+' links und rechts';
+    // Geländer ist das einzige "Beide"-fähige nummerierte Bauteil, und dort steht die
+    // Bauteil-Nr. (welche Pfosten betroffen sind) bewusst an jeder einzelnen Schadenszeile
+    // statt in der Überschrift (siehe NR_PRO_SYMPTOMZEILE_BAUTEILE) — bleibt beim
+    // Zusammenführen dadurch automatisch erhalten, ohne dass hier extra etwas
+    // herausgelöst werden müsste.
     var combinedDesc=combinedHeading+'\nLinks:\n'+stripHeadingLine(S.beideLinksDesc)+'\nRechts:\n'+stripHeadingLine(desc);
     var fkLinks=S.beideBaseKey+'___'+S.beideBaseName+' links';
     var fkRechts=S.beideBaseKey+'___'+S.beideBaseName+' rechts';
@@ -3237,6 +3411,7 @@ function doNew(){
   ['f_str','f_km','f_br','f_pr'].forEach(function(id){var el=g(id);if(el)el.value='';});
   g('f_dat').value=new Date().toISOString().split('T')[0];
   try{['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp_kopfCollapsed'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
+  idbClearAllFotos();
   render();setKopfCollapsed(false);toast('Neues Protokoll gestartet');
 }
 
@@ -3247,15 +3422,24 @@ var BACKUP_KEYS=['bp_dat','bp_stbs','bp_kopf','bp_nxtId','bp_fc','bp_locked','bp
 
 function doBackup(){
   autoSave();
+  toast('Sicherung wird erstellt…');
   var payload={meta:{tool:'bruecken-karten-app',exported:new Date().toISOString()},data:{}};
   BACKUP_KEYS.forEach(function(k){
     var v=null;
     try{v=localStorage.getItem(k);}catch(e){}
     payload.data[k]=v;
   });
-  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
-  triggerDownload(blob,'bp_sicherung_'+stamp+'.json');
+  // Bilddaten liegen jetzt in IndexedDB, nicht mehr in localStorage — für eine
+  // vollständige Sicherung müssen sie hier separat mit eingesammelt werden,
+  // sonst fehlen die Fotos in der exportierten Datei.
+  idbGetAllFotos().then(function(photoMap){
+    payload.photos=photoMap;
+    var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
+    triggerDownload(blob,'bp_sicherung_'+stamp+'.json');
+  }).catch(function(){
+    toast('⚠️ Fotos konnten nicht in die Sicherung aufgenommen werden!');
+  });
 }
 
 function handleRestoreFile(file){
@@ -3270,8 +3454,20 @@ function handleRestoreFile(file){
         if(data[k]!=null){try{localStorage.setItem(k,data[k]);}catch(e){}}
         else{try{localStorage.removeItem(k);}catch(e){}}
       });
-      toast('Wiederhergestellt — Seite wird neu geladen ✓');
-      setTimeout(function(){location.reload();},800);
+      // Neue Sicherungen enthalten die Fotos separat unter payload.photos (weil
+      // sie in IndexedDB statt localStorage liegen). Alte Sicherungen (vor dem
+      // Umbau) haben die Bilddaten noch direkt in bp_dat eingebettet — die
+      // Migration dafür läuft beim nächsten Laden automatisch (hydrateFotosFromIdb).
+      var photoWrites=Object.keys(payload.photos||{}).map(function(fid){
+        return idbPutFoto(fid,payload.photos[fid]);
+      });
+      Promise.all(photoWrites).then(function(){
+        toast('Wiederhergestellt — Seite wird neu geladen ✓');
+        setTimeout(function(){location.reload();},800);
+      }).catch(function(){
+        toast('⚠️ Fotos aus Sicherung konnten nicht geschrieben werden');
+        setTimeout(function(){location.reload();},1200);
+      });
     }catch(err){
       toast('Datei konnte nicht gelesen werden');
     }
