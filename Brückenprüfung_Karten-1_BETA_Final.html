@@ -636,6 +636,16 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
 
 // STATE
 var stbs=[], nxtId=1, dat={};
+// Liefert die AKTUELLE Anzeige-Position eines STB (1-basiert) anhand seiner internen,
+// nie wiederverwendeten ID — nicht die interne ID selbst. Grund: addStb() vergibt fort-
+// laufende IDs, die auch nach Löschen von STBs nicht zurückgesetzt werden (z.B. nach
+// vielen Testdurchläufen: STB mit id=11 ist trotzdem nur der 3. sichtbare STB). Überall,
+// wo aus einem gespeicherten Schlüssel wie "stb11_oe1" ein Anzeigetext wie "STB 3 /
+// Öffnung 1" gebaut wird, muss diese Funktion verwendet werden, nicht die rohe ID.
+function stbPos(id){
+  for(var i=0;i<stbs.length;i++){if(stbs[i].id===id)return i+1;}
+  return id; // Fallback, falls der STB nicht mehr existiert
+}
 var curGalleryOv=null; // aktuell offene Foto-Vollbildansicht (falls eine offen ist) — für Android-Zurück-Knopf
 function isDurchgehendW(){return !!dat['__durchgehendW'];}
 var bauwerkLocked=false;
@@ -697,7 +707,7 @@ function buildLagerFotoLabel(){
   var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim():'';
   var lVal=lIdx>=0&&g('lagerMw'+lIdx)?g('lagerMw'+lIdx).value.trim():'';
   var parts=[];
-  if(stbM)parts.push('STB '+stbM[1]);
+  if(stbM)parts.push('STB '+stbPos(parseInt(stbM[1],10)));
   if(wVal)parts.push('Widerlager '+wVal);
   else if(pVal)parts.push('Pfeiler '+pVal);
   if(lVal)parts.push('Lager '+lVal);
@@ -1065,11 +1075,11 @@ function shortBauTitleFromKey(baseKey){
 // (z.B. "STB 2 / Öffnung 1", "STB 1 / Widerlager 2", "Widerlager 1 (durchgehend)").
 function friendlyTargetLabel(baseKey){
   var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
-  if(oeM)return 'STB '+oeM[1]+' / Öffnung '+oeM[2];
+  if(oeM)return 'STB '+stbPos(parseInt(oeM[1],10))+' / Öffnung '+oeM[2];
   var wM=baseKey.match(/^stb(\d+)_w([12])$/);
-  if(wM)return 'STB '+wM[1]+' / Widerlager '+wM[2];
+  if(wM)return 'STB '+stbPos(parseInt(wM[1],10))+' / Widerlager '+wM[2];
   var pfM=baseKey.match(/^stb(\d+)_pf(\d+)$/);
-  if(pfM)return 'STB '+pfM[1]+' / Pfeiler '+pfM[2];
+  if(pfM)return 'STB '+stbPos(parseInt(pfM[1],10))+' / Pfeiler '+pfM[2];
   var wgM=baseKey.match(/^wg_w([12])$/);
   if(wgM)return 'Widerlager '+wgM[1]+' (durchgehend)';
   return baseKey;
@@ -1432,7 +1442,7 @@ function openSch(key,ugr,bereich){
   if(S.beidePhase&&S.key!==key)resetBeideState();
   S.key=key;S.ugr=ugr;S.schTitle=bereich+' / '+ugr;
   var stbM=key.split('___')[0].match(/^stb(\d+)_/);
-  g('schTitle').textContent=(stbM?'STB '+stbM[1]+' / ':'')+S.schTitle;
+  g('schTitle').textContent=(stbM?'STB '+stbPos(parseInt(stbM[1],10))+' / ':'')+S.schTitle;
   renderUgrSwitch(ugr);
   renderSch();
   showPanel('ovSch');
@@ -1485,7 +1495,7 @@ function renderSch(){
       var lh=document.createElement('div');
       lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
       var stbMloc=(S.key||'').match(/^stb(\d+)_/);
-      lh.textContent=(stbMloc?'STB '+stbMloc[1]+' / ':'')+it.loc;div.appendChild(lh);
+      lh.textContent=(stbMloc?'STB '+stbPos(parseInt(stbMloc[1],10))+' / ':'')+it.loc;div.appendChild(lh);
     }
     // Text + delete
     var sr=document.createElement('div');sr.className='sr';
@@ -1777,7 +1787,7 @@ function updateVerortungDisplay(){
   // STB-Nummer immer voranstellen (überall, nicht nur im Titel der Schäden-Liste) — z.B.
   // "STB 1 / Öffnung 1 / Schotterwand rechts" statt nur "Öffnung 1 / Schotterwand rechts".
   var stbM=(S.key||'').match(/^stb(\d+)_/);
-  if(stbM&&base)base='STB '+stbM[1]+' / '+base;
+  if(stbM&&base)base='STB '+stbPos(parseInt(stbM[1],10))+' / '+base;
   if(S.beidePhase)base='↔ Beide · Schritt '+S.beidePhase+'/2 ('+(S.beidePhase===1?'Links':'Rechts')+')  ·  '+base;
   vEl.textContent=base;
 }
@@ -2141,9 +2151,9 @@ function retargetHeadingLine(desc,targetBaseKey){
   var pfM=targetBaseKey.match(/^stb(\d+)_pf(\d+)$/);
   var wgM=targetBaseKey.match(/^wg_w([12])$/);
   var replaced=first;
-  if(oeM)replaced=first.replace(/^STB \d+, Öffnung \d+/,'STB '+oeM[1]+', Öffnung '+oeM[2]);
-  else if(wM)replaced=first.replace(/^STB \d+, Widerlager [12]/,'STB '+wM[1]+', Widerlager '+wM[2]);
-  else if(pfM)replaced=first.replace(/^STB \d+, Pfeiler \d+/,'STB '+pfM[1]+', Pfeiler '+pfM[2]);
+  if(oeM)replaced=first.replace(/^STB \d+, Öffnung \d+/,'STB '+stbPos(parseInt(oeM[1],10))+', Öffnung '+oeM[2]);
+  else if(wM)replaced=first.replace(/^STB \d+, Widerlager [12]/,'STB '+stbPos(parseInt(wM[1],10))+', Widerlager '+wM[2]);
+  else if(pfM)replaced=first.replace(/^STB \d+, Pfeiler \d+/,'STB '+stbPos(parseInt(pfM[1],10))+', Pfeiler '+pfM[2]);
   else if(wgM)replaced=first.replace(/^(STB \d+, Widerlager [12]|Widerlager [12] \(durchgehend\))/,'Widerlager '+wgM[1]+' (durchgehend)');
   lines[0]=replaced;
   return lines.join('\n');
@@ -2153,11 +2163,11 @@ function buildLocationHeadingBare(overrideBaseKey){
   if(!overrideBaseKey&&/^Lager: /.test(S.ugr||''))return '';
   var baseKey=overrideBaseKey||(S.key||'').split('___')[0];
   var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
-  if(oeM)return 'STB '+oeM[1]+', Öffnung '+oeM[2];
+  if(oeM)return 'STB '+stbPos(parseInt(oeM[1],10))+', Öffnung '+oeM[2];
   var wM=baseKey.match(/^stb(\d+)_w([12])$/);
-  if(wM)return 'STB '+wM[1]+', Widerlager '+wM[2];
+  if(wM)return 'STB '+stbPos(parseInt(wM[1],10))+', Widerlager '+wM[2];
   var pfM=baseKey.match(/^stb(\d+)_pf(\d+)$/);
-  if(pfM)return 'STB '+pfM[1]+', Pfeiler '+pfM[2];
+  if(pfM)return 'STB '+stbPos(parseInt(pfM[1],10))+', Pfeiler '+pfM[2];
   var wgM=baseKey.match(/^wg_w([12])$/);
   if(wgM)return 'Widerlager '+wgM[1]+' (durchgehend)';
   return '';
@@ -2409,7 +2419,7 @@ function openFotoPanel(idx){
   var it=dat[S.key]&&dat[S.key][idx];if(!it)return;
   var loc=it.loc||S.schTitle||'';
   var stbMfp=(S.key||'').match(/^stb(\d+)_/);
-  g('fpVerortung').textContent=(stbMfp?'STB '+stbMfp[1]+' / ':'')+loc;
+  g('fpVerortung').textContent=(stbMfp?'STB '+stbPos(parseInt(stbMfp[1],10))+' / ':'')+loc;
   g('fpCount').textContent=(it.fotos||[]).length+'/10';
   renderFotoLeiste(it);
   showPanel('ovFoto');
