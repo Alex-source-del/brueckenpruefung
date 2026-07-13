@@ -97,7 +97,8 @@ body.dark .oeka{background:var(--sur);border-color:#555;}
 #ovGesamt .ptop h3{font-size:22px;text-align:center;}
 .bback{border:1px solid var(--line);background:var(--s2);color:var(--soft);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;}
 .sb{width:100%;padding:10px 13px;border:1px solid var(--line);background:var(--s2);border-radius:7px;text-align:left;cursor:pointer;font-size:13px;color:var(--ink);font-family:inherit;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
-.sb:hover,.sb.on{border-color:var(--acc);background:var(--accs);color:var(--acc);font-weight:600;}
+.sb:hover{border-color:var(--acc);background:var(--accs);color:var(--acc);font-weight:600;}
+.sb.on{border-color:var(--acc);background:var(--acc);color:#fff;font-weight:700;}
 .uc{background:var(--acc);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;}
 .pan textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:9px;font-family:inherit;font-size:14px;background:var(--s2);color:var(--ink);outline:none;height:90px;resize:none;margin-top:6px;}
 #mDesc{font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#000;min-height:180px;max-height:55vh;overflow-y:auto;border:2px solid var(--acc)!important;}
@@ -135,8 +136,8 @@ body.dark #mDesc{color:var(--ink);}
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
 <div class="kopf" id="kopfBox">
-  <div class="fl"><label>Strecke</label><input id="f_str" placeholder="z.B. 5900"></div>
-  <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092"></div>
+  <div class="fl"><label>Strecke</label><input id="f_str" placeholder="z.B. 5900" inputmode="numeric"></div>
+  <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092" inputmode="decimal"></div>
   <div class="fl full"><label>Brückenname</label><input id="f_br" placeholder="z.B. EÜ Musterstraße"></div>
   <div class="fl"><label>Datum</label><input id="f_dat" type="date"></div>
   <div class="fl"><label>Prüfer</label><input id="f_pr" placeholder="Name"></div>
@@ -226,7 +227,7 @@ body.dark #mDesc{color:var(--ink);}
     <div class="ptop">
       <button class="bback" onclick="resetBeideState();g('ovMod').classList.remove('open');">← Zurück</button>
       <h3 style="flex:1;">Schaden erfassen</h3>
-
+      <div id="mSchadenNr" style="font-size:13px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:4px 12px;white-space:nowrap;"></div>
     </div>
     <div id="mTyp"></div>
     <div id="mVerortung" style="font-size:13px;font-weight:700;color:var(--acc);padding:8px 10px;background:var(--accs);border-radius:7px;margin-bottom:8px;"></div>
@@ -234,12 +235,16 @@ body.dark #mDesc{color:var(--ink);}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mBauteilNrRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilNrLabel" style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
-        <input id="mBauteilNr" type="text" inputmode="text" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <input id="mBauteilNr" type="text" inputmode="decimal" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
         <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
       </div>
       <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
-        <input id="mBauteilRef" type="text" inputmode="text" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <input id="mBauteilRef" type="text" inputmode="decimal" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+      </div>
+      <div id="mBauteilPosRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <label style="font-size:13px;color:var(--soft);font-weight:600;">Lage:</label>
+        <div id="mBauteilPosBtns" style="display:flex;gap:6px;"></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
@@ -253,7 +258,10 @@ body.dark #mDesc{color:var(--ink);}
     </div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
       <label style="font-size:12px;color:var(--soft);font-weight:600;">📷 Foto</label>
-      <div onclick="takeMFoto()"  style="border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;margin-top:5px;">📷 Foto aufnehmen</div>
+      <div style="display:flex;gap:6px;margin-top:5px;">
+        <div onclick="takeMFoto()" style="flex:1;border:1.5px dashed var(--line);border-radius:7px;padding:9px;text-align:center;cursor:pointer;color:var(--faint);font-size:13px;">📷 Foto aufnehmen</div>
+        <button type="button" id="mCamModeBtn" onclick="toggleCameraMode()" style="flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;font-family:inherit;">🎥 Kameramodus</button>
+      </div>
       <input type="file" id="mFoto" accept="image/*" capture="environment" style="display:none">
       <div id="mFotoLeiste" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
     </div>
@@ -490,6 +498,11 @@ var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längs
 // 1,3,5, aber Bewuchs an allen). Deshalb bleibt hier die alte Zeilen-Logik: Nr. wird an
 // jede einzelne Schadenszeile angehängt statt einmalig in die Überschrift.
 var NR_PRO_SYMPTOMZEILE_BAUTEILE=['Geländer links','Geländer rechts'];
+// Bauteile mit zusätzlicher Lage-Angabe (Punkt 7-9 der Sammelliste): Hauptträger bekommt
+// innen/außen, Längsträger und Längsrippe bekommen links/rechts — je EIN optionaler Button,
+// wird zusätzlich zur Bauteil-Nr. in die Überschrift eingerechnet, z.B. "Hauptträger 1 (innen)".
+var BAUTEIL_POS_OPTIONS={'Hauptträger':['innen','außen'],'Längsträger':['links','rechts'],'Längsrippe':['links','rechts']};
+var curBauteilPos='';
 // Bauteile mit zwei Nummern (eigene Nr. + Bezugs-Nr.), z.B. "Beulsteife Nr. 3 an Hauptträger Nr. 2"
 // Auf weitere Stahlbauteile erweiterbar, einfach hier ergänzen
 var DOPPEL_NR_BAUTEILE={
@@ -1457,7 +1470,7 @@ function renderSch(){
     // Laufende Nummer dieses Schadens innerhalb der Liste
     var numBadge=document.createElement('div');
     numBadge.style.cssText='display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:2px 9px;margin-bottom:6px;';
-    numBadge.textContent='Nr. '+(i+1);
+    numBadge.textContent='Schaden Nr.: '+(i+1);
     div.appendChild(numBadge);
     // Location
     if(it.loc){
@@ -1700,6 +1713,7 @@ function delS(i){
 function updateBauteilNrUI(){
   curVbsState={V:false,B:false,S:false};
   renderVbsRow();
+  curBauteilPos='';
   var nrRow=g('mBauteilNrRow'),refRow=g('mBauteilRefRow');
   if(!nrRow||!refRow){updateVerortungDisplay();return;}
   var bauteilName=S.ugr||'';
@@ -1714,7 +1728,33 @@ function updateBauteilNrUI(){
     nrRow.style.display='none';
     refRow.style.display='none';
   }
+  renderBauteilPosBtns();
   updateVerortungDisplay();
+}
+
+// Baut die optionalen Lage-Buttons (innen/außen bzw. links/rechts, siehe
+// BAUTEIL_POS_OPTIONS) je nach aktuellem Bauteil auf oder blendet die Zeile aus, wenn das
+// Bauteil keine Lage-Angabe kennt.
+function renderBauteilPosBtns(){
+  var row=g('mBauteilPosRow'),box=g('mBauteilPosBtns');
+  if(!row||!box)return;
+  var opts=BAUTEIL_POS_OPTIONS[S.ugr||''];
+  if(!opts){row.style.display='none';box.innerHTML='';return;}
+  row.style.display='flex';
+  box.innerHTML='';
+  opts.forEach(function(o){
+    var b=document.createElement('button');
+    b.type='button';b.textContent=o;
+    var on=curBauteilPos===o;
+    b.style.cssText='border:1.5px solid var(--acc);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'
+      +(on?'background:var(--acc);color:#fff;':'background:transparent;color:var(--acc);');
+    b.onclick=function(){
+      curBauteilPos=(curBauteilPos===o)?'':o;
+      renderBauteilPosBtns();
+      updateVerortungDisplay();updateHeadingLineInDesc();
+    };
+    box.appendChild(b);
+  });
 }
 
 // Ergänzt die Standort-Überschrift oben live um die gerade eingetippte Bauteil-Nummer
@@ -1929,7 +1969,7 @@ function openGesamtschaeden(){
     showPanel('ovGesamt');
     return;
   }
-  box.innerHTML='<p style="color:var(--soft);font-size:12px;padding:0 0 8px;">'+list.length+' Schaden(-Einträge) insgesamt</p>';
+  box.innerHTML='<p style="color:var(--acc);font-size:19px;font-weight:800;padding:2px 0 12px;">'+list.length+' Schaden(-Einträge) insgesamt</p>';
 
   // Nach Bauteil (bereich) gruppieren, Reihenfolge des ersten Auftretens beibehalten
   // (entspricht bereits W1 → Öffnungen/Pfeiler → W2 je STB, siehe collectAllSchaeden)
@@ -1974,7 +2014,7 @@ function openGesamtschaeden(){
       var div=document.createElement('div');div.className='sitem';
       var numBadge=document.createElement('div');
       numBadge.style.cssText='display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--acc);border-radius:10px;padding:2px 9px;margin-bottom:6px;';
-      numBadge.textContent='Nr. '+entry.num;
+      numBadge.textContent='Schaden Nr.: '+entry.num;
       div.appendChild(numBadge);
       var lh=document.createElement('div');
       lh.style.cssText='font-size:11px;font-weight:700;color:var(--acc);padding:4px 8px;background:var(--accs);border-radius:5px;margin-bottom:6px;';
@@ -2120,6 +2160,8 @@ function buildLocationHeadingBare(overrideBaseKey){
 // eingetragene Bauteil-Nummer mit eingerechnet wird.
 function buildBauteilPart(mitNr){
   if(!S.ugr)return '';
+  var posOpts=BAUTEIL_POS_OPTIONS[S.ugr];
+  var posSuffix=(mitNr&&posOpts&&curBauteilPos)?' ('+curBauteilPos+')':'';
   if(mitNr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)===-1){
     var nrRow=g('mBauteilNrRow');
     if(nrRow&&nrRow.style.display!=='none'){
@@ -2137,11 +2179,11 @@ function buildBauteilPart(mitNr){
         }
       } else if(nrVal){
         var nrClean=nrVal.toLowerCase()==='alle'?'Alle':nrVal.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}).join(',');
-        return S.ugr+' '+nrClean;
+        return S.ugr+' '+nrClean+posSuffix;
       }
     }
   }
-  return S.ugr.replace(/^Widerlager\s+/,'');
+  return S.ugr.replace(/^Widerlager\s+/,'')+posSuffix;
 }
 
 function buildLocationHeading(){
@@ -2188,6 +2230,8 @@ function editS(i){
   // freien Bearbeitung anbieten, keine automatische Zerlegung in Chips, keine
   // Bauteil-Nr-Felder (auch wenn das Bauteil an sich nummerierbar wäre).
   S.editIsBeide=/ links und rechts$/.test(it.loc||'');
+  mCameraModeOn=false;renderCamModeBtn();
+  updateSchadenNrBadge();
   if(S.editIsBeide){
     var nrRowB=g('mBauteilNrRow'),refRowB=g('mBauteilRefRow');
     if(nrRowB)nrRowB.style.display='none';
@@ -2264,6 +2308,14 @@ function editS(i){
           if(mHead[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHead[1];
           if(mHead[2]&&g('mBauteilRef'))g('mBauteilRef').value=mHead[2];
         }
+      } else if(BAUTEIL_POS_OPTIONS[S.ugr]){
+        var posAlt2=BAUTEIL_POS_OPTIONS[S.ugr].join('|');
+        var reHeadPos=new RegExp('^'+esc(S.ugr)+'(?: (\\S+))?(?: \\(('+posAlt2+')\\))?$');
+        var mHeadPos=bauteilTeil.match(reHeadPos);
+        if(mHeadPos){
+          if(mHeadPos[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHeadPos[1];
+          if(mHeadPos[2])curBauteilPos=mHeadPos[2];
+        }
       } else {
         var reHead2=new RegExp('^'+esc(S.ugr)+' (.+)$');
         var mHead2=bauteilTeil.match(reHead2);
@@ -2271,6 +2323,7 @@ function editS(i){
       }
     }
   }
+  renderBauteilPosBtns();
   updateVerortungDisplay();
   // Sonderfall Geländer: die Nr. steht hier NICHT in der Überschrift (siehe
   // NR_PRO_SYMPTOMZEILE_BAUTEILE), sondern an jeder einzelnen Schadenszeile — von dort
@@ -2528,6 +2581,7 @@ document.addEventListener('DOMContentLoaded',function(){
         URL.revokeObjectURL(objUrl);
         renderMFotoLeiste();
         toast('Foto '+nr+' hinzugefügt ✓');
+        if(mCameraModeOn)setTimeout(function(){if(mCameraModeOn)takeMFoto();},400);
       },0);
     };
     img.onerror=function(){
@@ -2670,10 +2724,22 @@ function renderLagerMesswerte(){
   mArt.insertBefore(box,mArt.firstChild);
 }
 
+// Zeigt die laufende Schaden-Nr. (innerhalb der aktuellen Bauteil/Untergruppen-Liste)
+// oben im "Schaden erfassen"-Modal an — bei neuen Schäden die nächste freie Nummer,
+// beim Bearbeiten die tatsächliche Position des Eintrags. Rein informativ.
+function updateSchadenNrBadge(){
+  var el=g('mSchadenNr');if(!el)return;
+  var items=(S.key&&dat[S.key])||[];
+  var nr=S.editIdx>=0?S.editIdx+1:items.length+1;
+  el.textContent='Schaden Nr.: '+nr;
+}
+
 function openMod(){
   S.editIdx=-1;
   S.editIsBeide=false;
   S.art='';S.vorl=null;
+  mCameraModeOn=false;renderCamModeBtn();
+  updateSchadenNrBadge();
   g('mDesc').value='';
   curSchadenEntries=[];
   renderSchadenChips();
@@ -2698,6 +2764,26 @@ function openMod(){
   pendingGenauArt=null;
   updateBeideModalUI();
   showPanel('ovMod');
+}
+
+// Kameramodus: bleibt nach jedem bestätigten Foto aktiv und öffnet automatisch die
+// Kamera für das nächste, statt dass man nach jedem einzelnen Foto erneut auf
+// "Foto aufnehmen" tippen muss. Explizit über "Kameramodus beenden" wieder ausschaltbar.
+var mCameraModeOn=false;
+function toggleCameraMode(){
+  mCameraModeOn=!mCameraModeOn;
+  renderCamModeBtn();
+  if(mCameraModeOn)takeMFoto();
+}
+function renderCamModeBtn(){
+  var b=g('mCamModeBtn');if(!b)return;
+  if(mCameraModeOn){
+    b.textContent='⏹ Kameramodus beenden';
+    b.style.cssText='flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--acc);color:#fff;font-size:13px;font-weight:700;font-family:inherit;';
+  } else {
+    b.textContent='🎥 Kameramodus';
+    b.style.cssText='flex:1;border:1.5px solid var(--acc);border-radius:7px;padding:9px;text-align:center;cursor:pointer;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;font-family:inherit;';
+  }
 }
 
 function takeMFoto(){
@@ -3336,7 +3422,8 @@ function buildFormDesc(){
     var mwLines=curLagerMesswertFelder.filter(function(f,idx){
       if(idx===wIdx&&!wVal&&pVal)return false;
       if(idx===pIdx&&!pVal&&wVal)return false;
-      return true;
+      var el=g('lagerMw'+idx);
+      return !!(el&&el.value.trim());
     }).map(function(f){
       var idx=curLagerMesswertFelder.indexOf(f);
       var el=g('lagerMw'+idx);
