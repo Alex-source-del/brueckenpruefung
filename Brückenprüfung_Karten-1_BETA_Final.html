@@ -2819,7 +2819,7 @@ function buildLiveCamOverlay(stream){
   var old=g('liveCamOverlay');if(old)old.parentNode.removeChild(old);
   var ov=document.createElement('div');
   ov.id='liveCamOverlay';
-  ov.style.cssText='position:fixed;inset:0;background:#000;z-index:1100;display:flex;flex-direction:column;touch-action:none;';
+  ov.style.cssText='position:fixed;inset:0;background:#000;z-index:1100;display:flex;flex-direction:column;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;';
 
   var videoWrap=document.createElement('div');
   videoWrap.id='liveCamVideoWrap';
