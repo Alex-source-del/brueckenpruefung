@@ -1047,6 +1047,20 @@ function shortBauTitleFromKey(baseKey){
   return '';
 }
 
+// Klartext-Label für einen Ziel-Bauteil-Schlüssel bei der Übernahme-Auswahl
+// (z.B. "STB 2 / Öffnung 1", "STB 1 / Widerlager 2", "Widerlager 1 (durchgehend)").
+function friendlyTargetLabel(baseKey){
+  var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
+  if(oeM)return 'STB '+oeM[1]+' / Öffnung '+oeM[2];
+  var wM=baseKey.match(/^stb(\d+)_w([12])$/);
+  if(wM)return 'STB '+wM[1]+' / Widerlager '+wM[2];
+  var pfM=baseKey.match(/^stb(\d+)_pf(\d+)$/);
+  if(pfM)return 'STB '+pfM[1]+' / Pfeiler '+pfM[2];
+  var wgM=baseKey.match(/^wg_w([12])$/);
+  if(wgM)return 'Widerlager '+wgM[1]+' (durchgehend)';
+  return baseKey;
+}
+
 function getUgr(k){
   // wg_w1/wg_w2 ("durchgehend") können Schäden aus STBs mit unterschiedlichem
   // Bauwerkstyp enthalten (z.B. ein STB Beton, ein anderer Mauerwerk) — deshalb
@@ -1469,98 +1483,180 @@ function renderSch(){
     sr.appendChild(txt);
     sr.appendChild(toGesamt);
     sr.appendChild(edit);sr.appendChild(del);div.appendChild(sr);
-    // Copy to sibling components of the same type (opt-in, description text only — no photos)
+    // Übernahme auf andere Bauteile: statt sofort blind zu kopieren, wird zuerst eine
+    // Auswahl der möglichen Ziele geöffnet (Chips mit Klartext-Label wie "STB 2 / Öffnung 1"
+    // oder "Widerlager 2"). Jeder Chip kopiert einzeln dorthin und markiert sich danach als
+    // erledigt; "Alle" kopiert auf alle noch offenen Ziele in einem Schritt.
     var wgMatch=S.key.match(/^(wg_w[12])___(.*)$/);
     var bMatch=S.key.match(/^(stb\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
+    var xferTargets=[]; // {key, label}
+    var xferUgrSuffix=null;
     if(wgMatch){
-      var wgPart=wgMatch[1],ugrSuffixWg=wgMatch[2];
+      var wgPart=wgMatch[1];xferUgrSuffix=wgMatch[2];
       var wgTarget=wgPart==='wg_w1'?'wg_w2':'wg_w1';
-      var cpWg=document.createElement('button');
-      cpWg.textContent='📋 Auf anderes Widerlager (durchgehend) übernehmen';
-      cpWg.style.cssText='border:0;background:none;color:var(--acc);font-size:11.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;margin-top:4px;display:block;';
-      (function(it2,tKey,ugr3){
-        cpWg.onclick=function(){
-          copyEntryToTarget(it2,tKey,ugr3);
-          autoSave();
-          render();
-          toast('Übernommen ✓');
-        };
-      })(it,wgTarget,ugrSuffixWg);
-      div.appendChild(cpWg);
+      xferTargets.push({key:wgTarget,label:friendlyTargetLabel(wgTarget)});
     } else if(bMatch){
-      var stbPrefix2=bMatch[1],bauteilPart=bMatch[2],ugrSuffix2=bMatch[3];
+      var stbPrefix2=bMatch[1],bauteilPart=bMatch[2];xferUgrSuffix=bMatch[3];
       var stbIdNum2=parseInt(stbPrefix2.replace('stb',''),10);
       var stbObj=stbs.filter(function(s){return s.id===stbIdNum2;})[0];
-      var siblingKeys=[],label='';
       if(stbObj){
+        // Ziele innerhalb desselben STB (anderes Widerlager / andere Öffnung / anderer Pfeiler)
         if(/^w[12]$/.test(bauteilPart)){
-          label='📋 Auf anderes Widerlager übernehmen';
-          siblingKeys=['w1','w2'].filter(function(x){return x!==bauteilPart;}).map(function(x){return stbPrefix2+'_'+x;});
+          ['w1','w2'].filter(function(x){return x!==bauteilPart;}).forEach(function(x){
+            var k=stbPrefix2+'_'+x;xferTargets.push({key:k,label:friendlyTargetLabel(k)});
+          });
         } else if(/^oe\d+$/.test(bauteilPart)){
-          label='📋 In andere Öffnungen übernehmen';
           var curOeN=parseInt(bauteilPart.replace('oe',''),10);
-          for(var j=1;j<=stbObj.oeff;j++){if(j!==curOeN)siblingKeys.push(stbPrefix2+'_oe'+j);}
+          for(var j=1;j<=stbObj.oeff;j++){if(j!==curOeN){var k2=stbPrefix2+'_oe'+j;xferTargets.push({key:k2,label:friendlyTargetLabel(k2),group:'sib-oe'});}}
         } else if(/^pf\d+$/.test(bauteilPart)){
-          label='📋 Auf andere Pfeiler übernehmen';
           var curPfN=parseInt(bauteilPart.replace('pf',''),10);
           var pfCount=stbObj.oeff-1;
-          for(var k=1;k<=pfCount;k++){if(k!==curPfN)siblingKeys.push(stbPrefix2+'_pf'+k);}
+          for(var k=1;k<=pfCount;k++){if(k!==curPfN){var k3=stbPrefix2+'_pf'+k;xferTargets.push({key:k3,label:friendlyTargetLabel(k3)});}}
+        }
+        // Ziele im gleichen Bauteil in anderen STB (z.B. W1 von STB1 -> W1 von STB2, STB3, ...)
+        if(stbs.length>1){
+          stbs.forEach(function(s){
+            if(s.id===stbIdNum2)return;
+            if(/^w[12]$/.test(bauteilPart)){
+              var k4='stb'+s.id+'_'+bauteilPart;xferTargets.push({key:k4,label:friendlyTargetLabel(k4)});
+            } else if(/^oe\d+$/.test(bauteilPart)){
+              var n=parseInt(bauteilPart.replace('oe',''),10);
+              if(n<=s.oeff){var k5='stb'+s.id+'_oe'+n;xferTargets.push({key:k5,label:friendlyTargetLabel(k5)});}
+            } else if(/^pf\d+$/.test(bauteilPart)){
+              var n2=parseInt(bauteilPart.replace('pf',''),10);
+              if(n2<=s.oeff-1){var k6='stb'+s.id+'_pf'+n2;xferTargets.push({key:k6,label:friendlyTargetLabel(k6)});}
+            }
+          });
         }
       }
-      if(siblingKeys.length){
-        var cp=document.createElement('button');
-        cp.textContent=label.replace(/^📋\s*/,'');
-        cp.className='dx';
-        cp.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
-        (function(it2,sKeys,ugr3){
-          cp.onclick=function(){
-            var count=0;
-            sKeys.forEach(function(sk){
-              copyEntryToTarget(it2,sk,ugr3);
-              count++;
-            });
-            autoSave();
-            render();
-            toast('Auf '+count+' weitere Stelle(n) übernommen ✓');
-          };
-        })(it,siblingKeys,ugrSuffix2);
-        sr.appendChild(cp);
-      }
-      // Auf gleiches Bauteil in anderen STB übernehmen (z.B. W1 von STB1 -> W1 von STB2, STB3, ...)
-      if(stbObj&&stbs.length>1){
-        var otherStbKeys=[];
-        stbs.forEach(function(s){
-          if(s.id===stbIdNum2)return;
-          if(/^w[12]$/.test(bauteilPart)){
-            otherStbKeys.push('stb'+s.id+'_'+bauteilPart);
-          } else if(/^oe\d+$/.test(bauteilPart)){
-            var n=parseInt(bauteilPart.replace('oe',''),10);
-            if(n<=s.oeff)otherStbKeys.push('stb'+s.id+'_oe'+n);
-          } else if(/^pf\d+$/.test(bauteilPart)){
-            var n2=parseInt(bauteilPart.replace('pf',''),10);
-            if(n2<=s.oeff-1)otherStbKeys.push('stb'+s.id+'_pf'+n2);
+    }
+    if(xferTargets.length){
+      var xferToggle=document.createElement('button');
+      xferToggle.textContent='📋 Auf anderes Bauteil übernehmen';
+      xferToggle.className='dx';
+      xferToggle.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
+      var xferBox=document.createElement('div');
+      xferBox.style.cssText='display:none;flex-direction:column;gap:9px;margin-top:8px;width:100%;';
+      (function(it2,targets,ugr3,box){
+        var doneKeys={};
+        var sibOeTargets=targets.filter(function(t){return t.group==='sib-oe';});
+        var singleTargets=targets.filter(function(t){return t.group!=='sib-oe';});
+
+        // --- Mehrfachauswahl für Öffnungen im selben STB: erst markieren, dann bestätigen ---
+        if(sibOeTargets.length){
+          var sibWrap=document.createElement('div');
+          sibWrap.style.cssText='display:flex;flex-direction:column;gap:6px;';
+          var sibLbl=document.createElement('div');
+          sibLbl.style.cssText='font-size:11px;color:var(--soft);font-weight:600;';
+          sibLbl.textContent='In andere Öffnungen (Mehrfachauswahl möglich):';
+          sibWrap.appendChild(sibLbl);
+          var sibChipRow=document.createElement('div');
+          sibChipRow.style.cssText='display:flex;flex-wrap:wrap;gap:7px;';
+          var selected={};
+          var confirmBtn=document.createElement('button');
+          confirmBtn.type='button';
+          confirmBtn.textContent='Übernehmen';
+          confirmBtn.disabled=true;
+          confirmBtn.style.cssText='align-self:flex-start;border:0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:700;cursor:default;font-family:inherit;background:var(--line);color:var(--soft);';
+          function refreshConfirmBtn(){
+            var n=Object.keys(selected).filter(function(k){return selected[k];}).length;
+            confirmBtn.textContent='Übernehmen'+(n?' ('+n+')':'');
+            confirmBtn.disabled=!n;
+            confirmBtn.style.cssText='align-self:flex-start;border:0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:700;font-family:inherit;'
+              +(n?'cursor:pointer;background:var(--acc);color:#fff;':'cursor:default;background:var(--line);color:var(--soft);');
           }
-        });
-        if(otherStbKeys.length){
-          var cp2=document.createElement('button');
-          cp2.textContent='Auf gleiches Bauteil in anderem STB übernehmen';
-          cp2.className='dx';
-          cp2.style.cssText='background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:700;padding:8px 12px;margin-right:14px;';
-          (function(it2,oKeys,ugr3){
-            cp2.onclick=function(){
-              var count=0;
-              oKeys.forEach(function(sk){
-                copyEntryToTarget(it2,sk,ugr3);
-                count++;
-              });
-              autoSave();
-              render();
-              toast('Auf '+count+' weitere STB übernommen ✓');
+          sibOeTargets.forEach(function(t){
+            var chip=document.createElement('button');
+            chip.type='button';
+            chip.textContent=t.label;
+            function paint(){
+              var on=!!selected[t.key];var isDone=!!doneKeys[t.key];
+              chip.disabled=isDone;
+              if(isDone){
+                chip.textContent='✓ '+t.label;
+                chip.style.cssText='border:1.5px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;cursor:default;font-family:inherit;background:var(--bg2,#eee);color:var(--soft);font-weight:600;';
+              } else {
+                chip.textContent=(on?'✓ ':'')+t.label;
+                chip.style.cssText='border:1.5px solid var(--acc);border-radius:20px;padding:6px 13px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;'
+                  +(on?'background:var(--acc);color:#fff;':'background:transparent;color:var(--acc);');
+              }
+            }
+            chip.onclick=function(){
+              if(doneKeys[t.key])return;
+              selected[t.key]=!selected[t.key];
+              paint();refreshConfirmBtn();
             };
-          })(it,otherStbKeys,ugrSuffix2);
-          sr.appendChild(cp2);
+            paint();
+            sibChipRow.appendChild(chip);
+          });
+          confirmBtn.onclick=function(){
+            var keys=Object.keys(selected).filter(function(k){return selected[k];});
+            if(!keys.length)return;
+            var chosen=sibOeTargets.filter(function(t){return keys.indexOf(t.key)!==-1;});
+            chosen.forEach(function(t){copyEntryToTarget(it2,t.key,ugr3);doneKeys[t.key]=true;selected[t.key]=false;});
+            autoSave();render();
+            var names=chosen.map(function(t){return t.label;}).join(', ');
+            toast('→ '+names+' übernommen ✓');
+            Array.from(sibChipRow.children).forEach(function(chip,idx){
+              var t=sibOeTargets[idx];if(!t)return;
+              var on=!!selected[t.key],isDone=!!doneKeys[t.key];
+              chip.disabled=isDone;
+              chip.textContent=isDone?('✓ '+t.label):((on?'✓ ':'')+t.label);
+              chip.style.cssText=isDone?
+                'border:1.5px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;cursor:default;font-family:inherit;background:var(--bg2,#eee);color:var(--soft);font-weight:600;':
+                'border:1.5px solid var(--acc);border-radius:20px;padding:6px 13px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:transparent;color:var(--acc);';
+            });
+            refreshConfirmBtn();
+          };
+          sibWrap.appendChild(sibChipRow);
+          sibWrap.appendChild(confirmBtn);
+          box.appendChild(sibWrap);
         }
-      }
+
+        // --- Einzelziele (anderes Widerlager/Pfeiler, anderer STB, wg-Gegenseite): Tipp = sofort übernehmen ---
+        if(singleTargets.length){
+          var singleRow=document.createElement('div');
+          singleRow.style.cssText='display:flex;flex-wrap:wrap;gap:7px;';
+          function mkChip(t,isAlle){
+            var chip=document.createElement('button');
+            chip.type='button';
+            chip.textContent=(isAlle?'✓✓ Alle':t.label);
+            chip.style.cssText='border:1.5px solid var(--acc);border-radius:20px;padding:6px 13px;font-size:12px;cursor:pointer;font-family:inherit;background:var(--acc);color:#fff;font-weight:600;';
+            chip.onclick=function(){
+              var targetsToDo=isAlle?singleTargets.filter(function(x){return !doneKeys[x.key];}):[t];
+              if(!targetsToDo.length)return;
+              targetsToDo.forEach(function(x){copyEntryToTarget(it2,x.key,ugr3);doneKeys[x.key]=true;});
+              autoSave();render();
+              var names=targetsToDo.map(function(x){return x.label;}).join(', ');
+              toast('→ '+names+' übernommen ✓');
+              singleRow.querySelectorAll('button[data-tkey]').forEach(function(btn){
+                var bk=btn.getAttribute('data-tkey');
+                if(doneKeys[bk]){
+                  btn.disabled=true;
+                  btn.style.cssText='border:1.5px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;cursor:default;font-family:inherit;background:var(--bg2,#eee);color:var(--soft);font-weight:600;';
+                  btn.textContent='✓ '+btn.getAttribute('data-tlabel');
+                }
+              });
+              if(singleTargets.every(function(x){return doneKeys[x.key];})){
+                var alleBtn=singleRow.querySelector('button[data-alle]');
+                if(alleBtn){alleBtn.disabled=true;alleBtn.style.opacity='.4';alleBtn.style.cursor='default';}
+              }
+            };
+            chip.setAttribute('data-tkey',isAlle?'':t.key);
+            chip.setAttribute('data-tlabel',isAlle?'':t.label);
+            if(isAlle)chip.setAttribute('data-alle','1');
+            return chip;
+          }
+          singleTargets.forEach(function(t){singleRow.appendChild(mkChip(t,false));});
+          if(singleTargets.length>1)singleRow.appendChild(mkChip(null,true));
+          box.appendChild(singleRow);
+        }
+      })(it,xferTargets,xferUgrSuffix,xferBox);
+      xferToggle.onclick=function(){
+        xferBox.style.display=xferBox.style.display==='none'?'flex':'none';
+      };
+      sr.appendChild(xferToggle);
+      div.appendChild(xferBox);
     }
     // Fotos
     var fotos=it.fotos||[];
