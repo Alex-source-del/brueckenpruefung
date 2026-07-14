@@ -1549,15 +1549,24 @@ function renderSch(){
           var pfCount=stbObj.oeff-1;
           for(var k=1;k<=pfCount;k++){if(k!==curPfN){var k3=stbPrefix2+'_pf'+k;xferTargets.push({key:k3,label:friendlyTargetLabel(k3)});}}
         }
-        // Ziele im gleichen Bauteil in anderen STB (z.B. W1 von STB1 -> W1 von STB2, STB3, ...)
+        // Ziele im gleichen Bauteiltyp in anderen STB. Auf Wunsch von Andreas (14.07.2026):
+        // bei Widerlager und Öffnungen werden ALLE gleichartigen Ziele im ganzen Bauwerk
+        // angeboten (nicht nur die "gleiche Position") — z.B. W1 von STB1 -> W1 UND W2 von
+        // STB2, STB3, ...; Öffnung 1 von STB1 -> ALLE Öffnungen von STB2, STB3, ... Bei
+        // Pfeiler bleibt es weiterhin bei der gleichen Position (Pfeiler sind nummeriert
+        // nach ihrer Lage zwischen zwei Öffnungen, eine "beliebige" Übernahme ergäbe dort
+        // keinen baulichen Sinn).
         if(stbs.length>1){
           stbs.forEach(function(s){
             if(s.id===stbIdNum2)return;
             if(/^w[12]$/.test(bauteilPart)){
-              var k4='stb'+s.id+'_'+bauteilPart;xferTargets.push({key:k4,label:friendlyTargetLabel(k4)});
+              ['w1','w2'].forEach(function(x){
+                var k4='stb'+s.id+'_'+x;xferTargets.push({key:k4,label:friendlyTargetLabel(k4)});
+              });
             } else if(/^oe\d+$/.test(bauteilPart)){
-              var n=parseInt(bauteilPart.replace('oe',''),10);
-              if(n<=s.oeff){var k5='stb'+s.id+'_oe'+n;xferTargets.push({key:k5,label:friendlyTargetLabel(k5)});}
+              for(var n=1;n<=s.oeff;n++){
+                var k5='stb'+s.id+'_oe'+n;xferTargets.push({key:k5,label:friendlyTargetLabel(k5)});
+              }
             } else if(/^pf\d+$/.test(bauteilPart)){
               var n2=parseInt(bauteilPart.replace('pf',''),10);
               if(n2<=s.oeff-1){var k6='stb'+s.id+'_pf'+n2;xferTargets.push({key:k6,label:friendlyTargetLabel(k6)});}
