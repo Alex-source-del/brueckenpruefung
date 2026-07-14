@@ -304,15 +304,29 @@ body.dark #mDesc{color:var(--ink);}
 // ============================================================
 var SC = {
   // Widerlager/Pfeiler Beton (senkrecht/waagerecht/diagonal) - auch Auflagerbank-Sonderfall
-  'Beton':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Zeile 2 (ab 'Schalungsankerhülsen offen'): Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen.
+  'Beton':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation',
+    'Schalungsankerhülsen offen','Tropfkante fehlt','Tropfkante ausgebrochen','Tropftülle fehlt','Tropftülle abgebrochen','Betonoberfläche ohne Quergefälle','Betonoberfläche ohne Längsgefälle','Beton-Karbonatisierung','Beton-Chloridbelastung','Alkali-Schaden','Betondeckung zu gering','Bewehrung freiliegend','Spannstahl gerissen','Hüllrohr freiliegend'],
   // Widerlager/Pfeiler Mauerwerk (senkrecht/waagerecht/diagonal)
-  'Mauerwerk':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Hohlstellen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation'],
+  // Zeile 2: Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen.
+  'Mauerwerk':['Senkrecht rissig','Waagerecht rissig','Diagonal rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Hohlstellen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation',
+    'Mauerwerk ausgebaucht','Ausblühungen','Fugenmörtel zeigt geringe Festigkeit','Steine zeigen geringe Festigkeit','Steine pumpen','Mauerwerkskanten abgeplatzt'],
   // Gewölbe Beton / Fahrbahnplatte Beton / Fahrbahnplatte WIB (längs/quer/schräg)
-  'BetonLQS':['Längs rissig','Quer rissig','Schräg rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation'],
+  // Zeile 2: Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen (identisch zu 'Beton' oben).
+  'BetonLQS':['Längs rissig','Quer rissig','Schräg rissig','Netzrissig','Unregelmäßig rissig','Betonabplatzung mit freiliegender Bewehrung','Betonabplatzung','Aussinterungen','Hohlstellen','Grobkornstellen','Poren und Lunker','Bewuchs/Vegetation',
+    'Schalungsankerhülsen offen','Tropfkante fehlt','Tropfkante ausgebrochen','Tropftülle fehlt','Tropftülle abgebrochen','Betonoberfläche ohne Quergefälle','Betonoberfläche ohne Längsgefälle','Beton-Karbonatisierung','Beton-Chloridbelastung','Alkali-Schaden','Betondeckung zu gering','Bewehrung freiliegend','Spannstahl gerissen','Hüllrohr freiliegend'],
   // Gewölbe Mauerwerk (längs/quer/schräg)
-  'MauerwerkLQS':['Längs rissig','Quer rissig','Schräg rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation'],
+  // Zeile 2: Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen. "Stirnringabriss" nur hier
+  // (nicht bei 'Mauerwerk'), da er nur bei Gewölben als Bauwerksform auftreten kann.
+  'MauerwerkLQS':['Längs rissig','Quer rissig','Schräg rissig','Abschalung','Abplatzung','Steinausbrüche','Aussinterungen','Hohlstellen','Mörtelfugenschäden/offene Fugen','Bewuchs/Vegetation',
+    'Mauerwerk ausgebaucht','Stirnringabriss','Ausblühungen','Fugenmörtel zeigt geringe Festigkeit','Steine zeigen geringe Festigkeit','Steine pumpen','Mauerwerkskanten abgeplatzt'],
   // Überbau Stahl (alle Stahlbauteile außer Walzträgerunterflansch)
-  'Stahl':['Verformung/Verschiebung/Verkippung','Korrosion','Korrosionsschutzschäden','Lose/fehlende Verbindungsmittel','Lose/fehlende Nietverbindung','Schweißnahtriss','Verschmutzung','Abnutzung','Bewuchs/Vegetation'],
+  // Zeile 2: Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen. Feinere Rost-Abstufungen
+  // (Rostfahnen/Kantenrost/Plattenrost/Spaltkorrosion) und Verformungsarten (gebrochen/eingebeult/
+  // geknickt/verdreht) stecken NICHT hier als eigene Buttons, sondern als zusätzliche Optionen bei
+  // 'Korrosion' (Genauer-beschreiben) bzw. 'Verformung/Verschiebung/Verkippung' (Vorlage) — siehe dort.
+  'Stahl':['Verformung/Verschiebung/Verkippung','Korrosion','Korrosionsschutzschäden','Lose/fehlende Verbindungsmittel','Lose/fehlende Nietverbindung','Schweißnahtriss','Verschmutzung','Abnutzung','Bewuchs/Vegetation',
+    'Schweißnaht fehlt','Schweißnahtdicke zu gering','Schweißnaht nicht fachgerecht','Einbrandkerben','Verzinkung beschädigt/abgewittert','Durchschuss'],
   // Walzträgerunterflansch (Fahrbahnplatte WIB)
   'WIB-Stahl':['Verformung/Verschiebung/Verkippung','Anfahrschramme','Anfahrkratzer','Korrosion','Korrosionsschutzschäden','Bewuchs/Vegetation'],
   // Überbau Geländer
@@ -412,6 +426,34 @@ var VL = {
   'Hohlstellen':[{l:'Bestätigen',t:'Hohlstellen',i:[]}],
   'Grobkornstellen':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Grobkornstellen',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Poren und Lunker':[{l:'Maß',t:'Poren und Lunker bis {0}mm',i:[{l:'Maß',u:'mm'}]}],
+  // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen (siehe SC.Beton/BetonLQS oben).
+  'Schalungsankerhülsen offen':[{l:'Bestätigen',t:'Schalungsankerhülsen offen',i:[]}],
+  'Tropfkante fehlt':[{l:'Bestätigen',t:'Tropfkante fehlt',i:[]}],
+  'Tropfkante ausgebrochen':[{l:'Bestätigen',t:'Tropfkante ausgebrochen',i:[]}],
+  'Tropftülle fehlt':[{l:'Bestätigen',t:'Tropftülle fehlt',i:[]}],
+  'Tropftülle abgebrochen':[{l:'Bestätigen',t:'Tropftülle abgebrochen',i:[]}],
+  'Betonoberfläche ohne Quergefälle':[{l:'Bestätigen',t:'Betonoberfläche ohne Quergefälle',i:[]}],
+  'Betonoberfläche ohne Längsgefälle':[{l:'Bestätigen',t:'Betonoberfläche ohne Längsgefälle',i:[]}],
+  'Beton-Karbonatisierung':[{l:'Tiefe (optional)',t:'Beton-Karbonatisierung',i:[{l:'Karbonatisierungstiefe',u:'mm',opt:true,suffix:', Tiefe {0}mm'}]}],
+  'Beton-Chloridbelastung':[{l:'Bestätigen',t:'Beton-Chloridbelastung',i:[]}],
+  'Alkali-Schaden':[{l:'Bestätigen',t:'Alkali-Schaden (AKR)',i:[]}],
+  'Betondeckung zu gering':[{l:'Ist-Maß (optional)',t:'Betondeckung zu gering',i:[{l:'Ist-Maß',u:'mm',opt:true,suffix:', Ist {0}mm'}]}],
+  'Bewehrung freiliegend':[{l:'Angerostet',t:'Bewehrung freiliegend, angerostet',i:[]},{l:'Durchgerostet',t:'Bewehrung freiliegend, durchgerostet',i:[]}],
+  'Spannstahl gerissen':[{l:'Bestätigen',t:'Spannstahl gerissen',i:[]}],
+  'Hüllrohr freiliegend':[{l:'Freiliegend',t:'Hüllrohr freiliegend',i:[]},{l:'Angerostet',t:'Hüllrohr freiliegend, angerostet',i:[]},{l:'Durchgerostet',t:'Hüllrohr freiliegend, durchgerostet',i:[]}],
+  'Mauerwerk ausgebaucht':[{l:'Bestätigen',t:'Mauerwerk ausgebaucht',i:[]}],
+  'Stirnringabriss':[{l:'Bestätigen',t:'Stirnringabriss',i:[]}],
+  'Ausblühungen':[{l:'Bestätigen',t:'Ausblühungen',i:[]}],
+  'Fugenmörtel zeigt geringe Festigkeit':[{l:'Bestätigen',t:'Fugenmörtel zeigt geringe Festigkeit',i:[]}],
+  'Steine zeigen geringe Festigkeit':[{l:'Bestätigen',t:'Steine zeigen geringe Festigkeit',i:[]}],
+  'Steine pumpen':[{l:'Bestätigen',t:'Steine pumpen',i:[]}],
+  'Mauerwerkskanten abgeplatzt':[{l:'Bestätigen',t:'Mauerwerkskanten abgeplatzt',i:[]}],
+  'Schweißnaht fehlt':[{l:'Bestätigen',t:'Schweißnaht fehlt',i:[]}],
+  'Schweißnahtdicke zu gering':[{l:'Bestätigen',t:'Schweißnahtdicke zu gering',i:[]}],
+  'Schweißnaht nicht fachgerecht':[{l:'Bestätigen',t:'Schweißnaht nicht fachgerecht ausgeführt',i:[]}],
+  'Einbrandkerben':[{l:'Bestätigen',t:'Einbrandkerben festgestellt',i:[]}],
+  'Verzinkung beschädigt/abgewittert':[{l:'Beschädigt',t:'Verzinkung beschädigt',i:[]},{l:'Abgewittert',t:'Verzinkung abgewittert',i:[]}],
+  'Durchschuss':[{l:'Bestätigen',t:'Durchschuss festgestellt',i:[]}],
   'Abschalung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abschalung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Abplatzung':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Abplatzung',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
   'Steinausbrüche':[{l:'Länge/Breite/Tiefe (alle optional)',t:'Steinausbrüche',i:[{l:'Länge',u:'mm',opt:true,suffix:', Länge {0}mm'},{l:'Breite',u:'mm',opt:true,suffix:', Breite {1}mm'},{l:'Tiefe',u:'mm',opt:true,suffix:', Tiefe {2}mm'}]}],
@@ -427,7 +469,11 @@ var VL = {
     {l:'Mehrfach Korrosionsschutzschäden',t:'Korrosion mehrfach, Korrosionsschutzschäden',i:[]}
   ],
   'Korrosionsschutzschäden':[{l:'Vereinzelt',t:'Korrosionsschutzschaden vereinzelt',i:[]},{l:'Stellenweise',t:'Korrosionsschutzschaden stellenweise',i:[]},{l:'Mehrfach',t:'Korrosionsschutzschaden mehrfach',i:[]}],
-  'Verformung/Verschiebung/Verkippung':[{l:'Verformung',t:'Verformung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verschiebung',t:'Verschiebung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verkippung',t:'Verkippung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]}],
+  'Verformung/Verschiebung/Verkippung':[{l:'Verformung',t:'Verformung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verschiebung',t:'Verschiebung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verkippung',t:'Verkippung Maß:{0}cm',i:[{l:'Maß',u:'cm'}]},
+    // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen: konkretere Verformungsarten
+    // als zusätzliche Optionen hier statt als eigene SC-Buttons, da es sich um dieselbe
+    // Schadenskategorie handelt (nur genauer benannt).
+    {l:'Gebrochen',t:'Gebrochen',i:[]},{l:'Eingebeult',t:'Eingebeult',i:[]},{l:'Geknickt',t:'Geknickt',i:[]},{l:'Verdreht',t:'Verdreht',i:[]}],
   'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}],
   'Lose/fehlende Nietverbindung':[{l:'Lose',t:'Lose Nietverbindung festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Nietverbindung festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Nietverbindung festgestellt',i:[]}],
   'Schweißnahtriss':[{l:'Länge',t:'Schweißnahtriss, Länge {0}mm',i:[{l:'Länge',u:'mm'}]}],
@@ -504,7 +550,7 @@ var NR_PRO_SYMPTOMZEILE_BAUTEILE=['Geländer links','Geländer rechts'];
 // Bauteile mit zusätzlicher Lage-Angabe (Punkt 7-9 der Sammelliste): Hauptträger bekommt
 // innen/außen, Längsträger und Längsrippe bekommen links/rechts — je EIN optionaler Button,
 // wird zusätzlich zur Bauteil-Nr. in die Überschrift eingerechnet, z.B. "Hauptträger 1 (innen)".
-var BAUTEIL_POS_OPTIONS={'Hauptträger':['innen','außen'],'Längsträger':['links','rechts'],'Längsrippe':['links','rechts']};
+var BAUTEIL_POS_OPTIONS={'Hauptträger':['innen','außen'],'Längsträger':['links','rechts'],'Längsrippe':['links','rechts'],'Beulsteife an Hauptträger':['innen','außen']};
 var curBauteilPos='';
 // Bauteile mit zwei Nummern (eigene Nr. + Bezugs-Nr.), z.B. "Beulsteife Nr. 3 an Hauptträger Nr. 2"
 // Auf weitere Stahlbauteile erweiterbar, einfach hier ergänzen
@@ -2246,6 +2292,7 @@ function buildBauteilPart(mitNr){
           if(nrVal)full+=' '+nrVal;
           full+=' an '+dbl.refWord;
           if(refVal)full+=' '+refVal;
+          full+=posSuffix;
           return full;
         }
       } else if(nrVal){
@@ -2372,11 +2419,14 @@ function editS(i){
       var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
       if(dbl2){
         var compWord2=S.ugr.split(' an ')[0];
-        var reHead=new RegExp('^'+esc(compWord2)+'(?: (\\S+))? an '+esc(dbl2.refWord)+'(?: (\\S+))?$');
+        var posOpts2=BAUTEIL_POS_OPTIONS[S.ugr];
+        var posAlt3=posOpts2?posOpts2.join('|'):null;
+        var reHead=new RegExp('^'+esc(compWord2)+'(?: (\\S+))? an '+esc(dbl2.refWord)+'(?: (\\S+))?'+(posAlt3?'(?: \\(('+posAlt3+')\\))?':'')+'$');
         var mHead=bauteilTeil.match(reHead);
         if(mHead){
           if(mHead[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHead[1];
           if(mHead[2]&&g('mBauteilRef'))g('mBauteilRef').value=mHead[2];
+          if(posAlt3&&mHead[3])curBauteilPos=mHead[3];
         }
       } else if(BAUTEIL_POS_OPTIONS[S.ugr]){
         var posAlt2=BAUTEIL_POS_OPTIONS[S.ugr].join('|');
@@ -2404,13 +2454,14 @@ function editS(i){
     if(nrRowGel&&nrRowGel.style.display!=='none'){
       var foundNrGel='';
       lines=lines.map(function(line){
-        var arrowIdx=line.indexOf('  》》');
+        var arrowIdx=line.indexOf('》》');
         var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
         var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+        var headTrimmed=head.replace(/\s+$/,'');
         var reGel=/ ([\d,.]+|Alle)$/;
-        var mGel=head.match(reGel);
-        if(mGel){foundNrGel=mGel[1];head=head.slice(0,mGel.index);}
-        return head+tail;
+        var mGel=headTrimmed.match(reGel);
+        if(mGel){foundNrGel=mGel[1];head=headTrimmed.slice(0,mGel.index);}else{head=headTrimmed;}
+        return tail?head+'  '+tail:head;
       });
       if(foundNrGel&&g('mBauteilNr'))g('mBauteilNr').value=foundNrGel;
     }
@@ -3426,6 +3477,37 @@ var MASSNAHMEN={
   'Verschmutzung':'Fachgerecht instandsetzen',
   'Wandung brüchig':'Fachgerecht instandsetzen'
 };
+// Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen (siehe SC-Katalog oben).
+var MASSNAHMEN_BSC_BR={
+  'Schalungsankerhülsen offen':'Schalungsankerhülsen verschließen',
+  'Tropfkante fehlt':'Tropfkante nachrüsten',
+  'Tropfkante ausgebrochen':'Tropfkante instandsetzen',
+  'Tropftülle fehlt':'Tropftülle nachrüsten',
+  'Tropftülle abgebrochen':'Tropftülle instandsetzen',
+  'Betonoberfläche ohne Quergefälle':'Gefälle fachgerecht herstellen',
+  'Betonoberfläche ohne Längsgefälle':'Gefälle fachgerecht herstellen',
+  'Beton-Karbonatisierung':'Beschichtung/Rekarbonatisierungsschutz veranlassen',
+  'Beton-Chloridbelastung':'Chloridgehalt fachgerecht untersuchen lassen',
+  'Alkali-Schaden':'Fachgerecht untersuchen lassen',
+  'Betondeckung zu gering':'Fachgerecht instandsetzen',
+  'Bewehrung freiliegend':'Oberfläche ausbessern und beschichten',
+  'Spannstahl gerissen':'Sofort fachgerecht untersuchen lassen',
+  'Hüllrohr freiliegend':'Fachgerecht instandsetzen',
+  'Mauerwerk ausgebaucht':'Statische Untersuchung veranlassen',
+  'Stirnringabriss':'Sofort fachgerecht untersuchen lassen',
+  'Ausblühungen':'Ursache klären, ggf. Abdichtung prüfen',
+  'Fugenmörtel zeigt geringe Festigkeit':'Fugen neu verfugen',
+  'Steine zeigen geringe Festigkeit':'Fachgerecht untersuchen lassen',
+  'Steine pumpen':'Fachgerecht instandsetzen',
+  'Mauerwerkskanten abgeplatzt':'Kanten ausbessern',
+  'Schweißnaht fehlt':'Schweißnaht nachrüsten',
+  'Schweißnahtdicke zu gering':'Schweißnaht nacharbeiten',
+  'Schweißnaht nicht fachgerecht':'Schweißnaht fachgerecht nacharbeiten',
+  'Einbrandkerben':'Fachgerecht nacharbeiten',
+  'Verzinkung beschädigt/abgewittert':'Korrosionsschutz bereichsweise instandsetzen',
+  'Durchschuss':'Fachgerecht instandsetzen'
+};
+Object.assign(MASSNAHMEN,MASSNAHMEN_BSC_BR);
 // Manche Schadensbegriffe tauchen sowohl im Beton- als auch im Mauerwerk-Katalog auf,
 // brauchen dort aber unterschiedliche Reparaturtechnik (Beton=verpressen, Mauerwerk=
 // Steine ergänzen+verfugen) — deshalb hier je nach aktuellem Bauwerkstyp (S.typ) übersteuern.
@@ -3461,7 +3543,26 @@ var GENAUIGKEIT={
     {term:'Flugrost',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
     {term:'Roststelle(n)',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
     {term:'starke Rostbildung',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
-    {term:'durchgerostet',massnahme:'Korrosionsschutz bereichsweise instandsetzen'}
+    {term:'durchgerostet',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen.
+    {term:'Rostfahnen',massnahme:'Korrosionsursache klären und instandsetzen'},
+    {term:'Kantenrost',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'Plattenrost',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'Spaltkorrosion',massnahme:'Fachgerecht untersuchen lassen'},
+    {term:'Rostauftreibungen',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'Rostnarben',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'Rostkerben',massnahme:'Fachgerecht untersuchen lassen'}
+  ],
+  // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen. DIN-53210-Rostgrade bewerten,
+  // wie stark der Untergrund unter einer intakt wirkenden Beschichtung bereits verrostet ist
+  // (Ri 1-2 = gering ... Ri 4-5 = stark) — genormte Skala, deshalb wörtlich mit Norm-Bezug.
+  'Korrosionsschutzschäden':[
+    {term:'Beschichtung unterrostet',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'Beschichtungsfehlstelle(n)',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'Rostgrad Ri 1-2 nach DIN 53210',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'Rostgrad Ri 2-3 nach DIN 53210',massnahme:'Korrosion beobachten, bei nächster Prüfung erneut kontrollieren'},
+    {term:'Rostgrad Ri 3-4 nach DIN 53210',massnahme:'Korrosionsschutz bereichsweise instandsetzen'},
+    {term:'Rostgrad Ri 4-5 nach DIN 53210',massnahme:'Korrosionsschutz bereichsweise instandsetzen'}
   ],
   'Lose/fehlende Verbindungsmittel':[
     {term:'lose',massnahme:'Niet-/HV-Schrauben-Anschluß instandsetzen'},
@@ -3480,6 +3581,15 @@ var curSchadenEntries=[]; // {lineIndex, label} je neu eingefügter Schadensart-
 function appendDesc(text){
   var ta=g('mDesc');var cur=ta.value.trim();
   ta.value=cur?cur+'\n- '+text:'- '+text;
+  // Bei Geländer (NR_PRO_SYMPTOMZEILE_BAUTEILE): jede Schadensart kann andere betroffene
+  // Pfosten haben (z.B. Verguss rissig an 1,3,5, aber Bewuchs an allen) — deshalb das Nr.-Feld
+  // hier für die gerade neu hinzugefügte Zeile zurücksetzen, BEVOR autoGrowMDesc()/
+  // syncGelaenderNrLive() läuft. syncGelaenderNrLive() fasst dadurch nur die zuletzt
+  // hinzugefügte Zeile an, ältere Zeilen mit bereits eingetragener Nr. bleiben unangetastet.
+  if(S.ugr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)>=0){
+    var nrFeld=g('mBauteilNr');
+    if(nrFeld)nrFeld.value='';
+  }
   autoGrowMDesc();
   ta.scrollIntoView({behavior:'smooth',block:'center'});
   // S.art hält immer den ursprünglichen Katalog-Begriff, auch wenn "text" hier
@@ -3775,14 +3885,18 @@ function applyGelaenderNrToLines(desc){
   // und 3" zu lesen ist, nicht als Dezimalzahl.
   var nrClean=nrVal?(nrVal.toLowerCase()==='alle'?'Alle':nrVal.replace(/\./g,',')):'';
   return desc.split('\n').map(function(line){
-    var arrowIdx=line.indexOf('  》》');
+    // Pfeil generisch suchen (nicht an genau 2 Leerzeichen davor gebunden) — realignMassnahmen()
+    // richtet mehrere Zeilen mit unterschiedlich viel Abstand vor "》》" spaltenweise aus, sonst
+    // würde die Nr.-Erkennung bei abweichendem Abstand fehlschlagen und die alte Nr. stehen lassen.
+    var arrowIdx=line.indexOf('》》');
     var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
     var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+    var headTrimmed=head.replace(/\s+$/,'');
     var reGel=/ ([\d,.]+|Alle)$/;
-    var mGel=head.match(reGel);
-    if(mGel)head=head.slice(0,mGel.index);
+    var mGel=headTrimmed.match(reGel);
+    head=mGel?headTrimmed.slice(0,mGel.index):headTrimmed;
     if(nrClean)head=head+' '+nrClean;
-    return head+tail;
+    return tail?head+'  '+tail:head;
   }).join('\n');
 }
 
@@ -3796,9 +3910,13 @@ function syncGelaenderNrLive(){
   var ta=g('mDesc');if(!ta)return;
   var lines=ta.value.split('\n');
   if(lines.length<2)return; // nur Überschrift, noch keine Schadenszeile vorhanden
-  var heading=lines[0];
-  var rest=applyGelaenderNrToLines(lines.slice(1).join('\n'));
-  ta.value=heading+'\n'+rest;
+  // NUR die zuletzt hinzugefügte Zeile live mit dem Nr.-Feld synchronisieren — ältere Zeilen
+  // haben ggf. bewusst eine andere Nr. (z.B. Verguss rissig an 1,3,5, aber Bewuchs an allen)
+  // und werden beim Hinzufügen einer neuen Schadensart bereits final "eingefroren"
+  // (siehe appendDesc(), das dafür das Nr.-Feld zurücksetzt).
+  var lastIdx=lines.length-1;
+  lines[lastIdx]=applyGelaenderNrToLines(lines[lastIdx]);
+  ta.value=lines.join('\n');
 }
 
 
@@ -3822,13 +3940,17 @@ function buildFormDesc(){
   }
   // Sonderfall Geländer: hier steht die Nr. NICHT in der Überschrift (siehe
   // NR_PRO_SYMPTOMZEILE_BAUTEILE weiter oben), sondern wie gehabt an jeder einzelnen
-  // Schadenszeile, weil sich die betroffenen Pfosten je Schadensart unterscheiden können.
-  // applyGelaenderNrToLines() ist idempotent (strippt zuerst eine evtl. schon vorhandene
-  // Nr., bevor die aktuelle eingefügt wird) — wichtig, weil seit Juli 2026 auch
-  // syncGelaenderNrLive() denselben Text direkt im Feld schreibt, während getippt wird;
-  // ohne Strip-vor-Insert würde sich die Nr. bei jeder Änderung verdoppeln.
+  // Schadenszeile, weil sich die betroffenen Pfosten je Schadensart unterscheiden können
+  // (z.B. Verguss rissig an 1,3,5, aber Bewuchs an allen). Deshalb hier — genau wie bei
+  // syncGelaenderNrLive() — NUR die letzte Zeile mit dem aktuellen Nr.-Feld abgleichen;
+  // ältere Zeilen wurden beim Hinzufügen der jeweils nächsten Schadensart bereits final
+  // "eingefroren" und bleiben unangetastet. applyGelaenderNrToLines() ist idempotent
+  // (strippt zuerst eine evtl. schon vorhandene Nr., bevor die aktuelle eingefügt wird).
   if(S.ugr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)>=0&&desc){
-    desc=applyGelaenderNrToLines(desc);
+    var gelLines=desc.split('\n');
+    var gelLast=gelLines.length-1;
+    gelLines[gelLast]=applyGelaenderNrToLines(gelLines[gelLast]);
+    desc=gelLines.join('\n');
   }
   var mwBox=g('lagerMesswerte');
   if(mwBox){
