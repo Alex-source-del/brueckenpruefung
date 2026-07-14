@@ -330,11 +330,19 @@ var SC = {
   // Walzträgerunterflansch (Fahrbahnplatte WIB)
   'WIB-Stahl':['Verformung/Verschiebung/Verkippung','Anfahrschramme','Anfahrkratzer','Korrosion','Korrosionsschutzschäden','Bewuchs/Vegetation'],
   // Überbau Geländer
-  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Verguss brüchig an Pfosten','Korrosionsschutzschäden','Korrosion','Fußleiste fehlt/liegt auf','Fußleiste Korrosionsschutzschäden/Korrosion','Fußleiste Verbindungsmittel locker/fehlen','Abstand Geländer zu Gleismitte','Bewuchs/Vegetation'],
+  // Zeile 2 (ab 'Warnanstrich...'): Juli 2026 aus BSC-BR-Schadenskatalog kuratiert übernommen.
+  'Geländer':['Verformung','Schweißnahtschaden','Lose Verbindungsmittel an Pfosten','Fehlende Verbindungsmittel an Pfosten','Verguss rissig an Pfosten','Verguss brüchig an Pfosten','Korrosionsschutzschäden','Korrosion','Fußleiste fehlt/liegt auf','Fußleiste Korrosionsschutzschäden/Korrosion','Fußleiste Verbindungsmittel locker/fehlen','Abstand Geländer zu Gleismitte','Bewuchs/Vegetation',
+    'Warnanstrich fehlt','Warnstreifen fehlt','Warnschild fehlt','Erdungsanschluss fehlt/beschädigt'],
   // Böschungsbefestigung (bei Widerlager)
   'Böschungsbefestigung':['Trittsteine nicht fachgerecht','Trittsteine locker','Trittsteine fehlen'],
   // Kabeltrog/Kabelkanal (unter Randweg)
-  'Kabeltrog':['Deckel brüchig','Wandung brüchig','Teilzerstört']
+  'Kabeltrog':['Deckel brüchig','Wandung brüchig','Teilzerstört'],
+  // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen. Erdung: bei elektrifizierten
+  // Strecken sicherheitsrelevant (Erdungsverbinder zu Fahrleitung/Signal). Gewässersohle:
+  // Unterspülung/Kolk an der Gründung ist ein eigenständiges, sicherheitsrelevantes
+  // Schadensbild — nicht in den normalen Beton/Mauerwerk-Katalogen enthalten.
+  'Erdung':['Erdungsverbinder','Erdungsverbindung zu Fahrleitungsmast','Erdungsverbindung zu Signalmast','Anschluss Geländer-Randkappe','Ringerder'],
+  'Gewässersohle':['Kolk/Ausspülung in der Gewässersohle','Unterspült']
 };
 // Zusatz-Schäden für alle "...Untersicht"-Bauteile, unabhängig vom Material
 var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben','Kleinste Lichte Höhe Bauwerk'];
@@ -500,6 +508,18 @@ var VL = {
   'Deckel brüchig':[{l:'Bestätigen',t:'Deckel brüchig',i:[]}],
   'Wandung brüchig':[{l:'Bestätigen',t:'Wandung brüchig',i:[]}],
   'Teilzerstört':[{l:'Bestätigen',t:'Teilzerstört',i:[]}],
+  // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen.
+  'Erdungsverbinder':[{l:'Fehlt',t:'Erdungsverbinder fehlt',i:[]},{l:'Locker',t:'Erdungsverbinder locker',i:[]},{l:'Beschädigt',t:'Erdungsverbinder beschädigt',i:[]}],
+  'Erdungsverbindung zu Fahrleitungsmast':[{l:'Fehlt',t:'Erdungsverbindung zu Fahrleitungsmast fehlt',i:[]},{l:'Beschädigt',t:'Erdungsverbindung zu Fahrleitungsmast beschädigt',i:[]}],
+  'Erdungsverbindung zu Signalmast':[{l:'Fehlt',t:'Erdungsverbindung zu Signalmast fehlt',i:[]},{l:'Beschädigt',t:'Erdungsverbindung zu Signalmast beschädigt',i:[]}],
+  'Anschluss Geländer-Randkappe':[{l:'Fehlt',t:'Anschluss Geländer-Randkappe fehlt',i:[]},{l:'Beschädigt',t:'Anschluss Geländer-Randkappe beschädigt',i:[]}],
+  'Ringerder':[{l:'Fehlt',t:'Ringerder fehlt',i:[]},{l:'Beschädigt',t:'Ringerder beschädigt',i:[]}],
+  'Kolk/Ausspülung in der Gewässersohle':[{l:'Bestätigen',t:'Kolk/Ausspülung in der Gewässersohle',i:[]}],
+  'Unterspült':[{l:'Bestätigen',t:'Unterspült',i:[]}],
+  'Warnanstrich fehlt':[{l:'Bestätigen',t:'Gelb-schwarzer Warnanstrich fehlt',i:[]}],
+  'Warnstreifen fehlt':[{l:'Bestätigen',t:'Gelber Warnstreifen fehlt',i:[]}],
+  'Warnschild fehlt':[{l:'Bestätigen',t:'Warnschild fehlt',i:[]}],
+  'Erdungsanschluss fehlt/beschädigt':[{l:'Fehlt',t:'Erdungsanschluss fehlt',i:[]},{l:'Beschädigt',t:'Erdungsanschluss beschädigt',i:[]}],
   'Mörtelfugenschäden/offene Fugen':[{l:'Bestätigen',t:'Mörtelfugenschäden/offene Fugen',i:[]}],
   'Verformt/beschädigt':[{l:'Bestätigen',t:'Verformt/beschädigt',i:[]}],
   'Abgenutzt':[{l:'Bestätigen',t:'Abgenutzt',i:[]}],
@@ -530,12 +550,21 @@ var VL = {
 // ============================================================
 // BAUTEIL-GLIEDERUNG (Neustrukturierung)
 // ============================================================
-var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
-var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
-var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank'];
-var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts'];
-var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Walzträgerunterflansch'];
-var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole'];
+// Erdung und Gewässersohle: Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen —
+// bauteilübergreifend (nicht materialgebunden), deshalb überall dort als eigene Kachel
+// ergänzt, wo Erdungsverbindungen bzw. Gründung in Gewässernähe realistisch vorkommen.
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper','Erdung','Gewässersohle'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper','Erdung','Gewässersohle'];
+var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank','Gründung'];
+// Juli 2026, aus BSC-BR-Bauteil-Bauglied-Katalog übernommen: Stützenreihe aus Stahl als
+// dritter Pfeiler-Bauwerkstyp (neben Beton/Mauerwerk) — nutzt den allgemeinen Stahl-
+// Schadenskatalog wie andere Stahlbauteile (siehe resolveSchadenTyp()).
+// Juli 2026: Einzelstütze (mit Kopf/Fuß/Stiel/Gründung als Untermenü, siehe
+// openEinzelstuetzeSel()) + Querriegel (einer pro Stützenreihe, kein eigenes Untermenü).
+var PF_UGR_STAHL=['Einzelstütze','Querriegel'];
+var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Erdung'];
+var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Walzträgerunterflansch','Erdung'];
+var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole','Erdung'];
 // Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
 // Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts'];
@@ -588,9 +617,13 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
   if(bauteil==='Auflagerbank')return 'Beton';
   if(bauteil==='Böschungsbefestigung')return 'Böschungsbefestigung';
   if(bauteil==='Übergang zum Bahnkörper')return 'Beton';
+  if(bauteil==='Erdung')return 'Erdung';
+  if(bauteil==='Gewässersohle'||bauteil==='Gründung')return 'Gewässersohle';
+  if(/^Einzelstütze \d+ - Gründung$/.test(bauteil))return 'Beton';
+  if(/^Einzelstütze \d+ - (Kopf|Fuß|Stiel)$/.test(bauteil))return 'Stahl';
   if(/^Kabeltrog\/Kabelkanal( links| rechts)?$/.test(bauteil))return 'Kabeltrog';
   if(/_w[12]$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
-  if(/_pf\d+$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
+  if(/_pf\d+$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':(parentTyp==='Stahl'?'Stahl':'Beton');
   // Öffnung
   if(bauteil==='Walzträgerunterflansch')return 'WIB-Stahl';
   if((bauteil==='Randweg links'||bauteil==='Randweg rechts')&&parentTyp==='Gew.Mauerwk')return 'BetonLQS';
@@ -696,6 +729,11 @@ function stbPos(id){
   for(var i=0;i<stbs.length;i++){if(stbs[i].id===id)return i+1;}
   return id; // Fallback, falls der STB nicht mehr existiert
 }
+// Juli 2026: Stahl-Pfeiler heißen "Stützenreihe" (Kurzform "SR") statt "Pfeiler"/"Pf" —
+// überall dort verwenden, wo bisher der feste String "Pfeiler "/"Pf " zusammengebaut wurde,
+// damit die Bezeichnung konsistent ist (Übersicht, Gesamtschäden, Word-Export, Suche).
+function pfShortLabel(baseKey,i){return (dat['__t_'+baseKey]==='Stahl'?'SR ':'Pf ')+i;}
+function pfLongLabel(baseKey,i){return (dat['__t_'+baseKey]==='Stahl'?'Stützenreihe ':'Pfeiler ')+i;}
 var curGalleryOv=null; // aktuell offene Foto-Vollbildansicht (falls eine offen ist) — für Android-Zurück-Knopf
 function isDurchgehendW(){return !!dat['__durchgehendW'];}
 var bauwerkLocked=false;
@@ -1004,7 +1042,7 @@ function render(){
     }
     for(var i=stb.oeff;i>=1;i--){
       inner.appendChild(mkOe(stb,i));
-      if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),'Pf '+(i-1),'pf'));
+      if(i>1)inner.appendChild(mkKa('stb'+stb.id+'_pf'+(i-1),pfShortLabel('stb'+stb.id+'_pf'+(i-1),i-1),'pf'));
     }
     if(!dgActive){
       var w1Key=isDurchgehendW()?'wg_w1':('stb'+stb.id+'_w1');
@@ -1115,7 +1153,7 @@ function shortBauTitleFromKey(baseKey){
   var wM=baseKey.match(/^stb\d+_w([12])$/);
   if(wM)return 'W'+wM[1];
   var pfM=baseKey.match(/^stb\d+_pf(\d+)$/);
-  if(pfM)return 'Pfeiler '+pfM[1];
+  if(pfM)return pfLongLabel(baseKey,pfM[1]);
   var wgM=baseKey.match(/^wg_w([12])$/);
   if(wgM)return 'W'+wgM[1]+' (durchgehend)';
   return '';
@@ -1143,7 +1181,7 @@ function getUgr(k){
   if(k==='wg_w1'||k==='wg_w2')return W_UGR_ALLE;
   var t=dat['__t_'+k]||'';
   if(/_w[12]$/.test(k))return t==='Mauerwerk'?W_UGR_MAUERWERK:W_UGR_BETON;
-  if(/_pf\d+$/.test(k))return PF_UGR;
+  if(/_pf\d+$/.test(k))return t==='Stahl'?PF_UGR_STAHL:PF_UGR;
   if(t==='Stahl')return OE_S;
   if(t==='WIB')return OE_WIB;
   if(t==='Gew.Beton')return OE_GB;
@@ -1264,7 +1302,7 @@ function openBau(key,title,ugr){
   var isPf=/_pf\d+$/.test(key)&&key.indexOf('___')===-1;
   if(isOe||isW||isPf){
     var curOt=dat['__t_'+key]||'';
-    var options=isOe?['Beton','Stahl','WIB','Gew.Beton','Gew.Mauerwk']:['Beton','Mauerwerk'];
+    var options=isOe?['Beton','Stahl','WIB','Gew.Beton','Gew.Mauerwk']:(isPf?['Beton','Mauerwerk','Stahl']:['Beton','Mauerwerk']);
     var optLabels={'WIB':'WIB (Walzträger in Beton)'};
     var ugr2=getUgr(key);
     var tw=document.createElement('div');tw.style.marginBottom='12px';
@@ -1275,7 +1313,12 @@ function openBau(key,title,ugr){
     options.forEach(function(t){
       var b=document.createElement('button');b.className='sb'+(curOt===t?' on':'');b.textContent=optLabels[t]||t;
       b.style.cssText='border:1px solid '+(curOt===t?'var(--acc)':'var(--line)')+';border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;background:'+(curOt===t?'var(--acc)':'transparent')+';color:'+(curOt===t?'#fff':'var(--soft)')+';';
-      (function(typ){b.onclick=function(){dat['__t_'+key]=typ;render();openBau(key,title,getUgr(key));};})(t);
+      (function(typ){b.onclick=function(){
+        dat['__t_'+key]=typ;render();
+        var pfM2=key.match(/^stb\d+_pf(\d+)$/);
+        var newTitle=pfM2?pfShortLabel(key,pfM2[1]):title;
+        openBau(key,newTitle,getUgr(key));
+      };})(t);
       tr.appendChild(b);
     });
     tw.appendChild(tr);
@@ -1332,6 +1375,17 @@ function openBau(key,title,ugr){
       var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
       b.innerHTML=base+' links/rechts'+(c>0?'<span class="uc">'+c+'</span>':'');
       (function(bk,bn,t){b.onclick=function(){openReliSel(bk,bn,t);};})(key,base,title);
+      g('bauList').appendChild(b);
+    } else if(u==='Einzelstütze'){
+      // Juli 2026: eigener zweistufiger Auswahlbildschirm statt direktem openSch() —
+      // siehe openEinzelstuetzeSel(). Zähler summiert über alle bereits erfassten
+      // Einzelstützen/Teile hinweg (Schlüsselpräfix "___Einzelstütze ").
+      var esPrefix=key+'___Einzelstütze ';
+      var esC=0;
+      Object.keys(dat).forEach(function(dk){if(dk.indexOf(esPrefix)===0&&Array.isArray(dat[dk]))esC+=dat[dk].length;});
+      var b=document.createElement('button');b.className='sb'+(esC>0?' on':'');
+      b.innerHTML='Einzelstütze'+(esC>0?'<span class="uc">'+esC+'</span>':'');
+      (function(bk,t){b.onclick=function(){openEinzelstuetzeSel(bk,t);};})(key,title);
       g('bauList').appendChild(b);
     } else {
       var k=key+'___'+u;var c=(dat[k]||[]).length;
@@ -1482,6 +1536,81 @@ function openReliSel(baseKey,baseName,bereich){
     };
   })(baseKey,baseName,bereich);
   g('bauList').appendChild(bb);
+  showPanel('ovBau');
+}
+
+// ============================================================
+// EINZELSTÜTZE (Stahl-Stützenreihe als Pfeiler-Typ, Juli 2026)
+// Zweistufige Navigation: erst Nummer der Einzelstütze wählen/eingeben, danach Kopf/Fuß/
+// Stiel/Gründung als Bauteil daran — analog zur Lager-Auswahl (openTypeSel), nur mit einer
+// frei eintippbaren Nummer statt eines festen Typ-Katalogs, weil die Anzahl Einzelstützen
+// je Stützenreihe nicht vorher feststeht. Speicherschlüssel: <bauKey>___Einzelstütze <N> -
+// <Teil>, z.B. "stb1_pf1___Einzelstütze 2 - Kopf".
+// ============================================================
+function openEinzelstuetzeSel(baseKey,bereich){
+  g('bauTitle').textContent=bereich+' / Einzelstütze';
+  g('bauList').innerHTML='';
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:13px;color:var(--soft);font-weight:600;margin-bottom:6px;';
+  lbl.textContent='Welche Einzelstütze? (Nr.)';
+  g('bauList').appendChild(lbl);
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:14px;';
+  var inp=document.createElement('input');
+  inp.type='text';inp.inputMode='decimal';inp.enterKeyHint='go';inp.placeholder='z.B. 2';
+  inp.style.cssText='width:110px;border:2px solid var(--acc);border-radius:7px;padding:9px;font-size:15px;font-weight:700;text-align:center;background:var(--s2);color:var(--ink);outline:none;';
+  var goBtn=document.createElement('button');
+  goBtn.type='button';goBtn.textContent='Weiter →';
+  goBtn.style.cssText='border:0;background:var(--acc);color:#fff;border-radius:7px;padding:10px 18px;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;';
+  goBtn.onclick=function(){
+    var n=(inp.value||'').trim();
+    if(!n){toast('Bitte eine Nummer eingeben');return;}
+    openEinzelstuetzeTeilSel(baseKey,bereich,n);
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();inp.blur();goBtn.click();}});
+  row.appendChild(inp);row.appendChild(goBtn);
+  g('bauList').appendChild(row);
+  // Bereits erfasste Einzelstützen als Schnellzugriff darunter auflisten, damit man nicht
+  // jedes Mal die Nummer neu eintippen muss, um an einer schon begonnenen weiterzuarbeiten.
+  var prefix=baseKey+'___Einzelstütze ';
+  var seen={},nums=[];
+  Object.keys(dat).forEach(function(k){
+    if(k.indexOf(prefix)!==0||!Array.isArray(dat[k]))return;
+    var m=k.slice(prefix.length).match(/^(\d+) - /);
+    if(m&&!seen[m[1]]){seen[m[1]]=true;nums.push(m[1]);}
+  });
+  nums.sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});
+  if(nums.length){
+    var hr=document.createElement('hr');hr.style.cssText='border:0;border-top:1px solid var(--line);margin:6px 0 10px;';
+    g('bauList').appendChild(hr);
+    var lbl2=document.createElement('div');
+    lbl2.style.cssText='font-size:12px;color:var(--soft);font-weight:600;margin-bottom:6px;';
+    lbl2.textContent='Bereits erfasst:';
+    g('bauList').appendChild(lbl2);
+    nums.forEach(function(n){
+      var c=0;
+      Object.keys(dat).forEach(function(k){if(k.indexOf(prefix+n+' - ')===0)c+=dat[k].length;});
+      var b=document.createElement('button');b.className='sb on';
+      b.innerHTML='Einzelstütze '+n+(c>0?'<span class="uc">'+c+'</span>':'');
+      (function(nn){b.onclick=function(){openEinzelstuetzeTeilSel(baseKey,bereich,nn);};})(n);
+      g('bauList').appendChild(b);
+    });
+  }
+  showPanel('ovBau');
+}
+
+function openEinzelstuetzeTeilSel(baseKey,bereich,n){
+  g('bauTitle').textContent=bereich+' / Einzelstütze '+n;
+  g('bauList').innerHTML='';
+  ['Kopf','Fuß','Stiel','Gründung'].forEach(function(teil){
+    var u='Einzelstütze '+n+' - '+teil;
+    var fk=baseKey+'___'+u;
+    var c=(dat[fk]||[]).length;
+    var b=document.createElement('button');b.className='sb'+(c>0?' on':'');
+    b.innerHTML=teil+(c>0?'<span class="uc">'+c+'</span>':'');
+    (function(k2,u2,t2){b.onclick=function(){openSch(k2,u2,t2);};})(fk,u,bereich+' / Einzelstütze '+n);
+    g('bauList').appendChild(b);
+  });
   showPanel('ovBau');
 }
 
@@ -2030,7 +2159,7 @@ function collectAllSchaeden(){
       LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
       FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
       bases.push({k:ok,l:'Öffnung '+i,u:getUgr(ok).concat(extraU)});
-      if(i<stb.oeff)bases.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
+      if(i<stb.oeff)bases.push({k:'stb'+stb.id+'_pf'+i,l:pfLongLabel('stb'+stb.id+'_pf'+i,i),u:getUgr('stb'+stb.id+'_pf'+i)});
     }
     if(!isDurchgehendW())bases.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
     bases.forEach(function(b){
@@ -2266,7 +2395,7 @@ function buildLocationHeadingBare(overrideBaseKey){
   var wM=baseKey.match(/^stb(\d+)_w([12])$/);
   if(wM)return 'STB '+stbPos(parseInt(wM[1],10))+', Widerlager '+wM[2];
   var pfM=baseKey.match(/^stb(\d+)_pf(\d+)$/);
-  if(pfM)return 'STB '+stbPos(parseInt(pfM[1],10))+', Pfeiler '+pfM[2];
+  if(pfM)return 'STB '+stbPos(parseInt(pfM[1],10))+', '+pfLongLabel(baseKey,pfM[2]);
   var wgM=baseKey.match(/^wg_w([12])$/);
   if(wgM)return 'Widerlager '+wgM[1]+' (durchgehend)';
   return '';
@@ -3507,6 +3636,21 @@ var MASSNAHMEN_BSC_BR={
   'Verzinkung beschädigt/abgewittert':'Korrosionsschutz bereichsweise instandsetzen',
   'Durchschuss':'Fachgerecht instandsetzen'
 };
+// Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen (siehe SC-Katalog oben).
+var MASSNAHMEN_BSC_BR_2={
+  'Erdungsverbinder':'Erdungsverbindung fachgerecht instandsetzen',
+  'Erdungsverbindung zu Fahrleitungsmast':'Erdungsverbindung fachgerecht instandsetzen',
+  'Erdungsverbindung zu Signalmast':'Erdungsverbindung fachgerecht instandsetzen',
+  'Anschluss Geländer-Randkappe':'Erdungsverbindung fachgerecht instandsetzen',
+  'Ringerder':'Erdungsverbindung fachgerecht instandsetzen',
+  'Kolk/Ausspülung in der Gewässersohle':'Sofort fachgerecht untersuchen lassen',
+  'Unterspült':'Sofort fachgerecht untersuchen lassen',
+  'Warnanstrich fehlt':'Warnanstrich erneuern',
+  'Warnstreifen fehlt':'Warnstreifen erneuern',
+  'Warnschild fehlt':'Warnschild nachrüsten',
+  'Erdungsanschluss fehlt/beschädigt':'Erdungsverbindung fachgerecht instandsetzen'
+};
+Object.assign(MASSNAHMEN,MASSNAHMEN_BSC_BR_2);
 Object.assign(MASSNAHMEN,MASSNAHMEN_BSC_BR);
 // Manche Schadensbegriffe tauchen sowohl im Beton- als auch im Mauerwerk-Katalog auf,
 // brauchen dort aber unterschiedliche Reparaturtechnik (Beton=verpressen, Mauerwerk=
@@ -4401,7 +4545,7 @@ function downloadFotos(){
       LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
       FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
       blist.push({k:ok,u:getUgr(ok).concat(extraU)});
-      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:PF_UGR});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:getUgr('stb'+stb.id+'_pf'+i)});
     }
     processFotoBlist(blist);
   });
@@ -4500,7 +4644,7 @@ function doExport(includeImages){
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
       blist.push({k:ok,l:'Öffnung '+i,u:getUgr(ok),extra:true});
-      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:'Pfeiler '+i,u:PF_UGR});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:pfLongLabel('stb'+stb.id+'_pf'+i,i),u:getUgr('stb'+stb.id+'_pf'+i)});
     }
     if(!isDurchgehendW())blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
 
@@ -4615,8 +4759,8 @@ function buildSearchIndex(){
       if(i<stb.oeff){
         (function(sid,lbl,i){
           var key='stb'+sid+'_pf'+i;
-          idx.push({txt:lbl+' Pfeiler '+i,fn:function(){openBau(key,'Pf '+i,PF_UGR);}});
-          bases.push({k:key,l:'Pf '+i});
+          idx.push({txt:lbl+' '+pfLongLabel(key,i),fn:function(){openBau(key,pfShortLabel(key,i),getUgr(key));}});
+          bases.push({k:key,l:pfShortLabel(key,i)});
         })(stb.id,lbl,i);
       }
     }
