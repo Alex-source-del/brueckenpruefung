@@ -234,12 +234,12 @@ body.dark #mDesc{color:var(--ink);}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
       <div id="mBauteilNrRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilNrLabel" style="font-size:13px;color:var(--soft);font-weight:600;">Nr.:</label>
-        <input id="mBauteilNr" type="text" inputmode="decimal" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
-        <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
+        <input id="mBauteilNr" type="text" inputmode="decimal" enterkeyhint="done" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();autoGrowMDesc();" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();autoGrowMDesc();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
       </div>
       <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
-        <input id="mBauteilRef" type="text" inputmode="decimal" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+        <input id="mBauteilRef" type="text" inputmode="decimal" enterkeyhint="done" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();updateLivePreview();" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
       </div>
       <div id="mBauteilPosRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <label style="font-size:13px;color:var(--soft);font-weight:600;">Lage:</label>
@@ -252,6 +252,10 @@ body.dark #mDesc{color:var(--ink);}
       <div id="schadenChips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
       <div id="genauBox" style="display:none;background:var(--accs);border:2px solid var(--acc);border-radius:9px;padding:10px;margin-bottom:8px;"></div>
       <textarea id="mDesc" placeholder="Beschreibung..." onfocus="scrollMDescIntoView()" oninput="autoGrowMDesc()"></textarea>
+      <div id="mLivePreviewBox" style="display:none;margin-top:10px;">
+        <div style="font-size:11px;color:var(--soft);font-weight:700;margin-bottom:4px;">👁 Vorschau — so wird gespeichert:</div>
+        <div id="mLivePreviewText" style="font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--soft);background:var(--s2);border:2px dashed var(--line);border-radius:9px;padding:10px;white-space:pre-wrap;"></div>
+      </div>
       <div id="massnahmeBox" style="display:none;margin-top:6px;flex-direction:column;gap:6px;background:var(--accs);border:2px solid var(--acc);border-radius:9px;padding:10px;"></div>
       <div id="mVbsRow" style="display:flex;gap:6px;margin-top:8px;"></div>
     </div>
@@ -483,9 +487,9 @@ var VL = {
 var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
 var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper'];
 var PF_UGR=['Pfeilerschaft','Pfeilerkopf','Auflagerbank'];
-var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht'];
-var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg','Kabeltrog/Kabelkanal','Randweguntersicht','Walzträgerunterflansch'];
-var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg','Kabeltrog/Kabelkanal','Randwegkonsole'];
+var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts'];
+var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte Untersicht','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Walzträgerunterflansch'];
+var OE_S=['Fahrbahnplatte Untersicht','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole'];
 // Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
 // Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts'];
@@ -538,7 +542,7 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
   if(bauteil==='Auflagerbank')return 'Beton';
   if(bauteil==='Böschungsbefestigung')return 'Böschungsbefestigung';
   if(bauteil==='Übergang zum Bahnkörper')return 'Beton';
-  if(bauteil==='Kabeltrog/Kabelkanal')return 'Kabeltrog';
+  if(/^Kabeltrog\/Kabelkanal( links| rechts)?$/.test(bauteil))return 'Kabeltrog';
   if(/_w[12]$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
   if(/_pf\d+$/.test(baseKey))return parentTyp==='Mauerwerk'?'Mauerwerk':'Beton';
   // Öffnung
@@ -1587,6 +1591,11 @@ function renderSch(){
         var sibOeTargets=targets.filter(function(t){return t.group==='sib-oe';});
         var singleTargets=targets.filter(function(t){return t.group!=='sib-oe';});
 
+        // Wird von der "✓✓ Alle"-Schaltfläche (unten bei den Einzelzielen) aufgerufen, damit ein
+        // einziger Tipp wirklich ALLE Ziele abdeckt — auch die Geschwister-Öffnungen/Pfeiler im
+        // selben STB, die sonst nur über die separate Mehrfachauswahl erreichbar wären.
+        var refreshConfirmBtn=null;
+        var clearSibSelection=null;
         // --- Mehrfachauswahl für Öffnungen im selben STB: erst markieren, dann bestätigen ---
         if(sibOeTargets.length){
           var sibWrap=document.createElement('div');
@@ -1603,16 +1612,17 @@ function renderSch(){
           confirmBtn.textContent='Übernehmen';
           confirmBtn.disabled=true;
           confirmBtn.style.cssText='align-self:flex-start;border:0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:700;cursor:default;font-family:inherit;background:var(--line);color:var(--soft);';
-          function refreshConfirmBtn(){
+          refreshConfirmBtn=function(){
             var n=Object.keys(selected).filter(function(k){return selected[k];}).length;
             confirmBtn.textContent='Übernehmen'+(n?' ('+n+')':'');
             confirmBtn.disabled=!n;
             confirmBtn.style.cssText='align-self:flex-start;border:0;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:700;font-family:inherit;'
               +(n?'cursor:pointer;background:var(--acc);color:#fff;':'cursor:default;background:var(--line);color:var(--soft);');
-          }
+          };
           sibOeTargets.forEach(function(t){
             var chip=document.createElement('button');
             chip.type='button';
+            chip.setAttribute('data-tkey',t.key);
             chip.textContent=t.label;
             function paint(){
               var on=!!selected[t.key];var isDone=!!doneKeys[t.key];
@@ -1640,7 +1650,7 @@ function renderSch(){
             var chosen=sibOeTargets.filter(function(t){return keys.indexOf(t.key)!==-1;});
             chosen.forEach(function(t){copyEntryToTarget(it2,t.key,ugr3);doneKeys[t.key]=true;selected[t.key]=false;});
             autoSave();render();
-            var names=chosen.map(function(t){return t.label;}).join(', ');
+            var names=chosen.length>3?(chosen.length+' Ziele'):chosen.map(function(t){return t.label;}).join(', ');
             toast('→ '+names+' übernommen ✓');
             Array.from(sibChipRow.children).forEach(function(chip,idx){
               var t=sibOeTargets[idx];if(!t)return;
@@ -1656,10 +1666,13 @@ function renderSch(){
           sibWrap.appendChild(sibChipRow);
           sibWrap.appendChild(confirmBtn);
           box.appendChild(sibWrap);
+          clearSibSelection=function(){selected={};refreshConfirmBtn();};
         }
 
         // --- Einzelziele (anderes Widerlager/Pfeiler, anderer STB, wg-Gegenseite): Tipp = sofort übernehmen ---
-        if(singleTargets.length){
+        // "✓✓ Alle" deckt bewusst ALLE Ziele ab (auch die Geschwister-Öffnungen/Pfeiler im
+        // selben STB oben in der Mehrfachauswahl), damit ein Tipp wirklich überallhin kopiert.
+        if(singleTargets.length||targets.length>1){
           var singleRow=document.createElement('div');
           singleRow.style.cssText='display:flex;flex-wrap:wrap;gap:7px;';
           function mkChip(t,isAlle){
@@ -1668,21 +1681,25 @@ function renderSch(){
             chip.textContent=(isAlle?'✓✓ Alle':t.label);
             chip.style.cssText='border:1.5px solid var(--acc);border-radius:20px;padding:6px 13px;font-size:12px;cursor:pointer;font-family:inherit;background:var(--acc);color:#fff;font-weight:600;';
             chip.onclick=function(){
-              var targetsToDo=isAlle?singleTargets.filter(function(x){return !doneKeys[x.key];}):[t];
+              var targetsToDo=isAlle?targets.filter(function(x){return !doneKeys[x.key];}):[t];
               if(!targetsToDo.length)return;
               targetsToDo.forEach(function(x){copyEntryToTarget(it2,x.key,ugr3);doneKeys[x.key]=true;});
               autoSave();render();
-              var names=targetsToDo.map(function(x){return x.label;}).join(', ');
+              var names=targetsToDo.length>3?(targetsToDo.length+' Ziele'):targetsToDo.map(function(x){return x.label;}).join(', ');
               toast('→ '+names+' übernommen ✓');
-              singleRow.querySelectorAll('button[data-tkey]').forEach(function(btn){
+              // Alle Chips mit data-tkey aktualisieren — das schließt sowohl die
+              // Einzelziel-Chips hier als auch die Geschwister-Öffnungen-Chips oben ein.
+              box.querySelectorAll('button[data-tkey]').forEach(function(btn){
                 var bk=btn.getAttribute('data-tkey');
-                if(doneKeys[bk]){
+                if(bk&&doneKeys[bk]){
                   btn.disabled=true;
                   btn.style.cssText='border:1.5px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;cursor:default;font-family:inherit;background:var(--bg2,#eee);color:var(--soft);font-weight:600;';
-                  btn.textContent='✓ '+btn.getAttribute('data-tlabel');
+                  btn.textContent='✓ '+(btn.getAttribute('data-tlabel')||btn.textContent.replace(/^✓ /,''));
                 }
               });
-              if(singleTargets.every(function(x){return doneKeys[x.key];})){
+              if(clearSibSelection)clearSibSelection();
+              else if(refreshConfirmBtn)refreshConfirmBtn();
+              if(targets.every(function(x){return doneKeys[x.key];})){
                 var alleBtn=singleRow.querySelector('button[data-alle]');
                 if(alleBtn){alleBtn.disabled=true;alleBtn.style.opacity='.4';alleBtn.style.cursor='default';}
               }
@@ -1693,7 +1710,7 @@ function renderSch(){
             return chip;
           }
           singleTargets.forEach(function(t){singleRow.appendChild(mkChip(t,false));});
-          if(singleTargets.length>1)singleRow.appendChild(mkChip(null,true));
+          if(targets.length>1)singleRow.appendChild(mkChip(null,true));
           box.appendChild(singleRow);
         }
       })(it,xferTargets,xferUgrSuffix,xferBox);
@@ -1757,6 +1774,7 @@ function updateBauteilNrUI(){
   }
   renderBauteilPosBtns();
   updateVerortungDisplay();
+  updateLivePreview();
 }
 
 // Baut die optionalen Lage-Buttons (innen/außen bzw. links/rechts, siehe
@@ -1778,7 +1796,7 @@ function renderBauteilPosBtns(){
     b.onclick=function(){
       curBauteilPos=(curBauteilPos===o)?'':o;
       renderBauteilPosBtns();
-      updateVerortungDisplay();updateHeadingLineInDesc();
+      updateVerortungDisplay();updateHeadingLineInDesc();updateLivePreview();
     };
     box.appendChild(b);
   });
@@ -1813,6 +1831,30 @@ function updateHeadingLineInDesc(){
   lines[0]=heading;
   ta.value=lines.join('\n');
   autoGrowMDesc();
+  updateLivePreview();
+}
+
+// Zeigt live, was beim Speichern tatsächlich als Beschreibung gespeichert wird — inkl.
+// Teile, die erst durch buildFormDesc() eingefügt werden und die man vorher NICHT im
+// Beschreibungsfeld selbst sieht: Geländer-Nr. (NR_PRO_SYMPTOMZEILE_BAUTEILE, an jeder
+// Schadenszeile statt in der Überschrift), Lager-Messwerte-Zeilen, VBS-Zeile
+// (Verkehrssicherheit/Betriebssicherheit/Standsicherheit). Wurde ergänzt, nachdem
+// aufgefallen war, dass genau diese drei Stellen erst nach dem Speichern sichtbar waren.
+// buildFormDesc() liest nur (schreibt g('mDesc').value nirgends zurück), darum ist ein
+// Aufruf bei jedem Tastendruck unbedenklich — nie doppelte Einfügung, immer frisch berechnet.
+// Bei "Beide"-Kombi-Einträgen (S.editIsBeide) wird die Vorschau bewusst ausgeblendet, da
+// dort ohnehin als Rohtext ohne automatische Nr./Überschrift-Erkennung gearbeitet wird.
+function updateLivePreview(){
+  var box=g('mLivePreviewBox'),txt=g('mLivePreviewText');
+  if(!box||!txt)return;
+  if(S.editIsBeide){box.style.display='none';return;}
+  var full=buildFormDesc();
+  var raw=(g('mDesc')?g('mDesc').value:'').trim();
+  // Nur anzeigen, wenn die Vorschau tatsächlich mehr/anderes zeigt als das reine
+  // Beschreibungsfeld ohnehin schon sichtbar macht (sonst unnötige Dopplung auf dem Screen).
+  if(!full||full===raw){box.style.display='none';return;}
+  box.style.display='block';
+  txt.textContent=full;
 }
 
 // Verschiebt Widerlager-Schäden zwischen den STB-eigenen Schlüsseln (stb<id>_w1/_w2)
@@ -2365,7 +2407,7 @@ function editS(i){
         var arrowIdx=line.indexOf('  》》');
         var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
         var tail=arrowIdx>=0?line.slice(arrowIdx):'';
-        var reGel=/ ([\d,]+|Alle)$/;
+        var reGel=/ ([\d,.]+|Alle)$/;
         var mGel=head.match(reGel);
         if(mGel){foundNrGel=mGel[1];head=head.slice(0,mGel.index);}
         return head+tail;
@@ -2741,6 +2783,7 @@ function renderLagerMesswerte(){
     var row=document.createElement('div');row.className='irow';row.style.justifyContent='flex-start';
     var lbl=document.createElement('label');lbl.style.cssText='flex:0 0 auto;min-width:160px;font-size:12.5px;';lbl.textContent=f.label+':';
     var input=document.createElement('input');input.type='text';input.inputMode='decimal';input.placeholder='0';input.id='lagerMw'+idx;
+    input.oninput=updateLivePreview;
     input.style.cssText='width:90px;flex:none;';
     var unit=document.createElement('span');unit.textContent=f.unit;
     row.appendChild(lbl);row.appendChild(input);row.appendChild(unit);
@@ -3199,7 +3242,7 @@ function renderVbsRow(){
     var b=document.createElement('button');b.type='button';b.textContent=letter;
     var on=curVbsState[letter];
     b.style.cssText='flex:1;padding:7px;border:1.5px solid var(--acc);border-radius:6px;background:'+(on?'var(--acc)':'transparent')+';color:'+(on?'#fff':'var(--acc)')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;';
-    b.onclick=function(){curVbsState[letter]=!curVbsState[letter];renderVbsRow();};
+    b.onclick=function(){curVbsState[letter]=!curVbsState[letter];renderVbsRow();updateLivePreview();};
     box.appendChild(b);
   });
 }
@@ -3667,8 +3710,10 @@ function resetMassnahmeBox(){
 function autoGrowMDesc(){
   var el=g('mDesc');
   if(!el)return;
+  syncGelaenderNrLive();
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
+  updateLivePreview();
 }
 
 function scrollMDescIntoView(){
@@ -3712,7 +3757,51 @@ function confVorl(){
   S.vorl=null;
 }
 
-// Baut den vollständigen Beschreibungstext aus dem aktuellen Formularzustand (Bauteil-Nr,
+// Fügt die aktuelle Bauteil-Nr. (aus #mBauteilNr) an jeder Schadenszeile eines Geländer-
+// Beschreibungstexts ein — VOR dem Einfügen wird an jeder Zeile zuerst eine evtl. schon
+// vorhandene Nr. wieder entfernt (derselbe Aufbau, den auch editS() beim Laden erkennt:
+// " <Ziffern/Alle>" direkt vor dem "  》》 Maßnahme..."-Pfeil bzw. am Zeilenende). Dadurch
+// ist die Funktion beliebig oft wiederholbar aufrufbar (z.B. bei jedem Tastendruck im
+// Nr.-Feld), ohne dass sich die Nr. jemals verdoppelt. Wird sowohl von buildFormDesc()
+// (beim tatsächlichen Speichern) als auch von syncGelaenderNrLive() (live im Feld, während
+// getippt wird) verwendet, damit beide Stellen exakt dasselbe Ergebnis liefern.
+function applyGelaenderNrToLines(desc){
+  var nrRow=g('mBauteilNrRow');
+  if(!nrRow||nrRow.style.display==='none')return desc;
+  var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+  // Android-Zifferntastaturen (inputmode="decimal") haben oft keinen Komma-Knopf, nur einen
+  // Punkt — deshalb wird ein eingetippter Punkt hier als Listen-Trenner (wie Komma) behandelt
+  // und für die Anzeige zu Komma normalisiert, damit "1.3" genauso wie "1,3" als "Pfosten 1
+  // und 3" zu lesen ist, nicht als Dezimalzahl.
+  var nrClean=nrVal?(nrVal.toLowerCase()==='alle'?'Alle':nrVal.replace(/\./g,',')):'';
+  return desc.split('\n').map(function(line){
+    var arrowIdx=line.indexOf('  》》');
+    var head=arrowIdx>=0?line.slice(0,arrowIdx):line;
+    var tail=arrowIdx>=0?line.slice(arrowIdx):'';
+    var reGel=/ ([\d,.]+|Alle)$/;
+    var mGel=head.match(reGel);
+    if(mGel)head=head.slice(0,mGel.index);
+    if(nrClean)head=head+' '+nrClean;
+    return head+tail;
+  }).join('\n');
+}
+
+// Live-Gegenstück zu updateHeadingLineInDesc(): schreibt die Bauteil-Nr. bei Geländer
+// (NR_PRO_SYMPTOMZEILE_BAUTEILE) direkt sichtbar in jede Schadenszeile im Beschreibungsfeld,
+// sobald sich das Nr.-Feld ändert — die Überschriftzeile (erste Zeile) bleibt dabei
+// unangetastet. Auf Wunsch von Andreas: die Nr. soll wie vor der Juli-2026-Umstellung
+// direkt im sichtbaren Beschreibungstext erscheinen, nicht nur in einer separaten Vorschau.
+function syncGelaenderNrLive(){
+  if(!S.ugr||NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)===-1)return;
+  var ta=g('mDesc');if(!ta)return;
+  var lines=ta.value.split('\n');
+  if(lines.length<2)return; // nur Überschrift, noch keine Schadenszeile vorhanden
+  var heading=lines[0];
+  var rest=applyGelaenderNrToLines(lines.slice(1).join('\n'));
+  ta.value=heading+'\n'+rest;
+}
+
+
 // Lager-Messwerte, Standort-Überschrift, VBS-Zeile) — ausgelagert aus saveS(), damit die
 // "Beide"-Erfassung dieselbe Logik zweimal (einmal je Seite) verwenden kann, ohne dabei
 // schon in dat[] zu schreiben.
@@ -3734,19 +3823,12 @@ function buildFormDesc(){
   // Sonderfall Geländer: hier steht die Nr. NICHT in der Überschrift (siehe
   // NR_PRO_SYMPTOMZEILE_BAUTEILE weiter oben), sondern wie gehabt an jeder einzelnen
   // Schadenszeile, weil sich die betroffenen Pfosten je Schadensart unterscheiden können.
+  // applyGelaenderNrToLines() ist idempotent (strippt zuerst eine evtl. schon vorhandene
+  // Nr., bevor die aktuelle eingefügt wird) — wichtig, weil seit Juli 2026 auch
+  // syncGelaenderNrLive() denselben Text direkt im Feld schreibt, während getippt wird;
+  // ohne Strip-vor-Insert würde sich die Nr. bei jeder Änderung verdoppeln.
   if(S.ugr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)>=0&&desc){
-    var nrRowZeile=g('mBauteilNrRow');
-    if(nrRowZeile&&nrRowZeile.style.display!=='none'){
-      var nrValZeile=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
-      if(nrValZeile){
-        var nrCleanZeile=nrValZeile.toLowerCase()==='alle'?'Alle':nrValZeile;
-        desc=desc.split('\n').map(function(line){
-          var arrowIdx=line.indexOf('  》》');
-          if(arrowIdx>=0)return line.slice(0,arrowIdx)+' '+nrCleanZeile+line.slice(arrowIdx);
-          return line+' '+nrCleanZeile;
-        }).join('\n');
-      }
-    }
+    desc=applyGelaenderNrToLines(desc);
   }
   var mwBox=g('lagerMesswerte');
   if(mwBox){
