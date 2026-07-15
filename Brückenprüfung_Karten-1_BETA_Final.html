@@ -140,7 +140,7 @@ body.dark #mDesc{color:var(--ink);}
 </header>
 <div class="kopf" id="kopfBox">
   <div class="fl"><label>Strecke</label><input id="f_str" placeholder="z.B. 5900" inputmode="numeric"></div>
-  <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092" inputmode="decimal"></div>
+  <div class="fl"><label>Kilometer</label><input id="f_km" placeholder="z.B. 66,092" inputmode="decimal" oninput="this.value=this.value.replace(/\./g,',');"></div>
   <div class="fl full"><label>Brückenname</label><input id="f_br" placeholder="z.B. EÜ Musterstraße"></div>
   <div class="fl"><label>Datum</label><input id="f_dat" type="date"></div>
   <div class="fl"><label>Prüfer</label><input id="f_pr" placeholder="Name"></div>
@@ -969,9 +969,10 @@ function buildLagerFotoLabel(){
     if(f.label==='Pfeiler')pIdx=idx;
     if(f.label==='Lager')lIdx=idx;
   });
-  var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim():'';
-  var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim():'';
-  var lVal=lIdx>=0&&g('lagerMw'+lIdx)?g('lagerMw'+lIdx).value.trim():'';
+  // Android-Zifferntastaturen haben oft keinen Komma-Knopf — Punkt wird als Dezimalkomma normalisiert.
+  var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim().replace(/\./g,','):'';
+  var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim().replace(/\./g,','):'';
+  var lVal=lIdx>=0&&g('lagerMw'+lIdx)?g('lagerMw'+lIdx).value.trim().replace(/\./g,','):'';
   var parts=[];
   if(stbM)parts.push('STB '+stbPos(parseInt(stbM[1],10)));
   if(wVal)parts.push('Widerlager '+wVal);
@@ -2638,9 +2639,15 @@ function buildBauteilPart(mitNr){
     var nrRow=g('mBauteilNrRow');
     if(nrRow&&nrRow.style.display!=='none'){
       var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
-      var nrVal=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+      // Android-Zifferntastaturen (inputmode="decimal") haben oft keinen Komma-Knopf, nur
+      // einen Punkt — deshalb wird ein eingetippter Punkt hier als Listen-Trenner (wie Komma)
+      // behandelt und normalisiert, damit "1.4.7.9" als "1,4,7,9" gespeichert wird statt
+      // wörtlich als "1.4.7.9" stehen zu bleiben.
+      var nrValRaw=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+      var nrVal=nrValRaw.toLowerCase()==='alle'?'Alle':nrValRaw.replace(/\./g,',');
       if(dbl){
-        var refVal=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
+        var refValRaw=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
+        var refVal=refValRaw.toLowerCase()==='alle'?'Alle':refValRaw.replace(/\./g,',');
         if(nrVal||refVal){
           var compWord=S.ugr.split(' an ')[0];
           var full=compWord;
@@ -2651,7 +2658,7 @@ function buildBauteilPart(mitNr){
           return full;
         }
       } else if(nrVal){
-        var nrClean=nrVal.toLowerCase()==='alle'?'Alle':nrVal.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}).join(',');
+        var nrClean=nrVal==='Alle'?'Alle':nrVal.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}).join(',');
         return S.ugr+' '+nrClean+posSuffix;
       }
     }
@@ -3809,6 +3816,7 @@ var MASSNAHMEN={
   'Führungskonstruktion':'Korrosionsschutz bereichsweise instandsetzen',
   'Festhaltekonstruktion':'Korrosionsschutz bereichsweise instandsetzen',
   'Typenschild':'Korrosionsschutz bereichsweise instandsetzen',
+  'Elastomerkissen':'Elastomerkissen fachgerecht instandsetzen/austauschen',
   'Typenschild fehlt/unleserlich':'Typenschild ersetzen',
   'Gleitteil (PTFE)':'Fachgerecht instandsetzen',
   'Korrosionsbeginn':'Lager ausrichten und beschichten',
@@ -4234,11 +4242,11 @@ function insertMassnahme(text,schadensArt){
   if(entry&&entry.lineIndex!=null){
     var lines=ta.value.split('\n');
     var idx=Math.min(entry.lineIndex,lines.length-1);
-    lines[idx]=lines[idx]+' 》》 Maßnahme: '+text+' 《《';
+    lines[idx]=lines[idx]+' 》》 Maßnahme: '+text;
     ta.value=lines.join('\n');
   } else {
     var cur=ta.value.trim();
-    ta.value=cur?cur+' 》》 Maßnahme: '+text+' 《《':'- Maßnahme: '+text+' 《《';
+    ta.value=cur?cur+' 》》 Maßnahme: '+text:'- Maßnahme: '+text;
   }
   realignMassnahmen();
   var box=g('massnahmeBox');
@@ -4322,7 +4330,10 @@ function confVorl(){
   var extra='';
   S.vorl.i.forEach(function(inp,i){
     var f=g('vi'+i);
-    var val=f?f.value.trim():'';
+    // Android-Zifferntastaturen (inputmode="decimal") haben oft keinen Komma-Knopf, nur einen
+    // Punkt — bei Maßangaben (Rissbreite/-länge usw.) wird ein eingetippter Punkt deshalb als
+    // Dezimalkomma normalisiert, damit "2.5" als "2,5" (deutsche Schreibweise) erscheint.
+    var val=f?f.value.trim().replace(/\./g,','):'';
     if(inp.opt){
       if(val!=='')extra+=inp.suffix.replace('{'+i+'}',val);
     } else {
@@ -4435,8 +4446,8 @@ function buildFormDesc(){
       if(f.label==='Widerlager')wIdx=idx;
       if(f.label==='Pfeiler')pIdx=idx;
     });
-    var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim():'';
-    var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim():'';
+    var wVal=wIdx>=0&&g('lagerMw'+wIdx)?g('lagerMw'+wIdx).value.trim().replace(/\./g,','):'';
+    var pVal=pIdx>=0&&g('lagerMw'+pIdx)?g('lagerMw'+pIdx).value.trim().replace(/\./g,','):'';
     var mwLines=curLagerMesswertFelder.filter(function(f,idx){
       if(idx===wIdx&&!wVal&&pVal)return false;
       if(idx===pIdx&&!pVal&&wVal)return false;
@@ -4445,7 +4456,7 @@ function buildFormDesc(){
     }).map(function(f){
       var idx=curLagerMesswertFelder.indexOf(f);
       var el=g('lagerMw'+idx);
-      var val=el?el.value.trim():'';
+      var val=el?el.value.trim().replace(/\./g,','):'';
       return '- '+f.label+': '+val+(f.unit||'');
     }).join('\n');
     desc=desc?mwLines+'\n'+desc:mwLines;
