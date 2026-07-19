@@ -134,7 +134,7 @@ body.dark #mDesc{color:var(--ink);}
 <body>
 <header>
   <div class="applogo">BP</div>
-  <h1>Brückenprüfung <span style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V3</span></h1>
+  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V4</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
@@ -172,6 +172,7 @@ body.dark #mDesc{color:var(--ink);}
   <button style="border:1.5px solid var(--line);background:var(--sur);color:var(--ink);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="g('restoreInput').click()">📂 Wiederherstellen</button>
   <input type="file" id="restoreInput" accept="application/json" style="display:none;" onchange="handleRestoreFile(this.files[0])">
 </div>
+<div id="infoLine" style="text-align:center;font-size:10.5px;color:var(--faint);padding:0 12px 10px;"></div>
 
 <!-- BAUTEILE PANEL -->
 <div class="ov" id="ovBau">
@@ -2078,8 +2079,18 @@ function autoSave(){
     var k={str:g('f_str').value,km:g('f_km').value,br:g('f_br').value,dat:g('f_dat').value,pr:g('f_pr').value};
     localStorage.setItem('bpdelta_kopf',JSON.stringify(k));
     persistFotosToIdb();
+    // Speicheranzeige unter der Export-Leiste aktualisieren (rein informativ,
+    // Funktion wird erst weiter unten definiert — daher abgesichert).
+    try{if(typeof updateInfoLine==='function')updateInfoLine();}catch(e2){}
   }catch(e){
-    toast('⚠️ Speichern fehlgeschlagen — bitte sofort per „Sichern" exportieren!');
+    // QuotaExceededError gezielt erkennen: Dann ist der Speicher wirklich voll
+    // und der Nutzer braucht eine klare Handlungsanweisung statt einer
+    // allgemeinen Fehlermeldung.
+    if(e&&(e.name==='QuotaExceededError'||e.code===22)){
+      toast('⚠️ Speicher voll! Sofort per „Sichern" exportieren, dann mit „Neu" Platz schaffen!');
+    }else{
+      toast('⚠️ Speichern fehlgeschlagen — bitte sofort per „Sichern" exportieren!');
+    }
   }
 }
 // Schreibt alle noch nicht gesicherten Fotos asynchron in IndexedDB. Fotos, die
@@ -6505,7 +6516,12 @@ var BACKUP_KEYS=['bpdelta_dat','bpdelta_stbs','bpdelta_kopf','bpdelta_nxtId','bp
 function doBackup(){
   autoSave();
   toast('Sicherung wird erstellt…');
-  var payload={meta:{tool:'bruecken-karten-app',exported:new Date().toISOString()},data:{}};
+  // Kennung 'brueckenpruefung-delta': bis Juli 2026 stand hier fälschlich
+  // 'bruecken-karten-app' (Überbleibsel aus der Karten-App). Die Wieder-
+  // herstellung prüft deshalb NICHT auf diese Kennung, sondern anhand der
+  // bpdelta_*-Schlüssel in den Daten (siehe handleRestoreFile) — so bleiben
+  // auch alte Delta-Sicherungen mit falscher Kennung weiter einlesbar.
+  var payload={meta:{tool:'brueckenpruefung-delta',version:APP_VERSION,exported:new Date().toISOString()},data:{}};
   BACKUP_KEYS.forEach(function(k){
     var v=null;
     try{v=localStorage.getItem(k);}catch(e){}
@@ -6537,6 +6553,15 @@ function handleRestoreFile(file){
     try{
       var payload=JSON.parse(reader.result);
       var data=payload.data||payload;
+      // Herkunftsprüfung anhand der Speicherschlüssel (nicht anhand meta.tool,
+      // weil alte Delta-Sicherungen dort die falsche Karten-App-Kennung tragen):
+      // Eine echte Delta-Sicherung enthält mindestens einen bpdelta_*-Schlüssel.
+      // Fehlt der, stammt die Datei vermutlich aus der Karten-App o.ä. — dann
+      // ausdrücklich warnen, aber nicht hart blockieren.
+      var hasDeltaKeys=Object.keys(data||{}).some(function(k){return k.indexOf('bpdelta_')===0&&data[k]!=null;});
+      if(!hasDeltaKeys){
+        if(!confirm('⚠️ Diese Datei scheint KEINE Delta-Sicherung zu sein (vermutlich aus einer anderen App). Ein Einlesen würde hier keine Daten wiederherstellen. Trotzdem fortfahren?'))return;
+      }
       if(!confirm('Aktuelle Daten werden durch die Sicherung ersetzt. Fortfahren?'))return;
       BACKUP_KEYS.forEach(function(k){
         if(data[k]!=null){try{localStorage.setItem(k,data[k]);}catch(e){}}
@@ -6546,10 +6571,17 @@ function handleRestoreFile(file){
       // sie in IndexedDB statt localStorage liegen). Alte Sicherungen (vor dem
       // Umbau) haben die Bilddaten noch direkt in bp_dat eingebettet — die
       // Migration dafür läuft beim nächsten Laden automatisch (hydrateFotosFromIdb).
-      var photoWrites=Object.keys(payload.photos||{}).map(function(fid){
-        return idbPutFoto(fid,payload.photos[fid]);
-      });
-      Promise.all(photoWrites).then(function(){
+      // Erst die IndexedDB vollständig leeren, DANN die Fotos aus der Sicherung
+      // schreiben: Sonst bleiben Bilddaten des vorherigen Protokolls als Waisen
+      // dauerhaft liegen und blähen den Speicher über mehrere Wieder-
+      // herstellungen hinweg immer weiter auf. Nach dem Leeren entspricht der
+      // Foto-Bestand exakt dem Inhalt der Sicherungsdatei.
+      var photoMap=payload.photos||{};
+      idbClearAllFotos().then(function(){
+        return Promise.all(Object.keys(photoMap).map(function(fid){
+          return idbPutFoto(fid,photoMap[fid]);
+        }));
+      }).then(function(){
         toast('Wiederhergestellt — Seite wird neu geladen ✓');
         setTimeout(function(){location.reload();},800);
       }).catch(function(){
@@ -7020,6 +7052,54 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(function(){});
   });
 }
+
+// ============================================================
+// VERSION & SPEICHERSCHUTZ (Juli 2026)
+// ============================================================
+// Sichtbare Versionskennung: erscheint im Header-Badge, in der Info-Zeile
+// unter der Export-Leiste und in der meta-Sektion jeder Sicherungsdatei.
+// Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
+// Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
+// ausliefert.
+var APP_VERSION='Delta V4';
+var APP_STAND='19.07.2026';
+try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
+
+// Dauerhafte Speicherung anfordern: Ohne diesen Aufruf darf der Browser
+// localStorage UND IndexedDB (also auch alle Fotos!) bei Speicherdruck
+// stillschweigend räumen. Mit persist() gelten die Daten als geschützt.
+// Der Aufruf ist idempotent und schlägt bei lokal geöffneter Datei einfach
+// leise fehl — kein Einfluss auf den restlichen Ablauf.
+if(navigator.storage&&navigator.storage.persist){
+  navigator.storage.persist().catch(function(){});
+}
+
+// Info-Zeile unter der Export-Leiste: Version + aktuelle Speicherbelegung.
+// Reine Anzeige, greift in keine Speicherlogik ein.
+function fmtBytes(b){
+  if(b>=1073741824)return (b/1073741824).toFixed(1)+' GB';
+  if(b>=1048576)return Math.round(b/1048576)+' MB';
+  return Math.max(1,Math.round(b/1024))+' KB';
+}
+function updateInfoLine(){
+  var el=g('infoLine');if(!el)return;
+  var base=APP_VERSION+' · Stand '+APP_STAND;
+  if(navigator.storage&&navigator.storage.estimate){
+    navigator.storage.estimate().then(function(est){
+      var used=est.usage||0,quota=est.quota||0;
+      var txt=base;
+      if(quota>0){
+        var pct=Math.round(used/quota*100);
+        txt+=' · Speicher: '+fmtBytes(used)+' von '+fmtBytes(quota)+(pct>=1?' ('+pct+'%)':'');
+        if(pct>=80)txt+=' ⚠️';
+      }
+      el.textContent=txt;
+    }).catch(function(){el.textContent=base;});
+  }else{
+    el.textContent=base;
+  }
+}
+window.addEventListener('load',updateInfoLine);
 
 </script>
 </body>
