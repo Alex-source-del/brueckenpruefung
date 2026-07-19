@@ -134,7 +134,7 @@ body.dark #mDesc{color:var(--ink);}
 <body>
 <header>
   <div class="applogo">BP</div>
-  <h1>Brückenprüfung <span style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V2</span></h1>
+  <h1>Brückenprüfung <span style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V3</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
@@ -1366,6 +1366,8 @@ function bausysFill(text,arr){
   var t=text.replace(/#+/g,function(){var v=(arr[i]||'').trim();i++;return v;});
   // "Nr."-Token ohne folgende Nummer entfernen (Platzhalter blieb leer)
   t=t.replace(/\s+Nr\.?(?=\s*(?:[,)(]|$))/g,'');
+  // Seitenwahl statt Nummer: "Nr. links" -> "links" (Andreas, Juli 2026)
+  t=t.replace(/\s+Nr\.?\s*(?=(links|rechts)\b)/g,' ');
   return t.replace(/\s+([,.)])/g,'$1').replace(/\s{2,}/g,' ').replace(/[ .,]+$/,'').trim();
 }
 
@@ -1535,6 +1537,15 @@ function renderBausysRefine(box){
       inp.oninput=function(){curBsVarNrs[i]=this.value;};
       inp.onkeydown=function(ev){if(ev.key==='Enter'){ev.preventDefault();this.blur();}};
       wrapIn.appendChild(s);wrapIn.appendChild(inp);
+      // Juli 2026 (Andreas): häufig ist die "Nummer" in Wahrheit eine Seite —
+      // darum überall zusätzlich links/rechts zum Antippen (Zahl bleibt möglich).
+      ['links','rechts'].forEach(function(seite){
+        var cb=document.createElement('button');
+        cb.textContent=seite;
+        cb.style.cssText='border:1.5px solid '+(curBsVarNrs[i]===seite?'var(--acc)':'var(--line)')+';background:'+(curBsVarNrs[i]===seite?'var(--accs)':'var(--s2)')+';color:'+(curBsVarNrs[i]===seite?'var(--acc)':'var(--ink)')+';border-radius:7px;padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+        cb.onclick=function(){curBsVarNrs[i]=(curBsVarNrs[i]===seite?'':seite);renderTeilRow();};
+        wrapIn.appendChild(cb);
+      });
       vnRow.appendChild(wrapIn);
     });
     wrap.appendChild(vnRow);
@@ -1577,6 +1588,13 @@ function renderBausysRefine(box){
         inp.oninput=function(){curBsGliedNrs[i]=this.value;};
         inp.onkeydown=function(ev){if(ev.key==='Enter'){ev.preventDefault();this.blur();}};
         nrRow.appendChild(inp);
+        ['links','rechts'].forEach(function(seite){
+          var cb=document.createElement('button');
+          cb.textContent=seite;
+          cb.style.cssText='border:1.5px solid '+(curBsGliedNrs[i]===seite?'var(--acc)':'var(--line)')+';background:'+(curBsGliedNrs[i]===seite?'var(--accs)':'var(--s2)')+';color:'+(curBsGliedNrs[i]===seite?'var(--acc)':'var(--ink)')+';border-radius:7px;padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+          cb.onclick=function(){curBsGliedNrs[i]=(curBsGliedNrs[i]===seite?'':seite);renderTeilRow();};
+          nrRow.appendChild(cb);
+        });
       });
       wrap.appendChild(nrRow);
     }
