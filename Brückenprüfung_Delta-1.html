@@ -2230,6 +2230,33 @@ function idbGetAllFotos(){
     });
   });
 }
+// Nur die fid-Schlüssel lesen (ohne Bilddaten) — für den Waisen-Abgleich
+// beim Start reicht das und schont den Arbeitsspeicher.
+function idbGetAllFotoIds(){
+  return idbOpen().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(IDB_STORE,'readonly');
+      var req=tx.objectStore(IDB_STORE).getAllKeys();
+      req.onsuccess=function(){resolve(req.result||[]);};
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+// Räumt still Bilddaten weg, die zu keinem Schaden im Protokoll mehr gehören
+// (z. B. nach Absturz oder abgebrochenem Löschvorgang liegengeblieben).
+// Löscht ausschliesslich fids, die NICHT im aktuellen Protokoll referenziert
+// sind — echte Fotos sind nie betroffen. Läuft verzögert nach dem Start,
+// damit Laden/Migration der Fotos (hydrateFotosFromIdb) sicher fertig ist.
+function sweepOrphanFotos(){
+  var used={};
+  collectAllFotoObjs(dat).forEach(function(f){if(f.fid)used[f.fid]=1;});
+  idbGetAllFotoIds().then(function(ids){
+    var orphans=ids.filter(function(fid){return !used[fid];});
+    if(!orphans.length)return;
+    orphans.forEach(function(fid){idbDeleteFoto(fid);});
+    try{if(typeof updateInfoLine==='function')setTimeout(updateInfoLine,1500);}catch(e){}
+  }).catch(function(){});
+}
 function idbDeleteFoto(fid){
   return idbOpen().then(function(db){
     return new Promise(function(resolve){
@@ -2319,6 +2346,7 @@ function persistFotosToIdb(){
   }));
 }
 function loadSaved(){
+  var loadOk=false;
   try{
     var d=localStorage.getItem('bpdelta_dat');if(d)dat=JSON.parse(d);
     var s=localStorage.getItem('bpdelta_stbs');if(s)stbs=JSON.parse(s);
@@ -2331,8 +2359,14 @@ function loadSaved(){
       if(k.br)g('f_br').value=k.br;if(k.dat)g('f_dat').value=k.dat;
       if(k.pr)g('f_pr').value=k.pr;
     }
+    loadOk=true;
   }catch(e){}
   hydrateFotosFromIdb();
+  // Waisen-Sweep NUR wenn das Protokoll fehlerfrei geladen wurde: Schlägt das
+  // Lesen/Parsen fehl, wäre dat leer und der Sweep würde fälschlich alle
+  // Fotos für Waisen halten. Die 4 Sekunden Verzögerung lassen der
+  // Foto-Hydrierung sicher den Vortritt.
+  if(loadOk)setTimeout(sweepOrphanFotos,4000);
 }
 // Lädt die eigentlichen Bilddaten aus IndexedDB nach (neues Format: fid ohne
 // data) UND migriert automatisch altes Format (fid fehlt, data direkt im
@@ -7230,7 +7264,10 @@ function doBackup(){
   // sonst fehlen die Fotos in der exportierten Datei.
   idbGetAllFotos().then(function(photoMap){
     payload.photos=photoMap;
-    var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    // Kompakt ohne Einrückung schreiben: Inhalt identisch, aber gerade mit
+    // vielen Fotos wird die Datei deutlich kleiner (Wiederherstellung liest
+    // beide Formate gleichermassen).
+    var blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
     var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
     // Strecke/Kilometer wie beim docx-Export mit in den Dateinamen aufnehmen, damit
     // Sicherungen auch anhand des Dateinamens dem richtigen Bauwerk zuzuordnen sind.
@@ -7239,6 +7276,10 @@ function doBackup(){
     function sani(s){return s.replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
     var locPart=(sStr||sKm)?('_'+sani(sStr||'ohneStrecke')+'_'+sani(sKm||'ohneKm')):'';
     triggerDownload(blob,'bpdelta_sicherung'+locPart+'_'+stamp+'.json');
+    // Zeitpunkt der Sicherung merken (bewusst NICHT in BACKUP_KEYS und nicht
+    // von "Neu" betroffen — gilt geräteweit für die Infozeile).
+    try{localStorage.setItem('bpdelta_lastBackup',''+Date.now());}catch(e){}
+    try{if(typeof updateInfoLine==='function')updateInfoLine();}catch(e){}
   }).catch(function(){
     toast('⚠️ Fotos konnten nicht in die Sicherung aufgenommen werden!');
   });
@@ -7784,7 +7825,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V16';
+var APP_VERSION='Delta V17';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
@@ -7804,9 +7845,22 @@ function fmtBytes(b){
   if(b>=1048576)return Math.round(b/1048576)+' MB';
   return Math.max(1,Math.round(b/1024))+' KB';
 }
+// Alter der letzten Sicherung als Kurztext ("vor 5 Min" / "vor 3 Tagen").
+function fmtBackupAge(){
+  var ts=null;
+  try{ts=parseInt(localStorage.getItem('bpdelta_lastBackup'));}catch(e){}
+  if(!ts||isNaN(ts))return 'Noch keine Sicherung';
+  var min=Math.floor((Date.now()-ts)/60000);
+  if(min<1)return 'Letzte Sicherung: gerade eben';
+  if(min<60)return 'Letzte Sicherung: vor '+min+' Min';
+  var h=Math.floor(min/60);
+  if(h<24)return 'Letzte Sicherung: vor '+h+' Std';
+  var d=Math.floor(h/24);
+  return 'Letzte Sicherung: vor '+d+(d===1?' Tag':' Tagen');
+}
 function updateInfoLine(){
   var el=g('infoLine');if(!el)return;
-  var base=APP_VERSION+' · Stand '+APP_STAND;
+  var base=APP_VERSION+' · Stand '+APP_STAND+' · '+fmtBackupAge();
   if(navigator.storage&&navigator.storage.estimate){
     navigator.storage.estimate().then(function(est){
       var used=est.usage||0,quota=est.quota||0;
