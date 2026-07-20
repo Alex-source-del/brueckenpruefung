@@ -134,7 +134,7 @@ body.dark #mDesc{color:var(--ink);}
 <body>
 <header>
   <div class="applogo">BP</div>
-  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V7</span></h1>
+  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V16</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
@@ -246,6 +246,18 @@ body.dark #mDesc{color:var(--ink);}
         <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
         <input id="mBauteilRef" type="text" inputmode="decimal" enterkeyhint="done" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();updateLivePreview();" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
       </div>
+      <div id="mSecRow" style="display:none;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--soft);font-weight:600;margin-bottom:6px;">➕ Abschnitt für Trägerlage einfügen:</div>
+        <div id="mSecChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div id="mSecInline" style="display:none;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          <span id="mSecInlineLabel" style="font-size:13px;font-weight:700;color:var(--ink);"></span>
+          <input id="mSecInlineNr" type="text" inputmode="decimal" enterkeyhint="done" placeholder="Nr." onkeydown="if(event.key==='Enter'){event.preventDefault();untersichtSecConfirm();}" style="width:70px;border:2px solid var(--acc);border-radius:7px;padding:7px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
+          <button type="button" onclick="untersichtSecConfirm()" style="border:0;border-radius:7px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--acc);color:#fff;">✓ Einfügen</button>
+          <button type="button" onclick="untersichtSecConfirm('Alle')" style="border:1.5px solid var(--acc);border-radius:7px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--accs);color:var(--acc);">Alle</button>
+          <button type="button" onclick="untersichtSecCancel()" style="border:1.5px solid var(--line);border-radius:7px;padding:8px 11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--soft);">✕</button>
+        </div>
+        <div id="mSecAktiv" style="display:none;font-size:12px;color:var(--acc);font-weight:600;margin-top:6px;"></div>
+      </div>
       <div id="mBauteilPosRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <label style="font-size:13px;color:var(--soft);font-weight:600;">Lage:</label>
         <div id="mBauteilPosBtns" style="display:flex;gap:6px;"></div>
@@ -278,6 +290,7 @@ body.dark #mDesc{color:var(--ink);}
       <button class="ps" id="mSaveBtn" onclick="saveS()">Speichern</button>
     </div>
     <button id="mSaveNextBtn" style="width:100%;margin-top:8px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="saveAndNext()">✓ Speichern &amp; weiteren Schaden hier erfassen</button>
+    <button id="mTraegerWeiterBtn" style="display:none;width:100%;margin-top:8px;border:1.5px solid #1565c0;background:#e3f2fd;color:#1565c0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="traegerWeiter()">➕ Nächster Träger (gleicher Schaden)</button>
   </div>
 </div>
 
@@ -363,6 +376,15 @@ var SC = {
 var UNTERSICHT_EXTRA=['Anfahrschrammen','Anfahrkerben','Kleinste Lichte Höhe Bauwerk'];
 
 var VL = {
+  // V8 (Andreas): "Allgemein" (Lager als Ganzes) mit typischen Schadensbildern —
+  // vorher gab es hier keinen hinterlegten Schadenstext.
+  'Allgemein':[
+    {l:'Korrosion',t:'Lager Korrosion'},
+    {l:'Korrosionsschutzschäden',t:'Lager Korrosionsschutzschäden'},
+    {l:'Verschmutzt',t:'Lager verschmutzt'},
+    {l:'Lageabweichung/verschoben',t:'Lager Lageabweichung/verschoben'},
+    {l:'Verkantet/Kippstellung',t:'Lager verkantet/Kippstellung'}
+  ],
   // Lager-Bauteile "Lagersockel" und "Verguss": bei der vereinfachten Lagererfassung als
   // eigene Bauteil-Einträge anwählbar, mit typischen Schadensbildern zur Auswahl.
   'Lagersockel':[
@@ -387,11 +409,17 @@ var VL = {
   ],
   'Obere Lagerplatte':[
     {l:'Korrosion',t:'Obere Lagerplatte Korrosion'},
-    {l:'Korrosionsschutzschäden',t:'Obere Lagerplatte Korrosionsschutzschäden'}
+    {l:'Korrosionsschutzschäden',t:'Obere Lagerplatte Korrosionsschutzschäden'},
+    {l:'Verformt/beschädigt',t:'Obere Lagerplatte verformt/beschädigt'},
+    {l:'Sockel/Verguss rissig',t:'Lagersockel/Verguss rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]},
+    {l:'Sockel/Verguss brüchig',t:'Lagersockel/Verguss brüchig'}
   ],
   'Untere Lagerplatte':[
     {l:'Korrosion',t:'Untere Lagerplatte Korrosion'},
-    {l:'Korrosionsschutzschäden',t:'Untere Lagerplatte Korrosionsschutzschäden'}
+    {l:'Korrosionsschutzschäden',t:'Untere Lagerplatte Korrosionsschutzschäden'},
+    {l:'Verformt/beschädigt',t:'Untere Lagerplatte verformt/beschädigt'},
+    {l:'Sockel/Verguss rissig',t:'Lagersockel/Verguss rissig bis {0}mm',i:[{l:'Rissbreite',u:'mm'}]},
+    {l:'Sockel/Verguss brüchig',t:'Lagersockel/Verguss brüchig'}
   ],
   'Verbindungsmittel/Befestigungsmittel':[
     {l:'Korrosion',t:'Verbindungsmittel/Befestigungsmittel Korrosion'},
@@ -490,15 +518,15 @@ var VL = {
     // Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen: konkretere Verformungsarten
     // als zusätzliche Optionen hier statt als eigene SC-Buttons, da es sich um dieselbe
     // Schadenskategorie handelt (nur genauer benannt).
-    {l:'Gebrochen',t:'Gebrochen',i:[]},{l:'Eingebeult',t:'Eingebeult',i:[]},{l:'Geknickt',t:'Geknickt',i:[]},{l:'Verdreht',t:'Verdreht',i:[]}],
+    {l:'Gebrochen',t:'Gebrochen, Maß {0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Eingebeult',t:'Eingebeult, Maß {0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Geknickt',t:'Geknickt, Maß {0}cm',i:[{l:'Maß',u:'cm'}]},{l:'Verdreht',t:'Verdreht, Maß {0}cm',i:[{l:'Maß',u:'cm'}]}],
   'Lose/fehlende Verbindungsmittel':[{l:'Lose',t:'Lose Verbindungsmittel festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Verbindungsmittel festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Verbindungsmittel festgestellt',i:[]}],
   'Lose/fehlende Nietverbindung':[{l:'Lose',t:'Lose Nietverbindung festgestellt',i:[]},{l:'Fehlend',t:'Fehlende Nietverbindung festgestellt',i:[]},{l:'Lose+Fehlend',t:'Lose und fehlende Nietverbindung festgestellt',i:[]}],
   'Schweißnahtriss':[{l:'Länge',t:'Schweißnahtriss, Länge {0}mm',i:[{l:'Länge',u:'mm'}]}],
   'Verschmutzung':[{l:'Festgestellt',t:'Verschmutzung festgestellt',i:[]}],
-  'Anfahrschramme':[{l:'Bestätigen',t:'Anfahrschramme festgestellt',i:[]}],
-  'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt',i:[]}],
-  'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt',i:[]}],
-  'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt',i:[]}],
+  'Anfahrschramme':[{l:'Bestätigen',t:'Anfahrschramme festgestellt, Länge {0}cm, Tiefe {1}mm',i:[{l:'Länge',u:'cm'},{l:'Tiefe',u:'mm'}]}],
+  'Anfahrkratzer':[{l:'Bestätigen',t:'Anfahrkratzer festgestellt, Tiefe {0}mm',i:[{l:'Tiefe',u:'mm'}]}],
+  'Anfahrschrammen':[{l:'Bestätigen',t:'Anfahrschrammen festgestellt, Länge {0}cm, Tiefe {1}mm',i:[{l:'Länge',u:'cm'},{l:'Tiefe',u:'mm'}]}],
+  'Anfahrkerben':[{l:'Bestätigen',t:'Anfahrkerben festgestellt, Länge {0}cm, Tiefe {1}mm',i:[{l:'Länge',u:'cm'},{l:'Tiefe',u:'mm'}]}],
   'Verformung':[{l:'Maß',t:'Verformung, {0}mm',i:[{l:'Maß',u:'mm'}]}],
   'Schweißnahtschaden':[{l:'Bestätigen',t:'Schweißnahtschaden festgestellt',i:[]}],
   'Fußleiste fehlt/liegt auf':[{l:'Fehlt',t:'Fußleiste fehlt',i:[]},{l:'Liegt auf',t:'Fußleiste liegt auf',i:[]}],
@@ -1329,9 +1357,26 @@ function resolveTeilKatalog(bauteilTop,teil){
 }
 var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Erdung','Oberbau'];
 var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Walzträgerunterflansch','Erdung','Oberbau'];
-var OE_S=['Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Hauptträger','Längsträger','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole links','Randwegkonsole rechts','Erdung','Oberbau'];
+var OE_S=['Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Hauptträger links','Hauptträger rechts','Längsträger links','Längsträger rechts','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe links','Längsrippe rechts','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole links','Randwegkonsole rechts','Erdung','Oberbau'];
 // Bauteile mit variabler Anzahl - bekommen ein Nr.-Eingabefeld im Schaden-Dialog (Mehrfacheingabe mit Komma möglich, z.B. "1,2,3,4")
 // Nr.-Feld (mit "Alle"-Option) nur bei Bauteilen mit variabler/mehrfacher Anzahl - nicht pauschal bei allen Stahlbauteilen
+// V9 (Andreas): Hauptträger/Längsträger/Längsrippe sind jetzt Links/Rechts-Paare wie der
+// Randweg (eigener Auswahl-Bildschirm Links/Rechts/Beide). Für Nachschlage-Tabellen
+// (Nr.-Feld, Positions-Chips, Bausys-Verfeinerung) zählt der Basisname ohne Seite:
+function ugrBase(u){return (u||'').replace(/ (links|rechts)$/,'');}
+// "Alle"-Option im Auswahl-Bildschirm: Nr.-Feld beim nächsten Maske-Öffnen vorbelegen.
+var pendingNrPrefill='';
+// Bauteile mit "Gleicher Ablauf, nächster Träger"-Knopf und Querträgerfeld-Nr.:
+var TRAEGER_SEQ_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe'];
+var QTF_BAUTEILE=['Längsträger','Querträger','Längsrippe','Querrippe'];
+// Alt-Einträge, die noch ohne Seite gespeichert wurden, bleiben sichtbar/zählbar/exportierbar:
+var LEGACY_SEITEN_BAUTEILE=['Hauptträger','Längsträger','Längsrippe'];
+// V13 (Andreas): die Träger/Rippen bleiben als eigenständige Bauteile in der Liste;
+// die Untersicht-Abschnitte sind ein ZUSÄTZLICHER Weg. Diese Liste hält nur die
+// nummerierten Alt-Speicherplätze ohne Seitenangabe am Leben (Zählung/Export/Kacheln):
+var OE_S_ALT_BAUTEILE=['Hauptträger','Längsträger','Längsrippe'];
+// Abschnitts-Chips in der Untersicht-Maske:
+var UNTERSICHT_SEC_BAUTEILE=['Querträger','Längsträger','Längsrippe','Querrippe','Schlingerverband (Bremsverband)','Unterer Windverband'];
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts',
   // BauSys-Delta: per BWA-Abgleich ergänzt (Walzträger Nr.##, Verbände je Feld, Konsolträger Nr.##)
   'Walzträgerunterflansch','Fachwerkverband Stahl','Bremsverband','Windverband','Randwegkonsole links','Randwegkonsole rechts'];
@@ -1346,7 +1391,7 @@ var NR_PRO_SYMPTOMZEILE_BAUTEILE=['Geländer links','Geländer rechts'];
 // Bauteile mit zusätzlicher Lage-Angabe (Punkt 7-9 der Sammelliste): Hauptträger bekommt
 // innen/außen, Längsträger und Längsrippe bekommen links/rechts — je EIN optionaler Button,
 // wird zusätzlich zur Bauteil-Nr. in die Überschrift eingerechnet, z.B. "Hauptträger 1 (innen)".
-var BAUTEIL_POS_OPTIONS={'Hauptträger':['innen','außen'],'Längsträger':['links','rechts'],'Längsrippe':['links','rechts'],'Beulsteife an Hauptträger':['innen','außen'],
+var BAUTEIL_POS_OPTIONS={'Hauptträger':['innen','außen'],'Beulsteife an Hauptträger':['innen','außen'],
   // BauSys-Delta: Seitenangabe für Verbände und Konsolen
   'Fachwerkverband Stahl':['links','rechts'],'Bremsverband':['links','rechts'],'Windverband':['oben','unten']};
 var curBauteilPos='';
@@ -1474,7 +1519,7 @@ function bausysVarianten(){
   var baseKey=S.key?S.key.split('___')[0]:'';
   var typ=dat['__t_'+baseKey]||'';
   if(/_w[12]$/.test(baseKey)||/^wg_w/.test(baseKey))typ=(typ==='Mauerwerk')?'W-Mauerwerk':'W-Beton';
-  return (BAUSYS_UGR_MAP[typ]||{})[S.ugr]||null;
+  return (BAUSYS_UGR_MAP[typ]||{})[ugrBase(S.ugr)]||null;
 }
 function renderBausysRefine(box){
   var varianten=bausysVarianten();
@@ -2097,16 +2142,22 @@ function fotoLabelFromKey(key){
     var baseKeyOb=(key||'').split('___')[0];
     return oberbauWatermarkLabel(baseKeyOb);
   }
-  // Bevorzugt dieselbe automatische Standort-Überschrift wie in der Schadensbeschreibung,
-  // aber bewusst OHNE Bauteil-Nummer (Fotos sollen laut Andreas nie Zahlen zeigen, auch
-  // nicht bei nummerierbaren Stahlbauteilen wie Hauptträger) — deshalb hier ausdrücklich
-  // die "bare" Variante buildLocationHeading(), nicht buildTextLocationHeading(). Fällt
-  // bei allem, was keine der beiden Funktionen abdeckt (z.B. Fugen), auf die alte
-  // schlüsselbasierte Herleitung zurück.
+  // V8 (Andreas, geänderte Vorgabe): die Bauteil-Nummer erscheint jetzt AUCH im
+  // Foto-Wasserzeichen ("Hauptträger 1") — vorher galt ausdrücklich "keine Zahlen im
+  // Foto". Der Materialtyp bleibt bewusst draußen (steht nur in der Text-Überschrift).
   var lagerLabel=buildLagerFotoLabel();
   if(lagerLabel)return lagerLabel;
-  var auto=buildLocationHeading();
-  if(auto)return auto;
+  var bareF=buildLocationHeadingBare();
+  if(bareF){
+    // Nr.-Feld nur auslesen, wenn die Erfassungsmaske gerade offen ist — sonst könnte
+    // ein stehen gebliebener Feldwert des LETZTEN Schadens im Foto eines anderen landen.
+    var modOffen=!!(g('ovMod')&&g('ovMod').classList.contains('open'));
+    var partF=buildBauteilPart(modOffen);
+    var kopfF=partF?bareF+', '+partF:bareF;
+    // V12: aktiver Trägerlage-Abschnitt (Untersicht) wandert mit ins Wasserzeichen
+    if(modOffen&&S.untersichtSec)kopfF+=', '+S.untersichtSec;
+    return kopfF;
+  }
   if(!key)return S.schTitle||'';
   var sigM=key.match(/^(sig_[a-z0-9]+)___(.*)$/);
   if(sigM)return sigLabel(sigM[1])+', '+sigM[2];
@@ -2441,6 +2492,7 @@ function cntKey(key,ugr){var n=0;ugr.forEach(function(u){n+=(dat[key+'___'+u]||[
 function cntExtra(key){
   if(!/_oe\d+$/.test(key))return 0;
   var n=(dat[key+'___Geländer links']||[]).length+(dat[key+'___Geländer rechts']||[]).length;
+  OE_S_ALT_BAUTEILE.forEach(function(nm){n+=(dat[key+'___'+nm]||[]).length;});
   LAGER_TYPES.forEach(function(t){
     n+=(dat[key+'___Lager: '+t]||[]).length;
     (LAGER_BAUTEILE[t]||[]).forEach(function(teil){n+=(dat[key+'___Lager: '+t+' - '+teil]||[]).length;});
@@ -2876,6 +2928,18 @@ function openBau(key,title,ugr){
     g('bauList').appendChild(schBtn);
   }
   var shown={};
+  // V9: Alt-Einträge von Hauptträger/Längsträger/Längsrippe, die noch OHNE Seite
+  // gespeichert wurden, bleiben über eine eigene Kachel "<Name> (ohne Seite)" erreichbar,
+  // solange dort Einträge liegen.
+  OE_S_ALT_BAUTEILE.forEach(function(nm){
+    var cLeg=(dat[key+'___'+nm]||[]).length;
+    if(!cLeg)return;
+    var bLeg=document.createElement('button');bLeg.className='sb on';
+    var etikett=/ (links|rechts)$/.test(nm)?' (Alt-Einträge)':' (nummeriert)';
+    bLeg.innerHTML=nm+etikett+'<span class="uc">'+cLeg+'</span>';
+    (function(k2,u2,t2){bLeg.onclick=function(){openSch(k2,u2,t2);};})(key+'___'+nm,nm,title);
+    g('bauList').appendChild(bLeg);
+  });
   ugr.forEach(function(u){
     var isRL=/ (links|rechts)$/.test(u);var base=isRL?u.replace(/ (links|rechts)$/,''):null;
     if(isRL){
@@ -3136,14 +3200,20 @@ function openReliSel(baseKey,baseName,bereich){
     wrap.appendChild(b);
   });
   g('bauList').appendChild(wrap);
-  // Dritte Option: Schaden für beide Seiten in einem Rutsch erfassen. Ablauf: zuerst wird
-  // die Erfassungsmaske für "Links" geöffnet (alle Schäden für die linke Seite eintragen),
-  // beim Antippen von "Speichern" wechselt die Maske automatisch zu "Rechts" (Schritt 2/2),
-  // und erst beim zweiten "Speichern" wird EIN gemeinsamer Eintrag mit der Überschrift
-  // "<Bauteil> links und rechts" angelegt (Abschnitte "Links:"/"Rechts:" getrennt, da die
-  // Schäden je Seite unterschiedlich sein können). Der Eintrag wird als unabhängige Kopie
-  // sowohl in der Links- als auch in der Rechts-Liste abgelegt, damit er in beiden
-  // Einzelansichten sichtbar ist und mitgezählt wird.
+  // Gemeinsame Links+Rechts-Einträge liegen seit V10 nur noch in der Links-Liste
+  // (einfach gezählt, einfach exportiert) — hier ein Hinweis, falls vorhanden:
+  var sharedN=(dat[baseKey+'___'+baseName+' links']||[]).filter(function(e){return e.beide;}).length;
+  if(sharedN>0){
+    var sh=document.createElement('div');
+    sh.style.cssText='margin-top:8px;font-size:12px;color:var(--soft);text-align:center;';
+    sh.textContent=sharedN+' gemeinsame(r) Links+Rechts-Eintrag/-Einträge — unter "Links" geführt';
+    g('bauList').appendChild(sh);
+  }
+  // Option "Beide": Schaden für beide Seiten in einem Rutsch erfassen. Ablauf: zuerst wird
+  // die Erfassungsmaske für "Links" geöffnet, beim Antippen von "Speichern" wechselt die
+  // Maske automatisch zu "Rechts" (Schritt 2/2), und erst beim zweiten "Speichern" wird
+  // EIN gemeinsamer Eintrag "<Bauteil> links und rechts" angelegt (V10: einfach, nicht
+  // mehr doppelt gespeichert).
   var bb=document.createElement('button');
   bb.style.cssText='width:100%;margin-top:10px;padding:14px 10px;border:2px solid var(--line);border-radius:10px;background:var(--s2);cursor:pointer;font-size:15px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
   bb.innerHTML='↔ Beide (links + rechts)';
@@ -3158,6 +3228,23 @@ function openReliSel(baseKey,baseName,bereich){
     };
   })(baseKey,baseName,bereich);
   g('bauList').appendChild(bb);
+  // V10 (Andreas): einheitliche Ziellogik für zählbare Träger/Rippen — zusätzlich
+  // "Nummeriert" (von links gezählt, Nr.-Feld) und "Alle" (ein Schaden für sämtliche).
+  // Beide nutzen den Speicherplatz ohne Seitenangabe (derselbe, in dem Alt-Einträge liegen).
+  if(LEGACY_SEITEN_BAUTEILE.indexOf(baseName)>-1){
+    var nk=baseKey+'___'+baseName;
+    var cN=(dat[nk]||[]).length;
+    var bn=document.createElement('button');
+    bn.style.cssText='width:100%;margin-top:10px;padding:14px 10px;border:2px solid '+(cN>0?'var(--acc)':'var(--line)')+';border-radius:10px;background:'+(cN>0?'var(--accs)':'var(--s2)')+';cursor:pointer;font-size:15px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
+    bn.innerHTML='🔢 Nummeriert (von links gezählt)'+(cN>0?'<br><span style="font-size:12px;color:var(--acc);">'+cN+' Schäden</span>':'');
+    (function(k,n,r){bn.onclick=function(){resetBeideState();openSch(k,n,r);};})(nk,baseName,bereich);
+    g('bauList').appendChild(bn);
+    var ba=document.createElement('button');
+    ba.style.cssText='width:100%;margin-top:10px;padding:14px 10px;border:2px solid var(--line);border-radius:10px;background:var(--s2);cursor:pointer;font-size:15px;font-weight:700;font-family:inherit;color:var(--ink);text-align:center;';
+    ba.innerHTML='∑ Alle '+baseName;
+    (function(k,n,r){ba.onclick=function(){resetBeideState();pendingNrPrefill='Alle';openSch(k,n,r);};})(nk,baseName,bereich);
+    g('bauList').appendChild(ba);
+  }
   showPanel('ovBau');
 }
 
@@ -3196,6 +3283,10 @@ function modalZurueck(){
 
 function openSch(key,ugr,bereich){
   if(S.beidePhase&&S.key!==key)resetBeideState();
+  // V8: Falls die Erfassungsmaske aus einem früheren Schaden noch im Hintergrund "offen"
+  // ist (Panel-Stapelung), hier schließen — sonst könnte ihr alter Text unter dem neuen
+  // Ziel gespeichert werden.
+  if(!S.beidePhase&&S.editIdx<0){var ovM=g('ovMod');if(ovM&&ovM.classList.contains('open')){ovM.classList.remove('open');S.modKey='';}}
   S.key=key;S.ugr=ugr;S.schTitle=bereich+' / '+ugr;
   var stbM=key.split('___')[0].match(/^stb(\d+)_/);
   g('schTitle').textContent=mitLagerCode((stbM?'STB '+stbPos(parseInt(stbM[1],10))+' / ':'')+S.schTitle);
@@ -3228,8 +3319,20 @@ function switchUgr(u){
 function renderSch(){
   var items=dat[S.key]||[];
   var el=g('schList');el.innerHTML='';
+  // V10: gemeinsame Links+Rechts-Einträge liegen nur in der Links-Liste — in der
+  // Rechts-Liste darauf hinweisen, damit nichts "verschwunden" wirkt.
+  if(/ rechts$/.test(S.ugr||'')){
+    var partnerKey=(S.key||'').replace(/ rechts$/,' links');
+    var nShared=(dat[partnerKey]||[]).filter(function(e){return e.beide;}).length;
+    if(nShared>0){
+      var hint=document.createElement('p');
+      hint.style.cssText='color:var(--soft);font-size:12px;font-style:italic;padding:4px 0;';
+      hint.textContent=nShared+' gemeinsame(r) Links+Rechts-Eintrag/-Einträge — unter "'+ugrBase(S.ugr)+' links" geführt';
+      el.appendChild(hint);
+    }
+  }
   if(!items.length){
-    el.innerHTML='<p style="color:var(--faint);font-size:13px;font-style:italic;padding:6px 0;">Keine Schäden</p>';
+    el.innerHTML+='<p style="color:var(--faint);font-size:13px;font-style:italic;padding:6px 0;">Keine Schäden</p>';
     return;
   }
   // Gleiche fortlaufende Nummer wie in der Gesamtschäden-Übersicht (nicht neu ab 1 pro
@@ -3512,18 +3615,31 @@ function updateBauteilNrUI(){
   curBauteilPos='';
   var nrRow=g('mBauteilNrRow'),refRow=g('mBauteilRefRow');
   if(!nrRow||!refRow){updateVerortungDisplay();return;}
-  var bauteilName=S.ugr||'';
+  var bauteilName=ugrBase(S.ugr||'');
   var dbl=DOPPEL_NR_BAUTEILE[bauteilName];
   if(dbl){
     nrRow.style.display='flex';g('mBauteilNrLabel').textContent=dbl.compLabel;g('mBauteilNr').value='';
     refRow.style.display='flex';g('mBauteilRefLabel').textContent=dbl.refLabel;g('mBauteilRef').value='';
   } else if(NUMMERIERBARE_BAUTEILE.indexOf(bauteilName)>-1){
     nrRow.style.display='flex';g('mBauteilNrLabel').textContent='Nr.:';g('mBauteilNr').value='';
-    refRow.style.display='none';
+    // V10: Querträgerfeld-Nr. als optionales Zusatzfeld (Träger Nr. X im Querträgerfeld Y)
+    if(QTF_BAUTEILE.indexOf(bauteilName)>-1){
+      refRow.style.display='flex';g('mBauteilRefLabel').textContent='Querträgerfeld Nr.:';g('mBauteilRef').value='';
+    } else {
+      refRow.style.display='none';
+    }
   } else {
     nrRow.style.display='none';
     refRow.style.display='none';
   }
+  // V10: "Alle"-Vorbelegung aus dem Auswahl-Bildschirm übernehmen
+  if(pendingNrPrefill&&nrRow.style.display!=='none'&&g('mBauteilNr')){
+    g('mBauteilNr').value=pendingNrPrefill;pendingNrPrefill='';
+  }
+  // V10: Knopf "Gleicher Ablauf, nächster Träger" nur bei zählbaren Trägern/Rippen zeigen
+  var twBtn=g('mTraegerWeiterBtn');
+  if(twBtn)twBtn.style.display=(TRAEGER_SEQ_BAUTEILE.indexOf(bauteilName)>-1&&!S.beidePhase)?'block':'none';
+  renderUntersichtSecChips();
   renderBauteilPosBtns();
   updateVerortungDisplay();
   updateLivePreview();
@@ -3535,11 +3651,15 @@ function updateBauteilNrUI(){
 function renderBauteilPosBtns(){
   var row=g('mBauteilPosRow'),box=g('mBauteilPosBtns');
   if(!row||!box)return;
-  var opts=BAUTEIL_POS_OPTIONS[S.ugr||''];
+  var opts=BAUTEIL_POS_OPTIONS[ugrBase(S.ugr||'')];
   if(!opts){row.style.display='none';box.innerHTML='';return;}
   row.style.display='flex';
   box.innerHTML='';
-  opts.forEach(function(o){
+  // V8 (Andreas): überall, wo zwei Positionen zur Wahl stehen (innen/außen,
+  // links/rechts ...), gibt es zusätzlich "beide" — Überschrift wird dann z.B.
+  // "Hauptträger 1 (innen und außen)" (Auflösung in buildBauteilPart()).
+  var optsPlus=opts.length===2?opts.concat(['beide']):opts;
+  optsPlus.forEach(function(o){
     var b=document.createElement('button');
     b.type='button';b.textContent=o;
     var on=curBauteilPos===o;
@@ -3746,7 +3866,7 @@ function collectAllSchaeden(){
     var bases=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
-      var extraU=['Geländer links','Geländer rechts'];
+      var extraU=['Geländer links','Geländer rechts'].concat(OE_S_ALT_BAUTEILE);
       LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
       FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
       bases.push({k:ok,l:'Öffnung '+i,u:getUgr(ok).concat(extraU)});
@@ -4006,12 +4126,24 @@ function buildBauteilPart(mitNr){
     var baseKey0=(S.key||'').split('___')[0];
     if(dat['__t_'+baseKey0]==='Stahl')return '';
   }
-  var posOpts=BAUTEIL_POS_OPTIONS[S.ugr];
-  var posSuffix=(mitNr&&posOpts&&curBauteilPos)?' ('+curBauteilPos+')':'';
+  var uSeiteM=(S.ugr||'').match(/ (links|rechts)$/);
+  var uSeite=uSeiteM?uSeiteM[1]:'';
+  var uBase=uSeite?ugrBase(S.ugr):S.ugr;
+  // V10: Querträgerfeld-Nr. (optionales Zusatzfeld bei Trägern/Rippen) — hängt als
+  // ", Querträgerfeld X" an die Überschrift und damit auch ans Foto-Wasserzeichen.
+  var qtfVal='';
+  if(mitNr&&QTF_BAUTEILE.indexOf(uBase)>-1){
+    var qtfRow=g('mBauteilRefRow');
+    if(qtfRow&&qtfRow.style.display!=='none'&&g('mBauteilRef'))qtfVal=g('mBauteilRef').value.trim().replace(/\./g,',');
+  }
+  var qtfSuffix=qtfVal?', Querträgerfeld '+qtfVal:'';
+  var posOpts=BAUTEIL_POS_OPTIONS[uBase];
+  var posText=curBauteilPos==='beide'&&posOpts&&posOpts.length===2?(posOpts[0]+' und '+posOpts[1]):curBauteilPos;
+  var posSuffix=(mitNr&&posOpts&&curBauteilPos)?' ('+posText+')':'';
   if(mitNr&&NR_PRO_SYMPTOMZEILE_BAUTEILE.indexOf(S.ugr)===-1){
     var nrRow=g('mBauteilNrRow');
     if(nrRow&&nrRow.style.display!=='none'){
-      var dbl=DOPPEL_NR_BAUTEILE[S.ugr];
+      var dbl=DOPPEL_NR_BAUTEILE[uBase];
       // Android-Zifferntastaturen (inputmode="decimal") haben oft keinen Komma-Knopf, nur
       // einen Punkt — deshalb wird ein eingetippter Punkt hier als Listen-Trenner (wie Komma)
       // behandelt und normalisiert, damit "1.4.7.9" als "1,4,7,9" gespeichert wird statt
@@ -4030,13 +4162,18 @@ function buildBauteilPart(mitNr){
           full+=posSuffix;
           return full;
         }
-      } else if(nrVal){
+      } else if(nrVal||qtfVal){
         var nrClean=nrVal==='Alle'?'Alle':nrVal.split(',').map(function(s){return s.trim();}).filter(function(s){return s;}).join(',');
-        return S.ugr+' '+nrClean+posSuffix;
+        var basePart;
+        // Paar-Bauteile (V9): Nummer vor der Seite — "Hauptträger 1 links (innen)"
+        if(nrClean&&uSeite)basePart=uBase+' '+nrClean+' '+uSeite;
+        else if(nrClean)basePart=S.ugr+' '+nrClean;
+        else basePart=S.ugr;
+        return basePart+qtfSuffix+posSuffix;
       }
     }
   }
-  return S.ugr.replace(/^Widerlager\s+/,'')+posSuffix;
+  return S.ugr.replace(/^Widerlager\s+/,'')+qtfSuffix+posSuffix;
 }
 
 function buildLocationHeading(){
@@ -4058,8 +4195,20 @@ function buildLocationHeading(){
 function buildTextLocationHeading(){
   var bare=buildLocationHeadingBare();
   if(!bare)return '';
-  var part=buildBauteilPart(true);
-  return part?bare+', '+part:bare;
+  // V11: im Mehr-Träger-Modus (traegerWeiter) bleibt die Überschrift allgemein
+  // ("... Hauptträger, Stahl") — die Nummern stehen in den Abschnittszeilen darunter.
+  var part=buildBauteilPart(!S.traegerMulti);
+  var heading=part?bare+', '+part:bare;
+  // V8 (Andreas): gewählter Material-/Bauwerkstyp ans Ende der Überschrift,
+  // z.B. "STB 1, Widerlager 1, Vorderansicht, Mauerwerk" — nur in der
+  // Text-Überschrift (Beschreibung/docx), nicht im Foto-Wasserzeichen.
+  var baseKeyT=(S.key||'').split('___')[0];
+  var typT=dat['__t_'+baseKeyT];
+  if(typT){
+    var typAnzeige=typT==='Gew.Beton'?'Gewölbe Beton':(typT==='Gew.Mauerwk'?'Gewölbe Mauerwerk':typT);
+    heading+=', '+typAnzeige;
+  }
+  return heading;
 }
 
 function editS(i){
@@ -4150,27 +4299,51 @@ function editS(i){
     // gehabt manuell nachtragbar.
     var nrRow2=g('mBauteilNrRow');
     if(S.ugr&&nrRow2&&nrRow2.style.display!=='none'){
-      var dbl2=DOPPEL_NR_BAUTEILE[S.ugr];
+      var uSeiteM2=(S.ugr||'').match(/ (links|rechts)$/);
+      var uSeite2=uSeiteM2?uSeiteM2[1]:'';
+      var uBase2=uSeite2?ugrBase(S.ugr):S.ugr;
+      // V10: ", Querträgerfeld X" vor dem restlichen Rückparsen abtrennen
+      if(QTF_BAUTEILE.indexOf(uBase2)>-1){
+        var qtfM=bauteilTeil.match(/,\s*Querträgerfeld\s+(\S+)$/);
+        if(qtfM){
+          if(g('mBauteilRef'))g('mBauteilRef').value=qtfM[1];
+          bauteilTeil=bauteilTeil.replace(/,\s*Querträgerfeld\s+\S+$/,'');
+        }
+      }
+      var dbl2=DOPPEL_NR_BAUTEILE[uBase2];
       var esc=function(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
+      var posOptsE=BAUTEIL_POS_OPTIONS[uBase2];
+      // "beide" wird in der Überschrift als "(A und B)" ausgeschrieben — beim Rückparsen
+      // wieder auf den Chip "beide" abbilden.
+      var posAltList=posOptsE?posOptsE.concat(posOptsE.length===2?[posOptsE[0]+' und '+posOptsE[1]]:[]):null;
+      var mapPos=function(txt){
+        if(posOptsE&&posOptsE.length===2&&txt===posOptsE[0]+' und '+posOptsE[1])return 'beide';
+        return txt;
+      };
       if(dbl2){
-        var compWord2=S.ugr.split(' an ')[0];
-        var posOpts2=BAUTEIL_POS_OPTIONS[S.ugr];
-        var posAlt3=posOpts2?posOpts2.join('|'):null;
+        var compWord2=uBase2.split(' an ')[0];
+        var posAlt3=posAltList?posAltList.map(esc).join('|'):null;
         var reHead=new RegExp('^'+esc(compWord2)+'(?: (\\S+))? an '+esc(dbl2.refWord)+'(?: (\\S+))?'+(posAlt3?'(?: \\(('+posAlt3+')\\))?':'')+'$');
         var mHead=bauteilTeil.match(reHead);
         if(mHead){
           if(mHead[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHead[1];
           if(mHead[2]&&g('mBauteilRef'))g('mBauteilRef').value=mHead[2];
-          if(posAlt3&&mHead[3])curBauteilPos=mHead[3];
+          if(posAlt3&&mHead[3])curBauteilPos=mapPos(mHead[3]);
         }
-      } else if(BAUTEIL_POS_OPTIONS[S.ugr]){
-        var posAlt2=BAUTEIL_POS_OPTIONS[S.ugr].join('|');
-        var reHeadPos=new RegExp('^'+esc(S.ugr)+'(?: (\\S+))?(?: \\(('+posAlt2+')\\))?$');
+      } else if(posOptsE){
+        var posAlt2=posAltList.map(esc).join('|');
+        var seiteTeil=uSeite2?'(?: '+uSeite2+')?':'';
+        var reHeadPos=new RegExp('^'+esc(uBase2)+'(?: (\\S+))?'+seiteTeil+'(?: \\(('+posAlt2+')\\))?$');
         var mHeadPos=bauteilTeil.match(reHeadPos);
         if(mHeadPos){
           if(mHeadPos[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHeadPos[1];
-          if(mHeadPos[2])curBauteilPos=mHeadPos[2];
+          if(mHeadPos[2])curBauteilPos=mapPos(mHeadPos[2]);
         }
+      } else if(uSeite2){
+        // Paar-Bauteil ohne Positions-Chips (z.B. Längsträger links): "Längsträger 2 links"
+        var reHeadSeite=new RegExp('^'+esc(uBase2)+'(?: (\\S+))?(?: '+uSeite2+')?$');
+        var mHeadSeite=bauteilTeil.match(reHeadSeite);
+        if(mHeadSeite&&mHeadSeite[1]&&g('mBauteilNr'))g('mBauteilNr').value=mHeadSeite[1];
       } else {
         var reHead2=new RegExp('^'+esc(S.ugr)+' (.+)$');
         var mHead2=bauteilTeil.match(reHead2);
@@ -4550,6 +4723,85 @@ var LAGER_MESSWERT_EXTRA_TYP={
 };
 var curLagerMesswertFelder=[]; // die für die aktuelle Erfassung tatsächlich angezeigten Felder
 
+// V8 (Andreas): mehrere Lager in EINEM Schaden. Die Trennzeile friert den bisherigen
+// Abschnitt ein; Live-Sync und Neuaufbau (buildFormDesc) fassen nur noch an, was NACH
+// der letzten Trennzeile steht.
+var LAGER_SEP_LINE='— weiteres Lager —';
+// V12 (Andreas): Trägerlage (Querträger/Längsträger/Längsrippe/Querrippe) als
+// Abschnitte IM Untersicht-Schaden erfassen — ein Speichern, ein Schaden. Der aktive
+// Abschnitt wandert ins Foto-Wasserzeichen ("... Fahrbahnplatte Untersicht, Querträger 3").
+var pendingSecName='';
+function untersichtSecStart(name){
+  pendingSecName=name;
+  var row=g('mSecInline');if(!row)return;
+  g('mSecInlineLabel').textContent=name+' — Nr.:';
+  g('mSecInlineNr').value='';
+  row.style.display='flex';
+  setTimeout(function(){var f=g('mSecInlineNr');if(f)f.focus();},60);
+}
+function untersichtSecCancel(){
+  var row=g('mSecInline');if(row)row.style.display='none';
+  pendingSecName='';
+}
+function untersichtSecConfirm(fix){
+  if(!pendingSecName)return;
+  var nr=typeof fix==='string'?fix:(g('mSecInlineNr')?g('mSecInlineNr').value:'');
+  var name=pendingSecName;
+  untersichtSecCancel();
+  untersichtAbschnitt(name,nr);
+}
+function untersichtAbschnitt(name,nr){
+  var ta=g('mDesc');if(!ta)return;
+  nr=(nr||'').trim();
+  var label=nr?name+' '+nr:name;
+  var full=buildFormDesc();
+  if(full)ta.value=full;
+  ta.value=ta.value.replace(/\s+$/,'')+'\n'+label+':';
+  S.untersichtSec=label;
+  var ak=g('mSecAktiv');
+  if(ak){ak.style.display='block';ak.textContent='Aktiver Abschnitt: '+label+' — Schadensbilder und Fotos landen hier';}
+  updateLivePreview();autoGrowMDesc();
+  toast(label+' — Schäden erfassen');
+}
+function renderUntersichtSecChips(){
+  var row=g('mSecRow');if(!row)return;
+  var baseKeyU=(S.key||'').split('___')[0];
+  var zeigen=S.ugr==='Fahrbahnplatte Untersicht'&&dat['__t_'+baseKeyU]==='Stahl'&&!S.beidePhase;
+  row.style.display=zeigen?'block':'none';
+  var ak=g('mSecAktiv');
+  if(ak&&!S.untersichtSec){ak.style.display='none';ak.textContent='';}
+  untersichtSecCancel();
+  if(!zeigen)return;
+  var box=g('mSecChips');if(!box)return;
+  box.innerHTML='';
+  UNTERSICHT_SEC_BAUTEILE.forEach(function(nm){
+    var b=document.createElement('button');
+    b.type='button';
+    b.textContent=nm;
+    b.style.cssText='border:1.5px solid var(--acc);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--accs);color:var(--acc);';
+    b.onclick=function(){untersichtSecStart(nm);};
+    box.appendChild(b);
+  });
+}
+function lagerNaechstes(){
+  var ta=g('mDesc');if(!ta)return;
+  var full=buildFormDesc();
+  if(full)ta.value=full;
+  ta.value=ta.value.replace(/\s+$/,'')+'\n'+LAGER_SEP_LINE;
+  // Felder fürs nächste Lager leeren — STB/Widerlager/Pfeiler bleiben stehen
+  // (mehrere Lager auf derselben Auflagerbank), Lager-Nr./Temperaturen/Wege werden neu erfasst.
+  curLagerMesswertFelder.forEach(function(f,idx){
+    var el=g('lagerMw'+idx);if(!el)return;
+    if(f.label==='STB'||f.label==='Widerlager'||f.label==='Pfeiler')return;
+    el.value='';
+  });
+  autoGrowMDesc();
+  var lagerIdx=-1;
+  curLagerMesswertFelder.forEach(function(f,idx){if(f.label==='Lager')lagerIdx=idx;});
+  var lagerFeld=lagerIdx>=0?g('lagerMw'+lagerIdx):null;
+  if(lagerFeld)lagerFeld.focus();
+  toast('Nächstes Lager — Messwerte und Schäden erfassen');
+}
 function renderLagerMesswerte(){
   var mArt=g('mArt');if(!mArt)return;
   var lagerTyp=(S.typ||'').replace(/^Lager:/,'');
@@ -4577,6 +4829,12 @@ function renderLagerMesswerte(){
     // STB-Nummer aus dem aktuellen Navigationspfad automatisch vorbelegen (bleibt änderbar)
     if(f.label==='STB'&&stbM)input.value=stbM[1];
   });
+  var nextBtn=document.createElement('button');
+  nextBtn.type='button';
+  nextBtn.textContent='➕ Nächstes Lager';
+  nextBtn.style.cssText='width:100%;margin:6px 0 8px;padding:10px;border:1.5px solid var(--acc);border-radius:8px;background:var(--accs);color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+  nextBtn.onclick=lagerNaechstes;
+  box.appendChild(nextBtn);
   mArt.insertBefore(box,mArt.firstChild);
 }
 
@@ -4601,6 +4859,13 @@ function updateSchadenNrBadge(){
 function openMod(){
   S.editIdx=-1;
   S.editIsBeide=false;
+  // Juli 2026 (Andreas, V8): Schnappschuss des Ziel-Schlüssels. Gespeichert wird IMMER
+  // auf das Bauteil, mit dem diese Maske geöffnet wurde — nicht auf einen evtl. später
+  // (durch Navigation im Hintergrund) veränderten S.key. Verhindert, dass z.B. ein
+  // Lagerschaden-Text beim nächsten Bauteil (Widerlager Vorderansicht) mitlandet.
+  S.modKey=S.key;S.modUgr=S.ugr;S.modSchTitle=S.schTitle;
+  S.traegerMulti=false; // V11: Mehr-Träger-Modus gilt je Maske, nicht dauerhaft
+  S.untersichtSec=''; // V12: aktiver Trägerlage-Abschnitt gilt je Maske
   S.art='';S.vorl=null;
   curTeil='';
   resetBausysRefine();
@@ -6562,10 +6827,19 @@ function confVorl(){
     if(inp.opt){
       if(val!=='')extra+=inp.suffix.replace('{'+i+'}',val);
     } else {
-      t=t.replace('{'+i+'}',val||'___');
+      // V16 (Andreas): leere Zahlenfelder erscheinen NICHT mehr im Befund — statt "___"
+      // wird das ganze Maß-Segment (", Länge …cm" / " bis …mm") sauber entfernt.
+      t=t.replace('{'+i+'}',val||'\u0000');
     }
   });
   t+=extra;
+  if(t.indexOf('\u0000')>-1){
+    t=t.replace(/,\s*[^,{}\u0000]{0,24}?\u0000[^\s,)]*/g,'');
+    t=t.replace(/\s[^\s,()]*:\u0000[^\s,)]*/g,'');
+    t=t.replace(/\s(?:bis|ca\.|um)?\s*\u0000[^\s,)]*/g,'');
+    t=t.replace(/\u0000[^\s,)]*/g,'');
+    t=t.replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/,\s*\)/g,')').replace(/[,\s]+$/,'').trim();
+  }
   appendDesc(t,S.vorl.l);
   var ai=g('artInline');if(ai)ai.parentNode.removeChild(ai);
   var vi=g('vorlInline');if(vi)vi.parentNode.removeChild(vi);
@@ -6666,6 +6940,16 @@ function buildFormDesc(){
     // Juli 2026: idempotent — bereits im Feld stehende Messwert-Zeilen zuerst
     // herauslösen (die Beschreibung enthält sie seit der Live-Sync dauerhaft),
     // dann frisch aus den Eingabefeldern zusammensetzen. So gibt es nie Dopplungen.
+    // V8: bei mehreren Lagern pro Schaden ("➕ Nächstes Lager") gilt das nur noch für
+    // den Abschnitt NACH der letzten Trennzeile — eingefrorene frühere Lager-Abschnitte
+    // bleiben wortwörtlich stehen.
+    var kopfTeil='';
+    var sepIdx=desc.lastIndexOf(LAGER_SEP_LINE);
+    if(sepIdx>-1){
+      var cut=sepIdx+LAGER_SEP_LINE.length;
+      kopfTeil=desc.slice(0,cut);
+      desc=desc.slice(cut).replace(/^\n+/,'');
+    }
     var mwLabels=curLagerMesswertFelder.map(function(f){return f.label;});
     desc=desc.split('\n').filter(function(z){
       var m=z.match(/^- ([^:]+):/);
@@ -6693,6 +6977,7 @@ function buildFormDesc(){
       return '- '+f.label+': '+val+(f.unit||'');
     }).join('\n');
     desc=desc?mwLines+'\n'+desc:mwLines;
+    if(kopfTeil)desc=kopfTeil+(desc?'\n'+desc:'');
   }
   if(locHeading)desc=desc?locHeading+'\n'+desc:locHeading;
   if(!desc)return '';
@@ -6753,9 +7038,14 @@ function saveS(keepOpen){
     if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
     return;
   }
+  // Schnappschuss aus openMod() wiederherstellen, BEVOR die Beschreibung gebaut wird —
+  // damit auch Überschrift/Bauteilname zum Öffnungs-Ziel gehören, falls im Hintergrund
+  // navigiert wurde (siehe Kommentar in openMod()).
+  if(S.modKey){S.key=S.modKey;S.ugr=S.modUgr;S.schTitle=S.modSchTitle;}
   var desc=buildFormDesc();
   if(!desc){toast('Bitte Schaden wählen und bestätigen');return;}
-  if(!S.key){toast('Fehler: kein Bauteil gewählt');return;}
+  var zielKey=S.modKey||S.key;
+  if(!zielKey){toast('Fehler: kein Bauteil gewählt');return;}
   if(S.beidePhase===2){
     var bare=buildLocationHeadingBare(S.beideBaseKey);
     var combinedName=S.beideCombined||(S.beideBaseName+' links und rechts');
@@ -6771,11 +7061,11 @@ function saveS(keepOpen){
     if(!dat[fkLinks])dat[fkLinks]=[];
     if(!dat[fkRechts])dat[fkRechts]=[];
     var loc=S.beideBereich+' / '+combinedName;
-    // Zwei unabhängige Kopien (kein geteiltes Objekt) — dieselbe Logik wie die bestehenden
-    // "Übernehmen"-Kopierfunktionen im Rest der App: nach dem Anlegen lässt sich jede Kopie
-    // für sich bearbeiten/löschen, ohne die jeweils andere zu verändern.
-    dat[fkLinks].push({d:combinedDesc,fotos:(S.beideLinksFotos||[]).slice(),loc:loc,t:S.typ,a:S.art});
-    dat[fkRechts].push({d:combinedDesc,fotos:mPendingFotos.slice(),loc:loc,t:S.typ,a:S.art});
+    // V10 (Andreas): nur noch EINE gemeinsame Kopie, geführt unter der Links-Liste —
+    // vorher lag der Kombi-Eintrag doppelt (Links + Rechts) und wurde dadurch in
+    // Gesamtschäden und im Gutachten-Export doppelt gezählt/ausgegeben. Die Fotos
+    // beider Phasen werden zusammengeführt. In der Rechts-Liste erscheint ein Hinweis.
+    dat[fkLinks].push({d:combinedDesc,fotos:(S.beideLinksFotos||[]).concat(mPendingFotos),loc:loc,t:S.typ,a:S.art,beide:true});
     resetBeideState();
     mPendingFotos=[];
     clearResumeState();
@@ -6785,14 +7075,14 @@ function saveS(keepOpen){
     if(g('ovGesamt')&&g('ovGesamt').classList.contains('open'))openGesamtschaeden();
     return;
   }
-  if(!dat[S.key])dat[S.key]=[];
-  var entry={d:desc,fotos:mPendingFotos.slice(),loc:S.schTitle||'',t:S.typ,a:S.art};
-  if(S.editIdx>=0&&dat[S.key][S.editIdx]){
-    dat[S.key][S.editIdx]=entry;
+  if(!dat[zielKey])dat[zielKey]=[];
+  var entry={d:desc,fotos:mPendingFotos.slice(),loc:S.modSchTitle||S.schTitle||'',t:S.typ,a:S.art};
+  if(S.editIdx>=0&&dat[zielKey][S.editIdx]){
+    dat[zielKey][S.editIdx]=entry;
     S.editIdx=-1;
     toast('Änderung gespeichert ✓');
   } else {
-    dat[S.key].push(entry);
+    dat[zielKey].push(entry);
     toast(keepOpen?'Gespeichert ✓ — nächsten Schaden erfassen':'Gespeichert ✓');
   }
   mPendingFotos=[];
@@ -6807,6 +7097,40 @@ function saveS(keepOpen){
 }
 
 function saveAndNext(){saveS(true);}
+
+// V11 (Andreas): Träger für Träger IM SELBEN Schaden durcharbeiten — wie "Nächstes
+// Lager". Beim ersten Tippen wird die Überschrift verallgemeinert (ohne Nr.) und der
+// bisherige Text als Abschnitt "<Träger> <Nr>:" eingefroren; danach beginnt der
+// Abschnitt für die nächste Nummer. Gespeichert wird erst am Ende — EIN Schaden.
+// Die Foto-Wasserzeichen folgen automatisch der Nr. im Feld ("Hauptträger 2").
+function traegerWeiter(){
+  var ta=g('mDesc');if(!ta)return;
+  if(!buildFormDesc()){toast('Bitte zuerst Schäden für diesen Träger erfassen');return;}
+  var base=ugrBase(S.ugr)||S.ugr;
+  var nrEl=g('mBauteilNr');
+  var cur=0;
+  if(nrEl&&nrEl.value){
+    var nums=nrEl.value.match(/\d+/g);
+    if(nums)cur=Math.max.apply(null,nums.map(Number));
+  }
+  cur=cur||1;
+  var next=cur+1;
+  if(!S.traegerMulti){
+    S.traegerMulti=true;
+    // Überschrift verallgemeinern, bisherige Zeilen als ersten Abschnitt einfrieren
+    var lines=ta.value.split('\n');
+    var body=lines.slice(1).join('\n').replace(/^\n+/,'');
+    ta.value=buildTextLocationHeading()+'\n'+base+' '+cur+':'+(body?'\n'+body:'');
+  } else {
+    var full=buildFormDesc();
+    if(full)ta.value=full;
+  }
+  ta.value=ta.value.replace(/\s+$/,'')+'\n'+base+' '+next+':';
+  if(nrEl)nrEl.value=String(next);
+  updateVerortungDisplay();updateLivePreview();
+  autoGrowMDesc();
+  toast(base+' '+next+' — Schäden erfassen');
+}
 
 // ============================================================
 // PANEL MANAGEMENT - simple show/hide, no history manipulation
@@ -7162,7 +7486,7 @@ function downloadFotos(){
     var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
     for(var i=1;i<=stb.oeff;i++){
       var ok='stb'+stb.id+'_oe'+i;
-      var extraU=['Geländer links','Geländer rechts'];
+      var extraU=['Geländer links','Geländer rechts'].concat(OE_S_ALT_BAUTEILE);
       LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
       FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
       blist.push({k:ok,u:getUgr(ok).concat(extraU)});
@@ -7222,6 +7546,7 @@ function doExport(includeImages){
     var allU=b.u.slice();
     if(b.extra){
       allU.push('Geländer links','Geländer rechts');
+      OE_S_ALT_BAUTEILE.forEach(function(nm){allU.push(nm);});
       LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){allU.push('Lager: '+t+' - '+teil);});});
       FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
     }
@@ -7459,7 +7784,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V7';
+var APP_VERSION='Delta V16';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
