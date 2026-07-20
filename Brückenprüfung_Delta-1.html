@@ -134,7 +134,7 @@ body.dark #mDesc{color:var(--ink);}
 <body>
 <header>
   <div class="applogo">BP</div>
-  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V5</span></h1>
+  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V7</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
@@ -1740,6 +1740,17 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
   if(bauteil==='Böschungsbefestigung')return 'Böschungsbefestigung';
   if(bauteil==='Übergang zum Bahnkörper')return 'Beton';
   if(bauteil==='Erdung')return 'Erdung';
+  // Signalausleger: alles Stahlbau, außer den Beton-Baugliedern der Gründung.
+  // (Erdung ist oben schon abgefangen.) Verankerung/Ankerbolzen/Stahlpfahl der
+  // Gründung sind Stahl; Holz-/Betonpfahl laufen über den Beton-Katalog (Risse/
+  // Abplatzungen passen dort am ehesten, Details in der Beschreibung).
+  if(baseKey.indexOf('sig_')===0){
+    if(/^sig_gr\d*$/.test(baseKey)){
+      if(/^Fundament|^Unterguss|Betonpfahl|Holzpfahl/.test(bauteil))return 'Beton';
+      return 'Stahl';
+    }
+    return 'Stahl';
+  }
   if(bauteil==='Gewässersohle')return 'Gewässersohle';
   // "Gründung" ist bei Widerlager/Beton-Mauerwerk-Pfeiler der Kolk/Unterspülungs-Katalog,
   // bei einer Stahl-Stützenreihe dagegen das eigentliche Betonfundament der Einzelstütze
@@ -1843,6 +1854,155 @@ function resolveSchadenTyp(baseKey,bauteil,parentTyp){
 
 // STATE
 var stbs=[], nxtId=1, dat={};
+
+// ============================================================
+// SIGNALAUSLEGER (BWA 334) — Delta V6, Etappe 1
+// Eigener Bauwerks-Zweig neben der Brücke. Quelle der Bauglieder:
+// BSC-BR Bauteil-Bauglied-Katalog, Abschnitt "s" (Signalbrücken/
+// Ausleger-Elemente), Bauteile s45/s46, s50/s51, s60/s61, s65/s66,
+// s70, s75/s76, s80/s81, s90/s91 — kuratiert auf die Haupt-Bauglieder
+// (Detailvarianten wie "Anschluß ...", "Bohrung Nr.#" laufen über die
+// Beschreibung/Genauigkeit, wie bei den Brücken-Bauteilen auch).
+// Datenhaltung komplett in `dat` (Zusatz-Schlüssel siehe unten), damit
+// autoSave/Sicherung/Wiederherstellen ohne Änderung funktionieren:
+//   __bwart        'sigausleger' (fehlt bei Brücke)
+//   __sig_bauart   'nRZ' (nach Richtzeichnung) | 'alt' (Altbauart)
+//   __sig_kragarm  'einfach' | 'doppel' (doppel nur bei n.RZ, BSC-BR s70)
+//   __sig_leiter   false = keine Steigleiter vorhanden (Standard: vorhanden)
+//   __sig_ab       Anzahl Lichtsignal-Arbeitsbühnen (0–4)
+// Bauteil-Schlüssel: sig_st (Stütze), sig_ka (Kragarm/Doppel-Kragarm),
+// sig_re (Rahmeneck), sig_gr (Gründung), sig_sl (Steigleiter),
+// sig_gb/sig_gs (Gittergeländer Breit-/Stirnseite), sig_ab1..n (Bühnen).
+// ============================================================
+var SIG_UGR={
+  st_nRZ:['Stegblech','Gurtblech','Fuß-Gurtblech','Fuß-Steife','Fußplatte','Kopfplatte','Schott','Rohr','Rohraustritt','Anschlusslasche (Steigleiter)','Einhängebügel','Erdung'],
+  st_alt:['Stegblech','Gurtblech','Fuß-Gurtblech','Fuß-Steife','Fußplatte','Schott','Anschlusslasche (Steigleiter)','Kabel-Befestigungsbügel','Erdung'],
+  ka_nRZ:['Stegblech links','Stegblech rechts','Obergurtblech','Untergurtblech','Schott','Rohr','Rohraustritt','Ankerschiene'],
+  ka_alt:['Stegblech links','Stegblech rechts','Obergurtblech','Untergurtblech','Aussteifungsblech','Stirnblech','Schott','Befestigungsblech (Arbeitsbühne)','Rundstahlnocke'],
+  re_nRZ:['Stegblech links','Stegblech rechts','Gurtblech','Horizontales Aussteifungsblech','Anschlussplatte (Stütze)','Anschlusslasche (Steigleiter)'],
+  re_alt:['Stegblech links','Stegblech rechts','Gurtblech','Obergurtblech','Aussteifungsblech','Rundstahlnocke','Anschlusslasche (Steigleiter)','Kabel-Befestigungsbügel'],
+  gr_nRZ:['Fundament (Fertigteil)','Fundament (Ortbeton)','Verankerung im Fundament','Ankerbolzen','Gründungspfahl (Profilstahl-Doppelbohle)','Unterguss'],
+  gr_alt:['Fundament (Fertigteil)','Fundament (Ortbeton)','Verankerung im Fundament','Ankerbolzen','Gründungspfahl (Profilstahl-Doppelbohle)','Gründungspfahl (Betonpfahl)','Gründungspfahl (Holzpfahl)','Unterguss'],
+  sl_nRZ:['Holm','Sprosse','Rückenschutz','Rückenschutz-Bügel','Rückenschutz-Vertikalstab','Einstiegsklappe'],
+  sl_alt:['Holm','Sprosse','Rückenschutz','Rückenschutz-Bügel','Rückenschutz-Vertikalstab','Rückenschutz-Diagonalstab','Einstiegsklappe'],
+  gel:['Handlauf','Gitterdraht','Gitterdraht-Rahmen','Pfosten','Haltegriff'],
+  ab_nRZ:['Turm: Pfosten','Turm: Querriegel','Turm: Diagonale','Turm: Schutzgitter','Turm: Leiter','Turm: Steigeisen','Turm: Hilfstritt','Signallagerung','Anschlusskonstruktion','Plattform: Längsträger','Plattform: Querriegel','Plattform: Längs-Holm','Plattform: Quer-Holm','Plattform: Strebe','Plattform: Gitterrost','Berührungsschutz-Schutzgitter'],
+  ab_alt:['Turm: Pfosten','Turm: Querriegel','Turm: Diagonale','Turm: Schutzgitter','Turm: Leiter','Turm: Steigeisen','Turm: Hilfstritt','Signallagerung','Anschlusskonstruktion','Plattform: Längsträger','Plattform: Querriegel','Plattform: Längs-Holm','Plattform: Quer-Holm','Plattform: Strebe','Plattform: Gitterrost'],
+  // --- Signalbrücke (BWA 333), Delta V6 Etappe 2 — BSC-BR s01/s05/s10/s15/s20/s25/s26/s30/s31/s35/s36/s40/s47 ---
+  b_st_hohlk:['Stegblech','Gurtblech','Fuß-Gurtblech','Fuß-Steife','Fußplatte','Fußplatten-Unterguss','Kopfplatte','Schott','Rohr (Signalkabel)','Rohraustritt','Anschlusslasche (Steigleiter)','Einhängebügel','Erdung'],
+  b_st_iwalz:['Steg','Flansch','Fußplatte','Fußplatten-Steife','Futterblech','Kopfplatte','Erdung'],
+  b_st_fw:['Ständer','Fußplatte','Kopfplatte','Querriegel','Kopfriegel','Diagonale','Erdung'],
+  b_ri_rahmen:['Stegblech links','Stegblech rechts','Obergurtblech','Untergurtblech','Schott','Rohr (Signalkabel)','Rohraustritt','Ankerschiene'],
+  b_ri_fw:['Obergurt','Obergurtknoten','Untergurt','Untergurtknoten','Pfosten','Diagonale','Unterer Querträger','Oberer Querträger','Unterer Verband: Diagonale','Oberer Verband: Diagonale','Stirnseiten-Diagonale links','Stirnseiten-Diagonale rechts','Stützenanschluss'],
+  b_re_hohlk:['Stegblech links','Stegblech rechts','Gurtblech','Horizontales Aussteifungsblech','Anschlussplatte (Stütze)','Anschlusslasche (Steigleiter)'],
+  b_re_iq:['Oberes Stegblech','Unteres Stegblech','Gurtblech','Horizontales Aussteifungsblech','Anschlussplatte (Stütze)','Anschlusslasche (Steigleiter)'],
+  b_gel_b:['Handlauf','Gitterdraht','Gitterdraht-Rahmen','Pfosten','Pfosten-Schutzblech','Anschlussblech','Haltegriff'],
+  b_gel_s:['Handlauf','Gitterdraht','Gitterdraht-Rahmen','Pfosten','Haltegriff'],
+  b_bs:['Gitterdraht','Gitterdraht-Rahmen'],
+  b_gsteg:['Auflagerprofil','Blechabdeckung','Längsrippe','Gitterrost','Holzbohle'],
+  b_treppe:['Stufe','Handlauf','Pfosten']
+};
+function sigMode(){return dat['__bwart']==='sigausleger'||dat['__bwart']==='sigbruecke';}
+function sigIsBruecke(){return dat['__bwart']==='sigbruecke';}
+// Bei der Signalbrücke steuert die Stützen-Bauart, ob die Alt-Listen
+// (Steigleiter/Arbeitsbühne/Gründung) gelten: Fachwerk-Stützen = Altbauart.
+function sigbAlt(){return dat['__sigb_stb']==='fachwerk';}
+function sigBauart(){return dat['__sig_bauart']==='alt'?'alt':'nRZ';}
+function sigKragarmLabel(){return dat['__sig_kragarm']==='doppel'?'Doppel-Kragarm':'Kragarm';}
+function sigUgrFor(k){
+  if(sigIsBruecke()){
+    var a2=sigbAlt()?'alt':'nRZ';
+    if(/^sig_st\d+$/.test(k)){
+      var stb=dat['__sigb_stb']||'hohlk';
+      return SIG_UGR[stb==='iwalz'?'b_st_iwalz':(stb==='fachwerk'?'b_st_fw':'b_st_hohlk')];
+    }
+    if(k==='sig_ri')return SIG_UGR[(dat['__sigb_ri']==='fachwerk')?'b_ri_fw':'b_ri_rahmen'];
+    if(/^sig_re\d+$/.test(k))return SIG_UGR[(dat['__sigb_re']==='iq')?'b_re_iq':'b_re_hohlk'];
+    if(/^sig_gr\d+$/.test(k))return SIG_UGR['gr_'+a2];
+    if(k==='sig_sl')return SIG_UGR['sl_'+a2];
+    if(k==='sig_gb')return SIG_UGR.b_gel_b;
+    if(k==='sig_gs')return SIG_UGR.b_gel_s;
+    if(k==='sig_bsb'||k==='sig_bss')return SIG_UGR.b_bs;
+    if(k==='sig_gsteg')return SIG_UGR.b_gsteg;
+    if(k==='sig_tr')return SIG_UGR.b_treppe;
+    if(/^sig_ab\d+$/.test(k))return SIG_UGR['ab_'+a2];
+    return [];
+  }
+  var a=sigBauart();
+  if(k==='sig_st')return SIG_UGR['st_'+a];
+  if(k==='sig_ka')return SIG_UGR['ka_'+(dat['__sig_kragarm']==='doppel'?'nRZ':a)];
+  if(k==='sig_re')return SIG_UGR['re_'+a];
+  if(k==='sig_gr')return SIG_UGR['gr_'+a];
+  if(k==='sig_sl')return SIG_UGR['sl_'+a];
+  if(k==='sig_gb'||k==='sig_gs')return SIG_UGR.gel;
+  if(/^sig_ab\d+$/.test(k))return SIG_UGR['ab_'+a];
+  return [];
+}
+function sigLabel(baseKey){
+  var stM=baseKey.match(/^sig_st(\d+)$/);
+  if(stM)return 'Stütze '+stM[1];
+  var reM=baseKey.match(/^sig_re(\d+)$/);
+  if(reM)return 'Rahmeneck '+reM[1];
+  var grM=baseKey.match(/^sig_gr(\d+)$/);
+  if(grM)return 'Gründung Stütze '+grM[1];
+  if(baseKey==='sig_ri')return (dat['__sigb_ri']==='fachwerk')?'Fachwerk-Riegel':'Rahmen-Riegel';
+  if(baseKey==='sig_bsb')return 'Berührungsschutz Breitseite';
+  if(baseKey==='sig_bss')return 'Berührungsschutz Stirnseite';
+  if(baseKey==='sig_gsteg')return 'Gehsteg';
+  if(baseKey==='sig_tr')return 'Treppe';
+  if(baseKey==='sig_st')return 'Stütze';
+  if(baseKey==='sig_ka')return sigKragarmLabel();
+  if(baseKey==='sig_re')return 'Rahmeneck';
+  if(baseKey==='sig_gr')return 'Gründung';
+  if(baseKey==='sig_sl')return 'Steigleiter';
+  if(baseKey==='sig_gb')return 'Gittergeländer Breitseite';
+  if(baseKey==='sig_gs')return 'Gittergeländer Stirnseite';
+  var abM=baseKey.match(/^sig_ab(\d+)$/);
+  if(abM)return 'Lichtsignal-Arbeitsbühne '+abM[1];
+  return '';
+}
+// Alle Bauteile des Signalauslegers in Prüf-Reihenfolge — zentrale Quelle für
+// Kachel-Anzeige, Gesamtschäden, docx-Export und Bilder-Export. MUSS überall
+// identisch verwendet werden (siehe DATENSCHEMA-Warnung unten).
+function sigBases(){
+  if(!sigMode())return [];
+  var bases=[];
+  var i,n2;
+  if(sigIsBruecke()){
+    var nSt=Math.max(2,Math.min(4,parseInt(dat['__sigb_st']||2,10)||2));
+    for(i=1;i<=nSt;i++)bases.push({k:'sig_gr'+i,l:'Gründung Stütze '+i,u:sigUgrFor('sig_gr'+i)});
+    for(i=1;i<=nSt;i++)bases.push({k:'sig_st'+i,l:'Stütze '+i,u:sigUgrFor('sig_st'+i)});
+    if(dat['__sigb_ri']!=='fachwerk'){
+      for(i=1;i<=nSt;i++)bases.push({k:'sig_re'+i,l:'Rahmeneck '+i,u:sigUgrFor('sig_re'+i)});
+    }
+    bases.push({k:'sig_ri',l:sigLabel('sig_ri'),u:sigUgrFor('sig_ri')});
+    if(dat['__sigb_ri']==='fachwerk'){
+      bases.push({k:'sig_bsb',l:'Berührungsschutz Breitseite',u:sigUgrFor('sig_bsb')});
+      bases.push({k:'sig_bss',l:'Berührungsschutz Stirnseite',u:sigUgrFor('sig_bss')});
+      if(dat['__sigb_gsteg']!==false)bases.push({k:'sig_gsteg',l:'Gehsteg',u:sigUgrFor('sig_gsteg')});
+      if(dat['__sigb_tr'])bases.push({k:'sig_tr',l:'Treppe',u:sigUgrFor('sig_tr')});
+    }
+    if(dat['__sig_leiter']!==false)bases.push({k:'sig_sl',l:'Steigleiter',u:sigUgrFor('sig_sl')});
+    bases.push({k:'sig_gb',l:'Gittergeländer Breitseite',u:sigUgrFor('sig_gb')});
+    bases.push({k:'sig_gs',l:'Gittergeländer Stirnseite',u:sigUgrFor('sig_gs')});
+    n2=parseInt(dat['__sig_ab']||0,10)||0;
+    for(i=1;i<=n2;i++)bases.push({k:'sig_ab'+i,l:'Lichtsignal-Arbeitsbühne '+i,u:sigUgrFor('sig_ab'+i)});
+    return bases;
+  }
+  bases.push({k:'sig_gr',l:'Gründung',u:sigUgrFor('sig_gr')});
+  bases.push({k:'sig_st',l:'Stütze',u:sigUgrFor('sig_st')});
+  bases.push({k:'sig_re',l:'Rahmeneck',u:sigUgrFor('sig_re')});
+  bases.push({k:'sig_ka',l:sigKragarmLabel(),u:sigUgrFor('sig_ka')});
+  if(dat['__sig_leiter']!==false)bases.push({k:'sig_sl',l:'Steigleiter',u:sigUgrFor('sig_sl')});
+  bases.push({k:'sig_gb',l:'Gittergeländer Breitseite',u:sigUgrFor('sig_gb')});
+  bases.push({k:'sig_gs',l:'Gittergeländer Stirnseite',u:sigUgrFor('sig_gs')});
+  var n=parseInt(dat['__sig_ab']||0,10)||0;
+  for(var i=1;i<=n;i++)bases.push({k:'sig_ab'+i,l:'Lichtsignal-Arbeitsbühne '+i,u:sigUgrFor('sig_ab'+i)});
+  return bases;
+}
+function sigCountAll(){
+  var n=0;sigBases().forEach(function(b){n+=cntKey(b.k,b.u);});return n;
+}
 // Liefert die AKTUELLE Anzeige-Position eines STB (1-basiert) anhand seiner internen,
 // nie wiederverwendeten ID — nicht die interne ID selbst. Grund: addStb() vergibt fort-
 // laufende IDs, die auch nach Löschen von STBs nicht zurückgesetzt werden (z.B. nach
@@ -1948,6 +2108,8 @@ function fotoLabelFromKey(key){
   var auto=buildLocationHeading();
   if(auto)return auto;
   if(!key)return S.schTitle||'';
+  var sigM=key.match(/^(sig_[a-z0-9]+)___(.*)$/);
+  if(sigM)return sigLabel(sigM[1])+', '+sigM[2];
   var m=key.match(/^stb(\d+)_(w[12]|oe\d+|pf\d+)___(.*)$/);
   if(!m)return S.schTitle||'';
   var stbNum=m[1],part=m[2],ugr=m[3];
@@ -2152,12 +2314,15 @@ function hydrateFotosFromIdb(){
 function render(){
   var grid=g('mainGrid');grid.innerHTML='';
   var sa0=g('stbBtnArea');if(sa0)sa0.innerHTML='';
+  if(sigMode()){renderSig();return;}
   if(!stbs.length){
     grid.style.cssText='display:flex;justify-content:center;width:100%;';
     var empty=document.createElement('div');
     empty.style.cssText='padding:60px 20px;text-align:center;color:var(--soft);width:100%;';
     empty.innerHTML='<div style="font-size:16px;margin-bottom:20px;">Noch kein Bauwerk angelegt.</div>'+
-      '<button class="ps" style="padding:18px 32px;font-size:17px;font-weight:700;border-radius:10px;" onclick="startBauwerk()">🏗 Bauwerk erstellen</button>';
+      '<button class="ps" style="padding:18px 32px;font-size:17px;font-weight:700;border-radius:10px;" onclick="startBauwerk()">🏗 Brücke erstellen</button>'+
+      '<div style="margin-top:14px;"><button style="padding:14px 26px;font-size:15px;font-weight:700;border-radius:10px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);cursor:pointer;font-family:inherit;" onclick="startSigAusleger()">🚦 Signalausleger erstellen</button></div>'+
+      '<div style="margin-top:10px;"><button style="padding:14px 26px;font-size:15px;font-weight:700;border-radius:10px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);cursor:pointer;font-family:inherit;" onclick="startSigBruecke()">🌉 Signalbrücke erstellen</button></div>';
     grid.appendChild(empty);
     return;
   }
@@ -2292,6 +2457,7 @@ var W_UGR_ALLE=W_UGR_BETON.concat(W_UGR_MAUERWERK).filter(function(v,i,a){return
 // derselben Schreibweise, die auch beim normalen Navigieren über die Kacheln verwendet wird
 // (nicht die längere Bezeichnung aus der Gesamtschäden-Sammlung).
 function shortBauTitleFromKey(baseKey){
+  if(baseKey.indexOf('sig_')===0)return sigLabel(baseKey);
   var oeM=baseKey.match(/^stb\d+_oe(\d+)$/);
   if(oeM)return 'Öffnung '+oeM[1];
   var wM=baseKey.match(/^stb\d+_w([12])$/);
@@ -2306,6 +2472,7 @@ function shortBauTitleFromKey(baseKey){
 // Klartext-Label für einen Ziel-Bauteil-Schlüssel bei der Übernahme-Auswahl
 // (z.B. "STB 2 / Öffnung 1", "STB 1 / Widerlager 2", "Widerlager 1 (durchgehend)").
 function friendlyTargetLabel(baseKey){
+  if(baseKey.indexOf('sig_')===0)return sigLabel(baseKey)||baseKey;
   var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
   if(oeM)return 'STB '+stbPos(parseInt(oeM[1],10))+' / Öffnung '+oeM[2];
   var wM=baseKey.match(/^stb(\d+)_w([12])$/);
@@ -2318,6 +2485,7 @@ function friendlyTargetLabel(baseKey){
 }
 
 function getUgr(k){
+  if(k.indexOf('sig_')===0)return sigUgrFor(k);
   // wg_w1/wg_w2 ("durchgehend") können Schäden aus STBs mit unterschiedlichem
   // Bauwerkstyp enthalten (z.B. ein STB Beton, ein anderer Mauerwerk) — deshalb
   // hier IMMER die vereinigte Begriffsliste verwenden, sonst werden Einträge des
@@ -2384,6 +2552,203 @@ function mkOe(stb,i){
     row.appendChild(del);
   }
   return row;
+}
+
+// ---------- Signalausleger: Hauptansicht ----------
+function startSigBruecke(){
+  dat['__bwart']='sigbruecke';
+  dat['__sigb_st']=2;
+  dat['__sigb_stb']='hohlk';
+  dat['__sigb_ri']='rahmen';
+  dat['__sigb_re']='hohlk';
+  dat['__sigb_gsteg']=true;
+  dat['__sigb_tr']=false;
+  dat['__sig_leiter']=true;
+  dat['__sig_ab']=1;
+  bauwerkLocked=false;
+  render();autoSave();toast('Signalbrücke erstellt — jetzt Bauart festlegen');
+}
+function sigbSet(key,val){
+  if(dat[key]===val)return;
+  if(sigCountAll()>0&&!confirm('Bauart wechseln? Bereits erfasste Schäden bleiben gespeichert, können aber unsichtbar werden, wenn es das Bauglied in der anderen Bauart nicht gibt.'))return;
+  dat[key]=val;render();autoSave();
+}
+function sigbSetStCount(delta){
+  var n=Math.max(2,Math.min(4,parseInt(dat['__sigb_st']||2,10)||2));
+  var neu=n+delta;
+  if(neu<2||neu>4)return;
+  if(delta<0){
+    var betroffen=cntKey('sig_st'+n,sigUgrFor('sig_st'+n))+cntKey('sig_gr'+n,sigUgrFor('sig_gr'+n))+cntKey('sig_re'+n,sigUgrFor('sig_re'+n));
+    if(betroffen>0){
+      if(!confirm('Stütze '+n+' (mit Gründung/Rahmeneck) hat '+betroffen+' erfasste Schäden. Wirklich entfernen? Die Einträge werden gelöscht.'))return;
+      ['sig_st'+n,'sig_gr'+n,'sig_re'+n].forEach(function(base){
+        Object.keys(dat).forEach(function(k){if(k.indexOf(base+'___')===0)delete dat[k];});
+      });
+    }
+  }
+  dat['__sigb_st']=neu;render();autoSave();refreshOpenSchList();
+}
+function sigbToggle(key,label){
+  var an=key==='__sigb_gsteg'?dat[key]!==false:!!dat[key];
+  if(an){
+    var base=key==='__sigb_gsteg'?'sig_gsteg':'sig_tr';
+    if(cntKey(base,sigUgrFor(base))>0){toast(label+' hat erfasste Schäden — erst löschen');return;}
+  }
+  dat[key]=key==='__sigb_gsteg'?(an?false:true):!an;
+  render();autoSave();
+}
+function startSigAusleger(){
+  dat['__bwart']='sigausleger';
+  dat['__sig_bauart']='nRZ';
+  dat['__sig_kragarm']='einfach';
+  dat['__sig_leiter']=true;
+  dat['__sig_ab']=1;
+  bauwerkLocked=false;
+  render();autoSave();toast('Signalausleger erstellt — jetzt Bauart festlegen');
+}
+function sigSetBauart(a){
+  if(dat['__sig_bauart']===a)return;
+  if(sigCountAll()>0&&!confirm('Bauart wechseln? Bereits erfasste Schäden bleiben gespeichert, können aber unsichtbar werden, wenn es das Bauglied in der anderen Bauart nicht gibt.'))return;
+  dat['__sig_bauart']=a;
+  if(a==='alt'&&dat['__sig_kragarm']==='doppel')dat['__sig_kragarm']='einfach';
+  render();autoSave();
+}
+function sigSetKragarm(v){dat['__sig_kragarm']=v;render();autoSave();}
+function sigToggleLeiter(){
+  var vorhanden=dat['__sig_leiter']!==false;
+  if(vorhanden&&cntKey('sig_sl',sigUgrFor('sig_sl'))>0){toast('Steigleiter hat erfasste Schäden — erst löschen');return;}
+  dat['__sig_leiter']=!vorhanden;render();autoSave();
+}
+function sigAddAb(){
+  var n=parseInt(dat['__sig_ab']||0,10)||0;
+  if(n>=4)return;
+  dat['__sig_ab']=n+1;render();autoSave();toast('Arbeitsbühne '+(n+1)+' hinzugefügt ✓');
+}
+function sigRmAb(){
+  var n=parseInt(dat['__sig_ab']||0,10)||0;
+  if(n<1)return;
+  var key='sig_ab'+n;
+  if(cntKey(key,sigUgrFor(key))>0){
+    if(!confirm('Arbeitsbühne '+n+' hat erfasste Schäden. Wirklich entfernen? Die Einträge werden gelöscht.'))return;
+    Object.keys(dat).forEach(function(k){if(k.indexOf(key+'___')===0)delete dat[k];});
+  }
+  dat['__sig_ab']=n-1;render();autoSave();refreshOpenSchList();
+}
+function sigChipBtn(label,active,onclick){
+  var b=document.createElement('button');
+  b.textContent=label;
+  b.style.cssText='border:1.5px solid '+(active?'var(--acc)':'var(--line)')+';border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:'+(active?'var(--acc)':'transparent')+';color:'+(active?'#fff':'var(--soft)')+';';
+  b.onclick=onclick;
+  return b;
+}
+function renderSig(){
+  var grid=g('mainGrid');
+  grid.style.cssText='display:block;width:100%;max-width:430px;margin:0 auto;';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='font-size:15px;font-weight:800;color:var(--acc);padding:4px 2px 10px;';
+  if(sigIsBruecke()){
+    hdr.textContent='🌉 Signalbrücke (BWA 333) — '+(sigbAlt()?'Altbauart (Fachwerk)':'nach Richtzeichnung');
+  } else {
+    hdr.textContent='🚦 Signalausleger (BWA 334) — '+(sigBauart()==='alt'?'Altbauart':'nach Richtzeichnung');
+  }
+  grid.appendChild(hdr);
+  if(!bauwerkLocked){
+    var cfg=document.createElement('div');
+    cfg.style.cssText='background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;';
+    var mk=function(title,chips){
+      var lbl=document.createElement('div');lbl.style.cssText='font-size:12px;color:var(--soft);font-weight:600;margin:8px 0 6px;';lbl.textContent=title;cfg.appendChild(lbl);
+      var row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+      chips.forEach(function(c){row.appendChild(c);});cfg.appendChild(row);
+    };
+    if(sigIsBruecke()){
+      var nSt=Math.max(2,Math.min(4,parseInt(dat['__sigb_st']||2,10)||2));
+      mk('Stützen: '+nSt,[
+        sigChipBtn('–',false,function(){sigbSetStCount(-1);}),
+        sigChipBtn('+',false,function(){sigbSetStCount(1);})
+      ]);
+      mk('Stützen-Bauart:',[
+        sigChipBtn('Hohlkasten (geschweißt)',(dat['__sigb_stb']||'hohlk')==='hohlk',function(){sigbSet('__sigb_stb','hohlk');}),
+        sigChipBtn('I-Walzprofil',dat['__sigb_stb']==='iwalz',function(){sigbSet('__sigb_stb','iwalz');}),
+        sigChipBtn('Fachwerk (Altbauart)',dat['__sigb_stb']==='fachwerk',function(){sigbSet('__sigb_stb','fachwerk');})
+      ]);
+      mk('Riegel:',[
+        sigChipBtn('Rahmen-Riegel (Hohlkasten)',(dat['__sigb_ri']||'rahmen')==='rahmen',function(){sigbSet('__sigb_ri','rahmen');}),
+        sigChipBtn('Fachwerk-Riegel',dat['__sigb_ri']==='fachwerk',function(){sigbSet('__sigb_ri','fachwerk');})
+      ]);
+      if(dat['__sigb_ri']!=='fachwerk'){
+        mk('Rahmenecken:',[
+          sigChipBtn('Hohlkasten',(dat['__sigb_re']||'hohlk')==='hohlk',function(){sigbSet('__sigb_re','hohlk');}),
+          sigChipBtn('I-Querschnitt',dat['__sigb_re']==='iq',function(){sigbSet('__sigb_re','iq');})
+        ]);
+      } else {
+        mk('Gehsteg:',[
+          sigChipBtn('Vorhanden',dat['__sigb_gsteg']!==false,function(){if(dat['__sigb_gsteg']===false)sigbToggle('__sigb_gsteg','Gehsteg');}),
+          sigChipBtn('Keiner',dat['__sigb_gsteg']===false,function(){if(dat['__sigb_gsteg']!==false)sigbToggle('__sigb_gsteg','Gehsteg');})
+        ]);
+        mk('Treppe:',[
+          sigChipBtn('Vorhanden',!!dat['__sigb_tr'],function(){if(!dat['__sigb_tr'])sigbToggle('__sigb_tr','Treppe');}),
+          sigChipBtn('Keine',!dat['__sigb_tr'],function(){if(dat['__sigb_tr'])sigbToggle('__sigb_tr','Treppe');})
+        ]);
+      }
+    } else {
+      mk('Bauart:',[
+        sigChipBtn('Nach Richtzeichnung',sigBauart()==='nRZ',function(){sigSetBauart('nRZ');}),
+        sigChipBtn('Altbauart',sigBauart()==='alt',function(){sigSetBauart('alt');})
+      ]);
+      var kaChips=[sigChipBtn('Kragarm',dat['__sig_kragarm']!=='doppel',function(){sigSetKragarm('einfach');})];
+      if(sigBauart()==='nRZ')kaChips.push(sigChipBtn('Doppel-Kragarm',dat['__sig_kragarm']==='doppel',function(){sigSetKragarm('doppel');}));
+      mk('Kragarm:',kaChips);
+    }
+    mk('Steigleiter:',[
+      sigChipBtn('Vorhanden',dat['__sig_leiter']!==false,function(){if(dat['__sig_leiter']===false)sigToggleLeiter();}),
+      sigChipBtn('Keine',dat['__sig_leiter']===false,function(){if(dat['__sig_leiter']!==false)sigToggleLeiter();})
+    ]);
+    grid.appendChild(cfg);
+  }
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;';
+  var bases=sigBases();
+  bases.forEach(function(b,i){
+    if(i>0){var sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--line);';box.appendChild(sep);}
+    var typ='';
+    if(/^sig_gr/.test(b.k))typ='wid';
+    else if(/^sig_(st|ka|re|ri)/.test(b.k))typ='pf';
+    box.appendChild(mkKa(b.k,b.l,typ));
+  });
+  grid.appendChild(box);
+  var sa=g('stbBtnArea');
+  if(sa){
+    sa.innerHTML='';
+    if(!bauwerkLocked){
+      var n=parseInt(dat['__sig_ab']||0,10)||0;
+      if(n<4){
+        var addAb=document.createElement('button');
+        addAb.textContent='+ Lichtsignal-Arbeitsbühne hinzufügen';
+        addAb.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid var(--acc);border-radius:var(--radius-sm);background:var(--accs);color:var(--acc);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+        addAb.onclick=sigAddAb;
+        sa.appendChild(addAb);
+      }
+      if(n>0){
+        var rmAb=document.createElement('button');
+        rmAb.textContent='– Arbeitsbühne '+n+' entfernen';
+        rmAb.style.cssText='width:100%;padding:9px;margin-bottom:8px;border:1.5px solid #c62828;border-radius:var(--radius-sm);background:#ffebee;color:#c62828;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;';
+        rmAb.onclick=sigRmAb;
+        sa.appendChild(rmAb);
+      }
+      var lockBtn=document.createElement('button');
+      lockBtn.className='ps';
+      lockBtn.style.cssText='margin-top:10px;width:100%;padding:12px;font-size:14px;';
+      lockBtn.textContent='✓ Bauwerk fertig — Speichern';
+      lockBtn.onclick=lockBauwerk;
+      sa.appendChild(lockBtn);
+    } else {
+      var editLink=document.createElement('button');
+      editLink.textContent='✏️ Bauwerksstruktur bearbeiten';
+      editLink.style.cssText='border:0;background:none;color:var(--acc);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:6px 0;';
+      editLink.onclick=unlockBauwerk;
+      sa.appendChild(editLink);
+    }
+  }
 }
 
 function startBauwerk(){
@@ -3341,7 +3706,7 @@ function validateDatConsistency(){
     }
     if(!arr.length)return;
     var baseKey=key.slice(0,sepIdx);
-    var hatTyp=!!dat['__t_'+baseKey];
+    var hatTyp=!!dat['__t_'+baseKey]||baseKey.indexOf('sig_')===0;
     arr.forEach(function(entry,idx){
       if(!hatTyp){
         issues.push({type:'missing_typ',key:key,idx:idx,detail:'Bauwerkstyp für "'+baseKey+'" nicht gesetzt — Eintrag ist in der Navigation unsichtbar'});
@@ -3358,6 +3723,14 @@ function validateDatConsistency(){
 // und render()/mkKa() übereinstimmen — siehe DATENSCHEMA-Kommentar weiter oben.
 function collectAllSchaeden(){
   var out=[];
+  sigBases().forEach(function(b){
+    b.u.forEach(function(u){
+      var items=dat[b.k+'___'+u]||[];
+      items.forEach(function(it,idx){
+        out.push({key:b.k,ugr:u,bereich:b.l,idx:idx,item:it});
+      });
+    });
+  });
   if(isDurchgehendW()){
     [{k:'wg_w1',l:'Widerlager 1 (durchgehend)',u:getUgr('wg_w1')},{k:'wg_w2',l:'Widerlager 2 (durchgehend)',u:getUgr('wg_w2')}].forEach(function(b){
       b.u.forEach(function(u){
@@ -3608,6 +3981,7 @@ function retargetHeadingLine(desc,targetBaseKey){
 function buildLocationHeadingBare(overrideBaseKey){
   if(!overrideBaseKey&&/^Lager: /.test(S.ugr||''))return '';
   var baseKey=overrideBaseKey||(S.key||'').split('___')[0];
+  if(baseKey.indexOf('sig_')===0)return sigLabel(baseKey);
   var oeM=baseKey.match(/^stb(\d+)_oe(\d+)$/);
   if(oeM)return 'STB '+stbPos(parseInt(oeM[1],10))+', Öffnung '+oeM[2];
   var wM=baseKey.match(/^stb(\d+)_w([12])$/);
@@ -6780,6 +7154,7 @@ function downloadFotos(){
       });
     });
   }
+  if(sigMode())processFotoBlist(sigBases());
   if(isDurchgehendW()){
     processFotoBlist([{k:'wg_w1',u:getUgr('wg_w1')},{k:'wg_w2',u:getUgr('wg_w2')}]);
   }
@@ -6836,7 +7211,7 @@ function doExport(includeImages){
   if(missing.length&&!confirm('Folgende Angaben fehlen noch: '+missing.join(', ')+'.\nTrotzdem exportieren?'))return;
 
   var body='';
-  body+=docxPara('Brückenprüfungsprotokoll','Title');
+  body+=docxPara(sigMode()?(sigIsBruecke()?'Prüfprotokoll Signalbrücke':'Prüfprotokoll Signalausleger'):'Brückenprüfungsprotokoll','Title');
   body+=docxPara('Strecke: '+str+'    Kilometer: '+km,null);
   body+=docxPara('Brücke: '+br,null);
   body+=docxPara('Datum: '+dt+'    Prüfer: '+pr,null);
@@ -6876,6 +7251,13 @@ function doExport(includeImages){
         }
       });
     });
+  }
+
+  if(sigMode()){
+    body+=docxPara(sigIsBruecke()
+      ?('Signalbrücke (BWA 333, '+(sigbAlt()?'Altbauart':'nach Richtzeichnung')+')')
+      :('Signalausleger (BWA 334, '+(sigBauart()==='alt'?'Altbauart':'nach Richtzeichnung')+')'),'Heading1');
+    sigBases().forEach(function(b){exportBauteilBlock({k:b.k,l:b.l,u:b.u});});
   }
 
   if(isDurchgehendW()){
@@ -7077,7 +7459,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V5';
+var APP_VERSION='Delta V7';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
