@@ -134,7 +134,7 @@ body.dark #mDesc{color:var(--ink);}
 <body>
 <header>
   <div class="applogo">BP</div>
-  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V4</span></h1>
+  <h1>Brückenprüfung <span id="verBadge" style="font-size:12px;background:#7b1fa2;color:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;">DELTA V5</span></h1>
   <button class="hbtn" id="kopfToggleBtn" onclick="toggleKopf()">▾</button>
   <button class="hbtn" id="darkBtn">☀️</button>
 </header>
@@ -6747,6 +6747,19 @@ function makeEndRecord(count,cdSize,cdOffset){
 }
 
 // Download all photos as ZIP
+function fotoDateiname(loc){
+  // Ortsbezeichnung (Wasserzeichen-Text) in einen gültigen Dateinamen umwandeln.
+  // Umlaute bleiben erhalten; unerlaubte Zeichen werden ersetzt.
+  if(!loc)return '';
+  return String(loc)
+    .replace(/\s*[·|]\s*/g,'_')          // Trennpunkte/Striche zwischen Ortsteilen -> _
+    .replace(/[\/\\:*?"<>#%&{}$!@+=`~;,]/g,'-') // in Dateinamen unerlaubte/heikle Zeichen -> -
+    .replace(/\s+/g,'-')                  // Leerzeichen -> -
+    .replace(/-{2,}/g,'-')                // Mehrfach-Striche zusammenfassen
+    .replace(/_{2,}/g,'_')
+    .replace(/^[-_]+|[-_]+$/g,'')         // Rand-Striche entfernen
+    .slice(0,120);                        // Länge begrenzen
+}
 function downloadFotos(){
   var zip=new PureZip();
   var count=0;
@@ -6758,7 +6771,10 @@ function downloadFotos(){
             count++;
             var ext=foto.data.indexOf('jpeg')>-1||foto.data.indexOf('jpg')>-1?'jpg':'png';
             var b64=foto.data.split(',')[1];
-            zip.file('Foto_'+(foto.nr||count)+'.'+ext, b64, {base64:true});
+            var nr=foto.nr||count;
+            var nrStr=(nr<10?'0':'')+nr;
+            var locPart=fotoDateiname(foto.loc);
+            zip.file('Foto_'+nrStr+(locPart?'_'+locPart:'')+'.'+ext, b64, {base64:true});
           });
         });
       });
@@ -7061,8 +7077,8 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V4';
-var APP_STAND='19.07.2026';
+var APP_VERSION='Delta V5';
+var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
 // Dauerhafte Speicherung anfordern: Ohne diesen Aufruf darf der Browser
