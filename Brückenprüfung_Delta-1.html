@@ -4206,7 +4206,7 @@ function buildBauteilPart(mitNr){
       // einen Punkt — deshalb wird ein eingetippter Punkt hier als Listen-Trenner (wie Komma)
       // behandelt und normalisiert, damit "1.4.7.9" als "1,4,7,9" gespeichert wird statt
       // wörtlich als "1.4.7.9" stehen zu bleiben.
-      var nrValRaw=(g('mBauteilNr')?g('mBauteilNr').value:'').trim();
+      var nrValRaw=(g('mBauteilNr')?g('mBauteilNr').value:'').trim().replace(/\./g,','); // V25: Ziffernblock-Punkt wird Komma (Mehrfachnummern 1,3,7)
       var nrVal=nrValRaw.toLowerCase()==='alle'?'Alle':nrValRaw.replace(/\./g,',');
       if(dbl){
         var refValRaw=(g('mBauteilRef')?g('mBauteilRef').value:'').trim();
@@ -4813,7 +4813,7 @@ function untersichtSecConfirm(fix){
 }
 function untersichtAbschnitt(name,nr){
   var ta=g('mDesc');if(!ta)return;
-  nr=(nr||'').trim();
+  nr=(nr||'').trim().replace(/\./g,','); // V25: Ziffernblock-Punkt wird Komma
   var label=nr?name+' '+nr:name;
   var full=buildFormDesc();
   if(full)ta.value=full;
@@ -5400,6 +5400,11 @@ function renderVbsRow(){
 }
 
 function selArt(a,btn){
+  // V25 (Andreas): Ist die Abschnitts-Nr.-Zeile noch offen (Chip getippt, "Einfügen"
+  // vergessen), wird der Abschnitt jetzt automatisch mit der eingetragenen Nummer
+  // bestätigt, BEVOR das Schadensbild anhängt — sonst landete es im vorherigen
+  // Abschnitt (z.B. unter "Endquerträger 1" statt "Querträger 1").
+  if(typeof pendingSecName!=='undefined'&&pendingSecName)untersichtSecConfirm();
   S.art=a;
   var old=g('artInline');if(old)old.parentNode.removeChild(old);
   g('mArt').querySelectorAll('.sb').forEach(function(b){b.classList.remove('on');});
@@ -6578,7 +6583,7 @@ function renderChipEditExtras(entry){
     zok.style.cssText='border:none;background:var(--acc);color:#fff;border-radius:7px;padding:7px 12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;';
     zok.onclick=function(){
       var i=0;
-      var neu=teile.core.replace(/\d+(?:[.,]\d+)?/g,function(alt){var v=(inps[i]&&inps[i].value.trim())||alt;i++;return v;});
+      var neu=teile.core.replace(/\d+(?:[.,]\d+)?/g,function(alt){var v=((inps[i]&&inps[i].value.trim())||alt).replace(/\./g,',');i++;return v;}); // V25: Punkt wird Komma
       ersetzeZeilenCore(entry.lineIndex,neu);
       entry.label=neu;renderSchadenChips();
       box.style.display='none';box.innerHTML='';
@@ -7086,7 +7091,7 @@ function buildFormDesc(){
       var idx=curLagerMesswertFelder.indexOf(f);
       var el=g('lagerMw'+idx);
       var val=el?el.value.trim().replace(/\./g,','):'';
-      return '- '+f.label+': '+val+(f.unit||'');
+      return '- '+f.label+': '+String(val).replace(/\./g,',')+(f.unit||''); // V25: Punkt wird Komma
     }).join('\n');
     desc=desc?mwLines+'\n'+desc:mwLines;
     if(kopfTeil)desc=kopfTeil+(desc?'\n'+desc:'');
@@ -7128,6 +7133,34 @@ function startBeidePhase2(desc){
   toast((S.beideLblA||'Links')+' gespeichert — jetzt '+(S.beideLblB||'Rechts')+' erfassen');
 }
 
+// V25 (Andreas): Abschnittszeilen ohne eine einzige Schadenszeile darunter (z.B. ein
+// verwaistes "Querträger 1:") werden beim Speichern still entfernt — samt der
+// zugehörigen Leerzeile. Erkennung streng über die Untersicht-Chipnamen.
+function entferneLeereAbschnitte(text){
+  var names=UNTERSICHT_SEC_BAUTEILE;
+  function istAbschnitt(l){
+    l=l.trim();
+    if(!/:$/.test(l))return false;
+    var core=l.slice(0,-1);
+    for(var i=0;i<names.length;i++){
+      if(core===names[i]||core.indexOf(names[i]+' ')===0)return true;
+    }
+    return false;
+  }
+  var lines=text.split('\n'),out=[];
+  for(var i=0;i<lines.length;i++){
+    if(istAbschnitt(lines[i])){
+      var j=i+1;
+      while(j<lines.length&&lines[j].trim()==='')j++;
+      if(j>=lines.length||istAbschnitt(lines[j])){
+        while(out.length&&out[out.length-1].trim()==='')out.pop();
+        continue;
+      }
+    }
+    out.push(lines[i]);
+  }
+  return out.join('\n');
+}
 function saveS(keepOpen){
   if(S.beidePhase===1){
     var descL=buildFormDesc();
@@ -7156,6 +7189,7 @@ function saveS(keepOpen){
   if(S.modKey){S.key=S.modKey;S.ugr=S.modUgr;S.schTitle=S.modSchTitle;}
   var desc=buildFormDesc();
   if(!desc){toast('Bitte Schaden wählen und bestätigen');return;}
+  desc=entferneLeereAbschnitte(desc);
   var zielKey=S.modKey||S.key;
   if(!zielKey){toast('Fehler: kein Bauteil gewählt');return;}
   if(S.beidePhase===2){
@@ -7689,6 +7723,11 @@ function doExport(includeImages){
 
   var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],mediaFiles=[],relCounter=1;
 
+  // V24 (Andreas): Laufende Schadensnummer auch im Word-Bericht — dieselbe Zahl wie
+  // das "Schaden Nr."-Badge in der App (Quelle: collectAllSchaeden(), bauwerksweit).
+  var nrMap={};
+  collectAllSchaeden().forEach(function(e){nrMap[e.key+'___'+e.ugr+'#'+e.idx]=e.num;});
+
   function exportBauteilBlock(b){
     var allU=b.u.slice();
     if(b.extra){
@@ -7705,7 +7744,9 @@ function doExport(includeImages){
       var items=dat[b.k+'___'+u]||[];
       if(!items.length)return;
       body+=docxPara(u,'Heading3');
-      items.forEach(function(it){
+      items.forEach(function(it,itIx){
+        var nrEx=nrMap[b.k+'___'+u+'#'+itIx];
+        if(nrEx!=null)body+=docxPara('Schaden Nr. '+nrEx,'SchNr');
         var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
         lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
         if(includeImages){
@@ -7786,6 +7827,7 @@ function doExport(includeImages){
     '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
     '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
     '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="444444"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="SchNr"><w:name w:val="Schaden Nr"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="120" w:after="40"/></w:pPr><w:rPr><w:b/><w:sz w:val="20"/></w:rPr></w:style>'+
     '</w:styles>';
 
   var zip=new PureZip();
@@ -7931,7 +7973,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V23';
+var APP_VERSION='Delta V25';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
