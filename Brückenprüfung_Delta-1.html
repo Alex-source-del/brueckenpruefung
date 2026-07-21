@@ -179,7 +179,7 @@ body.dark #mDesc{color:var(--ink);}
   <div class="pan">
     <div class="pbar"></div>
     <div class="ptop">
-      <button class="bback" onclick="g('ovBau').classList.remove('open')">← Zurück</button>
+      <button class="bback" onclick="bauBack()">← Zurück</button>
       <h3 id="bauTitle">Bauteile</h3>
     </div>
     <div id="bauList"></div>
@@ -209,7 +209,7 @@ body.dark #mDesc{color:var(--ink);}
   <div class="pan">
     <div class="pbar"></div>
     <div class="ptop">
-      <button class="bback" onclick="g('ovSch').classList.remove('open');if(S.bauKey)openBau(S.bauKey,S.bauTitle,S.lastUgr);">← Zurück</button>
+      <button class="bback" onclick="schBack()">← Zurück</button>
       <h3 id="schTitle">Schäden</h3>
 
     </div>
@@ -242,6 +242,9 @@ body.dark #mDesc{color:var(--ink);}
         <input id="mBauteilNr" type="text" inputmode="decimal" enterkeyhint="done" placeholder="z.B. 3 oder 1,2,3,4" oninput="updateVerortungDisplay();updateHeadingLineInDesc();autoGrowMDesc();" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" style="width:130px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
         <button type="button" onclick="g('mBauteilNr').value='Alle';updateVerortungDisplay();autoGrowMDesc();" style="border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Alle</button>
       </div>
+      <!-- V18 (Andreas): Knopf von ganz unten hierher verschoben — unten wurde er
+           kaum gesehen. Sichtbarkeitslogik unverändert (TRAEGER_SEQ_BAUTEILE). -->
+      <button id="mTraegerWeiterBtn" style="display:none;width:100%;margin-bottom:10px;border:1.5px solid #1565c0;background:#e3f2fd;color:#1565c0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="traegerWeiter()">➕ Nächster Träger (gleicher Schaden)</button>
       <div id="mBauteilRefRow" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
         <label id="mBauteilRefLabel" style="font-size:13px;color:var(--soft);font-weight:600;">an Hauptträger Nr.:</label>
         <input id="mBauteilRef" type="text" inputmode="decimal" enterkeyhint="done" placeholder="z.B. 2" oninput="updateVerortungDisplay();updateHeadingLineInDesc();updateLivePreview();" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" style="width:100px;border:2px solid var(--acc);border-radius:7px;padding:8px 8px;font-size:15px;font-weight:700;background:var(--s2);color:var(--ink);outline:none;text-align:center;">
@@ -290,7 +293,6 @@ body.dark #mDesc{color:var(--ink);}
       <button class="ps" id="mSaveBtn" onclick="saveS()">Speichern</button>
     </div>
     <button id="mSaveNextBtn" style="width:100%;margin-top:8px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="saveAndNext()">✓ Speichern &amp; weiteren Schaden hier erfassen</button>
-    <button id="mTraegerWeiterBtn" style="display:none;width:100%;margin-top:8px;border:1.5px solid #1565c0;background:#e3f2fd;color:#1565c0;border-radius:7px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="traegerWeiter()">➕ Nächster Träger (gleicher Schaden)</button>
   </div>
 </div>
 
@@ -591,8 +593,8 @@ var VL = {
 // Erdung und Gewässersohle: Juli 2026, aus BSC-BR-Schadenskatalog kuratiert übernommen —
 // bauteilübergreifend (nicht materialgebunden), deshalb überall dort als eigene Kachel
 // ergänzt, wo Erdungsverbindungen bzw. Gründung in Gewässernähe realistisch vorkommen.
-var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper','Erdung','Gewässersohle'];
-var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper','Erdung','Gewässersohle'];
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper links','Übergang zum Bahnkörper rechts','Erdung','Gewässersohle'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper links','Übergang zum Bahnkörper rechts','Erdung','Gewässersohle'];
 // Juli 2026: Pfeiler-Bauteile bei Beton/Mauerwerk sind jetzt EIN Bauteil "Pfeiler" (statt
 // vier getrennte Kacheln) mit derselben "Teil antippen → Schadensart → nächster Teil"-
 // Verfahrensweise wie Stützenreihe — siehe TEIL_OPTIONS unten. Bei Beton kommt zusätzlich
@@ -1367,19 +1369,21 @@ function ugrBase(u){return (u||'').replace(/ (links|rechts)$/,'');}
 // "Alle"-Option im Auswahl-Bildschirm: Nr.-Feld beim nächsten Maske-Öffnen vorbelegen.
 var pendingNrPrefill='';
 // Bauteile mit "Gleicher Ablauf, nächster Träger"-Knopf und Querträgerfeld-Nr.:
-var TRAEGER_SEQ_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe'];
+// V21 (Andreas): auch Verbände & Co. Träger-für-Träger im selben Schaden durcharbeiten.
+// Geländer (eigene Nr.-pro-Zeile-Logik) und Beulsteife (Doppel-Nr.) bewusst NICHT dabei.
+var TRAEGER_SEQ_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Bremsverband','Windverband','Fachwerkverband Stahl','Hänger','Walzträgerunterflansch','Randwegkonsole'];
 var QTF_BAUTEILE=['Längsträger','Querträger','Längsrippe','Querrippe'];
 // Alt-Einträge, die noch ohne Seite gespeichert wurden, bleiben sichtbar/zählbar/exportierbar:
-var LEGACY_SEITEN_BAUTEILE=['Hauptträger','Längsträger','Längsrippe'];
+var LEGACY_SEITEN_BAUTEILE=['Hauptträger','Längsträger','Längsrippe','Übergang zum Bahnkörper'];
 // V13 (Andreas): die Träger/Rippen bleiben als eigenständige Bauteile in der Liste;
 // die Untersicht-Abschnitte sind ein ZUSÄTZLICHER Weg. Diese Liste hält nur die
 // nummerierten Alt-Speicherplätze ohne Seitenangabe am Leben (Zählung/Export/Kacheln):
 var OE_S_ALT_BAUTEILE=['Hauptträger','Längsträger','Längsrippe'];
 // Abschnitts-Chips in der Untersicht-Maske:
-var UNTERSICHT_SEC_BAUTEILE=['Querträger','Längsträger','Längsrippe','Querrippe','Schlingerverband (Bremsverband)','Unterer Windverband'];
+var UNTERSICHT_SEC_BAUTEILE=['Querträger','Längsträger','Längsrippe','Querrippe','Endquerträger 1','Endquerträger 2','Schlingerverband (Bremsverband)','Unterer Windverband'];
 var NUMMERIERBARE_BAUTEILE=['Hauptträger','Längsträger','Querträger','Längsrippe','Querrippe','Beulsteife an Hauptträger','Hänger','Geländer links','Geländer rechts',
   // BauSys-Delta: per BWA-Abgleich ergänzt (Walzträger Nr.##, Verbände je Feld, Konsolträger Nr.##)
-  'Walzträgerunterflansch','Fachwerkverband Stahl','Bremsverband','Windverband','Randwegkonsole links','Randwegkonsole rechts'];
+  'Walzträgerunterflansch','Fachwerkverband Stahl','Bremsverband','Windverband','Randwegkonsole','Randwegkonsole links','Randwegkonsole rechts'];
 // Sonderfall innerhalb der nummerierbaren Bauteile: Bei den meisten (Hauptträger, Querträger
 // usw.) ist die Nr. eine Instanz-Kennung ("welcher Hauptträger") — passt gut einmalig in die
 // Überschrift. Bei Geländer ist die Nr. dagegen KEINE Instanz (es gibt nur "Geländer links"
@@ -1783,7 +1787,7 @@ var FUGEN_SC={
 function resolveSchadenTyp(baseKey,bauteil,parentTyp){
   if(bauteil==='Auflagerbank')return 'Beton';
   if(bauteil==='Böschungsbefestigung')return 'Böschungsbefestigung';
-  if(bauteil==='Übergang zum Bahnkörper')return 'Beton';
+  if(bauteil.indexOf('Übergang zum Bahnkörper')===0)return 'Beton';
   if(bauteil==='Erdung')return 'Erdung';
   // Signalausleger: alles Stahlbau, außer den Beton-Baugliedern der Gründung.
   // (Erdung ist oben schon abgefangen.) Verankerung/Ankerbolzen/Stahlpfahl der
@@ -2889,6 +2893,7 @@ function collectSchaedenForBauKey(key){
 }
 
 function openBau(key,title,ugr){
+  bauViewRoot(function(){openBau(key,title,ugr);});
   S.bauKey=key;S.bauTitle=title;S.lastUgr=ugr||OE_B;
   g('bauTitle').textContent=title;
   g('bauList').innerHTML='';
@@ -3206,6 +3211,7 @@ function finalizeOberbauSelection(box){
 }
 
 function openTypeSel(baseKey,groupName,bereich,types){
+  bauViewPush(function(){openTypeSel(baseKey,groupName,bereich,types);});
   g('bauTitle').textContent=bereich+' / '+groupName;
   g('bauList').innerHTML='';
   types.forEach(function(typ){
@@ -3221,6 +3227,7 @@ function openTypeSel(baseKey,groupName,bereich,types){
 }
 
 function openReliSel(baseKey,baseName,bereich){
+  bauViewPush(function(){openReliSel(baseKey,baseName,bereich);});
   g('bauTitle').textContent=bereich+' / '+baseName;
   g('bauList').innerHTML='';
   var wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:10px;';
@@ -3330,8 +3337,15 @@ function openSch(key,ugr,bereich){
 }
 
 function renderUgrSwitch(activeUgr){
+  // V20 (Andreas): Schnellwechsel-Leiste entfernt — die doppelte Bauteil-Auflistung auf
+  // der Schadensseite war verwirrend und konnte die 5-Wege-Auswahl (Links/Rechts/Beide/
+  // Nummeriert/Alle) nicht abbilden. Bauteilwechsel läuft jetzt ausschließlich über
+  // "← Zurück" zur Bauteilliste. switchUgr() bleibt für evtl. Altaufrufer erhalten.
   var box=g('schUgrSwitch');if(!box)return;
   box.innerHTML='';
+  box.style.display='none';
+  return;
+  /* stillgelegt seit V20:
   if(!S.bauKey||!S.lastUgr||S.lastUgr.length<2)return;
   // Flatten li/re pairs into individual chips so switching is a single tap
   S.lastUgr.forEach(function(u){
@@ -3342,6 +3356,7 @@ function renderUgrSwitch(activeUgr){
     (function(uu){chip.onclick=function(){if(uu===activeUgr)return;switchUgr(uu);};})(u);
     box.appendChild(chip);
   });
+  */
 }
 
 function switchUgr(u){
@@ -3672,7 +3687,15 @@ function updateBauteilNrUI(){
   }
   // V10: Knopf "Gleicher Ablauf, nächster Träger" nur bei zählbaren Trägern/Rippen zeigen
   var twBtn=g('mTraegerWeiterBtn');
-  if(twBtn)twBtn.style.display=(TRAEGER_SEQ_BAUTEILE.indexOf(bauteilName)>-1&&!S.beidePhase)?'block':'none';
+  if(twBtn){
+    var twZeigen=(TRAEGER_SEQ_BAUTEILE.indexOf(bauteilName)>-1&&!S.beidePhase);
+    twBtn.style.display=twZeigen?'block':'none';
+    // V21: Beschriftung folgt dem Bauteil ("Nächster Bremsverband", "Nächste Randwegkonsole").
+    if(twZeigen){
+      var twArt=(bauteilName==='Randwegkonsole')?'Nächste':'Nächster';
+      twBtn.textContent='➕ '+twArt+' '+bauteilName+' (gleicher Schaden)';
+    }
+  }
   renderUntersichtSecChips();
   renderBauteilPosBtns();
   updateVerortungDisplay();
@@ -4766,6 +4789,9 @@ var LAGER_SEP_LINE='— weiteres Lager —';
 // Abschnitt wandert ins Foto-Wasserzeichen ("... Fahrbahnplatte Untersicht, Querträger 3").
 var pendingSecName='';
 function untersichtSecStart(name){
+  // V21 (Andreas): Bauteile mit fester Nummer im Namen (Endquerträger 1/2) brauchen
+  // keine Nr.-Abfrage — Abschnitt direkt einfügen.
+  if(/\d+$/.test(name)){untersichtSecCancel();untersichtAbschnitt(name,'');return;}
   pendingSecName=name;
   var row=g('mSecInline');if(!row)return;
   g('mSecInlineLabel').textContent=name+' — Nr.:';
@@ -4790,7 +4816,8 @@ function untersichtAbschnitt(name,nr){
   var label=nr?name+' '+nr:name;
   var full=buildFormDesc();
   if(full)ta.value=full;
-  ta.value=ta.value.replace(/\s+$/,'')+'\n'+label+':';
+  // V21 (Andreas): Leerzeile vor jedem Trägerlage-Abschnitt — Absätze statt Textblock.
+  ta.value=ta.value.replace(/\s+$/,'')+'\n\n'+label+':';
   S.untersichtSec=label;
   var ak=g('mSecAktiv');
   if(ak){ak.style.display='block';ak.textContent='Aktiver Abschnitt: '+label+' — Schadensbilder und Fotos landen hier';}
@@ -4821,7 +4848,8 @@ function lagerNaechstes(){
   var ta=g('mDesc');if(!ta)return;
   var full=buildFormDesc();
   if(full)ta.value=full;
-  ta.value=ta.value.replace(/\s+$/,'')+'\n'+LAGER_SEP_LINE;
+  // V21 (Andreas): Leerzeile vor der Trennzeile — Absatz zwischen den Lagern.
+  ta.value=ta.value.replace(/\s+$/,'')+'\n\n'+LAGER_SEP_LINE;
   // Felder fürs nächste Lager leeren — STB/Widerlager/Pfeiler bleiben stehen
   // (mehrere Lager auf derselben Auflagerbank), Lager-Nr./Temperaturen/Wege werden neu erfasst.
   curLagerMesswertFelder.forEach(function(f,idx){
@@ -4893,6 +4921,13 @@ function updateSchadenNrBadge(){
 function openMod(){
   S.editIdx=-1;
   S.editIsBeide=false;
+  // V19 (Bugfix): Eine Messwerte-Box aus einer FRÜHEREN Lager-Erfassung hängt zu diesem
+  // Zeitpunkt evtl. noch im Formular (mArt wird erst weiter unten von bldArt() geleert).
+  // Die Live-Vorschau in updateBauteilNrUI()/autoGrowMDesc() würde sie finden und die
+  // alten Messwerte unter die NEUE Überschrift schreiben (z.B. Lager-Werte in
+  // "Fahrbahnplatte Untersicht"). Deshalb hier als Allererstes entfernen.
+  var oldMw=g('lagerMesswerte');
+  if(oldMw&&oldMw.parentNode)oldMw.parentNode.removeChild(oldMw);
   // Juli 2026 (Andreas, V8): Schnappschuss des Ziel-Schlüssels. Gespeichert wird IMMER
   // auf das Bauteil, mit dem diese Maske geöffnet wurde — nicht auf einen evtl. später
   // (durch Navigation im Hintergrund) veränderten S.key. Verhindert, dass z.B. ein
@@ -6970,6 +7005,11 @@ function buildFormDesc(){
     desc=gelLines.join('\n');
   }
   var mwBox=g('lagerMesswerte');
+  // V19 (Bugfix, Gürtel + Hosenträger zum Entfernen in openMod()): Messwert-Zeilen nur
+  // zusammenbauen, wenn die AKTUELLE Maske wirklich eine Lager-Maske ist — dieselbe
+  // Prüfung wie in buildLagerFotoLabel(). Verhindert über jeden Pfad, dass eine noch im
+  // Formular hängende alte Box ihre Werte in ein fremdes Bauteil einschleppt.
+  if(mwBox&&!/^Lager: /.test(S.ugr||''))mwBox=null;
   if(mwBox){
     // Juli 2026: idempotent — bereits im Feld stehende Messwert-Zeilen zuerst
     // herauslösen (die Beschreibung enthält sie seit der Live-Sync dauerhaft),
@@ -7159,7 +7199,8 @@ function traegerWeiter(){
     var full=buildFormDesc();
     if(full)ta.value=full;
   }
-  ta.value=ta.value.replace(/\s+$/,'')+'\n'+base+' '+next+':';
+  // V21 (Andreas): Leerzeile vor jedem neuen Abschnitt — Absätze statt Textblock.
+  ta.value=ta.value.replace(/\s+$/,'')+'\n\n'+base+' '+next+':';
   if(nrEl)nrEl.value=String(next);
   updateVerortungDisplay();updateLivePreview();
   autoGrowMDesc();
@@ -7170,6 +7211,33 @@ function traegerWeiter(){
 // PANEL MANAGEMENT - simple show/hide, no history manipulation
 // ============================================================
 var panelStack=[];
+
+// V21 (Andreas): Schritt-Historie für das Bauteil-Panel — "Zurück" geht immer genau
+// EINEN Schritt zurück (z.B. Schadensliste -> Lagertyp-Liste -> Bauteilliste), statt
+// direkt bis zur Kachel-Übersicht durchzufallen.
+var bauViewStack=[];
+var __bauRestoring=false;
+function bauViewRoot(fn){if(!__bauRestoring)bauViewStack=[fn];}
+function bauViewPush(fn){if(!__bauRestoring)bauViewStack.push(fn);}
+function bauBack(){
+  if(bauViewStack.length<=1){
+    bauViewStack=[];
+    g('ovBau').classList.remove('open');
+    return;
+  }
+  bauViewStack.pop();
+  var fn=bauViewStack[bauViewStack.length-1];
+  __bauRestoring=true;
+  try{fn();}finally{__bauRestoring=false;}
+}
+function schBack(){
+  // Zurück aus der Schadensliste: exakt die Listenansicht wiederherstellen, aus der
+  // sie geöffnet wurde (Typ-/Seitenauswahl bleibt erhalten) — nicht die Wurzel-Liste.
+  g('ovSch').classList.remove('open');
+  var fn=bauViewStack[bauViewStack.length-1];
+  if(fn){__bauRestoring=true;try{fn();}finally{__bauRestoring=false;}}
+  else if(S.bauKey)openBau(S.bauKey,S.bauTitle,S.lastUgr);
+}
 
 function showPanel(id){
   g(id).classList.add('open');
@@ -7825,7 +7893,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V17';
+var APP_VERSION='Delta V21';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
