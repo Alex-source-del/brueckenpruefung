@@ -267,11 +267,12 @@ body.dark #mDesc{color:var(--ink);}
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label style="font-size:12px;color:var(--soft);font-weight:600;">📝 Beschreibung</label>
+        <button type="button" id="mKbBtn" onclick="mDescKeyboard()" style="border:1px solid var(--line);background:var(--s2);color:var(--soft);font-size:12px;cursor:pointer;font-family:inherit;padding:2px 10px;border-radius:12px;margin-left:8px;">⌨ Tastatur</button>
         <button type="button" onclick="if(g('mDesc').value&&!confirm('Beschreibung wirklich löschen?'))return;g('mDesc').value='';autoGrowMDesc();resetMassnahmeBox();curSchadenEntries=[];renderSchadenChips();var gb=g('genauBox');if(gb){gb.style.display='none';gb.innerHTML='';}" style="border:0;background:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 4px;">🗑 Löschen</button>
       </div>
       <div id="schadenChips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
       <div id="genauBox" style="display:none;background:var(--accs);border:2px solid var(--acc);border-radius:9px;padding:10px;margin-bottom:8px;"></div>
-      <textarea id="mDesc" placeholder="Beschreibung..." onfocus="scrollMDescIntoView()" oninput="autoGrowMDesc()"></textarea>
+      <textarea id="mDesc" placeholder="Beschreibung..." readonly onfocus="scrollMDescIntoView()" oninput="autoGrowMDesc()" onblur="this.readOnly=true;"></textarea>
       <div id="mLivePreviewBox" style="display:none;margin-top:10px;">
         <div style="font-size:11px;color:var(--soft);font-weight:700;margin-bottom:4px;">👁 Vorschau — so wird gespeichert:</div>
         <div id="mLivePreviewText" style="font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--soft);background:var(--s2);border:2px dashed var(--line);border-radius:9px;padding:10px;white-space:pre-wrap;"></div>
@@ -4928,6 +4929,8 @@ function openMod(){
   // "Fahrbahnplatte Untersicht"). Deshalb hier als Allererstes entfernen.
   var oldMw=g('lagerMesswerte');
   if(oldMw&&oldMw.parentNode)oldMw.parentNode.removeChild(oldMw);
+  // V22: Textfeld startet bei jedem Schaden im Nur-Lesen-Modus (Tastatur nur per Chip).
+  if(g('mDesc'))g('mDesc').readOnly=true;
   // Juli 2026 (Andreas, V8): Schnappschuss des Ziel-Schlüssels. Gespeichert wird IMMER
   // auf das Bauteil, mit dem diese Maske geöffnet wurde — nicht auf einen evtl. später
   // (durch Navigation im Hintergrund) veränderten S.key. Verhindert, dass z.B. ein
@@ -6816,25 +6819,32 @@ function insertMassnahme(text,schadensArt){
 function realignMassnahmen(){
   var ta=g('mDesc');
   var GAP=3; // Mindestabstand in Zeichen vor dem Pfeil
-  // Juli 2026 (Andreas): Ausrichtspalte kappen — sonst schieben lange Schadenszeilen
-  // die Maßnahmen aller Zeilen über die Tablet-Breite und einzelne Wörter brechen
-  // an den linken Rand um ("kontrollieren"-Effekt).
-  var CAP=46;
+  // V22 (Andreas): exakt untereinander, so weit rechts wie nötig — der frühere
+  // 46-Zeichen-Deckel ist raus. Ausgerichtet wird jetzt PRO ABSATZ (Blöcke zwischen
+  // Leerzeilen, z.B. je Trägerlage-Abschnitt): Eine überlange Schadenszeile schiebt
+  // nur noch die Maßnahmen ihres eigenen Absatzes, nicht mehr den ganzen Text.
   var lines=ta.value.split('\n');
-  var maxLen=0;
   var parsed=lines.map(function(line){
     var idx=line.indexOf('》》');
     if(idx===-1)return null;
-    var content=line.slice(0,idx).replace(/\s+$/,'');
-    var suffix=line.slice(idx+2).replace(/^\s*/,'');
-    if(content.length>maxLen)maxLen=content.length;
-    return {content:content,suffix:suffix};
+    return {content:line.slice(0,idx).replace(/\s+$/,''),suffix:line.slice(idx+2).replace(/^\s*/,'')};
   });
-  var target=Math.min(maxLen+GAP,CAP);
-  for(var i=0;i<lines.length;i++){
-    if(parsed[i]){
-      var pad=Math.max(target-parsed[i].content.length,2);
-      lines[i]=parsed[i].content+' '.repeat(pad)+'》》 '+parsed[i].suffix;
+  var i=0;
+  while(i<lines.length){
+    // Absatzgrenzen: Leerzeilen
+    if(lines[i].trim()===''){i++;continue;}
+    var start=i;
+    while(i<lines.length&&lines[i].trim()!=='')i++;
+    var maxLen=0;
+    for(var k=start;k<i;k++){
+      if(parsed[k]&&parsed[k].content.length>maxLen)maxLen=parsed[k].content.length;
+    }
+    if(!maxLen)continue;
+    var target=maxLen+GAP;
+    for(var k2=start;k2<i;k2++){
+      if(parsed[k2]){
+        lines[k2]=parsed[k2].content+' '.repeat(target-parsed[k2].content.length)+'》》 '+parsed[k2].suffix;
+      }
     }
   }
   ta.value=lines.join('\n');
@@ -6863,10 +6873,26 @@ function autoGrowMDesc(){
   updateLivePreview();
 }
 
-function scrollMDescIntoView(){
-  var el=g('mDesc');
+// V22 (Andreas): Die Bildschirmtastatur ging beim Antippen des Textfelds auf und
+// verdeckte Bereiche. Das Feld ist jetzt standardmäßig nur-lesen (Antippen scrollt,
+// öffnet aber keine Tastatur); erst der "⌨ Tastatur"-Chip schaltet es zum Tippen frei.
+// Beim Verlassen des Felds (onblur) und bei jedem Maskenöffnen wird zurückgeschaltet.
+// Die Zahlenfelder (Nr./Messwerte/Maße) bleiben unverändert: antippen -> Ziffernblock.
+function mDescKeyboard(){
+  var ta=g('mDesc');if(!ta)return;
+  ta.readOnly=false;
+  ta.focus();
+  scrollMDescIntoView();
+}
+
+// V23 (Andreas): zentrale Nachzentrier-Logik für ALLE Eingabefelder — vorher hing sie
+// nur am Beschreibungsfeld, wodurch Ziffernblock-Felder (Maße der Vorlagen, Lager-
+// Messwerte, Abschnitts-Nr., Bauteil-Nr.) samt OK-Knopf von der Tastatur verdeckt
+// werden konnten. Zentriert wird beim Fokus UND nochmal, sobald die Tastatur wirklich
+// eingeblendet ist (visualViewport-Resize) — dann stimmt der sichtbare Bereich exakt.
+function scrollFieldIntoView(el,firstBlock){
   if(!el)return;
-  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  el.scrollIntoView({behavior:'smooth',block:firstBlock||'center'});
   if(window.visualViewport){
     var handler=function(){
       if(document.activeElement===el){
@@ -6880,6 +6906,18 @@ function scrollMDescIntoView(){
     setTimeout(function(){window.visualViewport.removeEventListener('resize',handler);},1500);
   }
 }
+function scrollMDescIntoView(){
+  scrollFieldIntoView(g('mDesc'),'nearest');
+}
+// Greift automatisch bei JEDEM Ziffernblock-Feld — auch bei künftig neuen, ohne
+// Einzelverdrahtung. Zentrieren stellt sicher, dass unter dem Feld Platz bleibt und
+// der zugehörige OK-Knopf über der Tastatur sichtbar ist.
+document.addEventListener('focusin',function(ev){
+  var t=ev.target;
+  if(!t||t.tagName!=='INPUT')return;
+  var im=(t.getAttribute('inputmode')||'').toLowerCase();
+  if(im==='decimal'||im==='numeric')scrollFieldIntoView(t,'center');
+});
 
 function noc(i,tot){if(i<tot-1){var n=g('vi'+(i+1));if(n){n.focus();return;}}confVorl();}
 
@@ -7893,7 +7931,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V21';
+var APP_VERSION='Delta V23';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
