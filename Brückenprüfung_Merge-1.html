@@ -18,28 +18,28 @@ header{background:var(--sur);color:var(--ink);border-bottom:1px solid var(--line
 header h1{font-size:15px;font-weight:700;flex:1;}
 #verBadge{font-size:10.5px;font-weight:800;color:#fff;background:var(--acc);border-radius:9px;padding:3px 9px;letter-spacing:.4px;}
 .hbtn{border:0;background:var(--s2);color:var(--ink);width:34px;height:34px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;}
-main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
+main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
 .card{background:var(--sur);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;margin-bottom:12px;}
 .card h2{font-size:13px;font-weight:700;color:var(--soft);margin-bottom:10px;}
 .big{display:block;width:100%;padding:14px;border:0;border-radius:var(--radius-sm);background:var(--acc);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
 .big[disabled]{opacity:.45;cursor:default;}
 .big.soft{background:var(--accs);color:var(--acc);border:1.5px solid var(--acc);}
 .hint{font-size:12px;color:var(--faint);margin-top:8px;line-height:1.5;}
-.kv{font-size:13px;line-height:1.7;}
+.kv{font-size:14.5px;line-height:1.75;}
 .kv b{font-weight:700;}
 .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .bdg{background:var(--acc);color:#fff;border-radius:14px;padding:3px 12px;font-size:12.5px;font-weight:700;}
 .bdg.soft{background:var(--s2);color:var(--ink);}
-.rep{font-size:12.5px;line-height:1.6;}
+.rep{font-size:14px;line-height:1.65;}
 .rep li{margin:0 0 6px 16px;}
 .err{background:var(--reds);color:var(--red);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;font-weight:600;margin-top:10px;display:none;}
 .err.show{display:block;}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.trfeld{border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:8px;background:var(--s2);}
-.trhead{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--soft);margin-bottom:4px;}
+.trfeld{border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;background:var(--s2);}
+.trhead{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--soft);margin-bottom:4px;}
 .trlen{color:var(--acc);}
-.trwert{font-size:13px;line-height:1.5;word-break:break-word;}
+.trwert{font-size:15px;line-height:1.55;word-break:break-word;}
 .mono{font-family:"Cascadia Mono","Consolas",monospace;}
 .trcopy{margin-top:6px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
 #trDoneBtn.done{background:#2e7d32;}
@@ -54,6 +54,7 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
   <div class="applogo">BP</div>
   <h1>Brückenprüfung – Zusammenführung</h1>
   <span id="verBadge"></span>
+  <button class="hbtn" id="fsBtn" type="button" title="Vollbild">⛶</button>
   <button class="hbtn" id="darkBtn" type="button">☀️</button>
 </header>
 <main>
@@ -120,7 +121,7 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
     </div>
     <div class="trfeld">
       <div class="trhead"><span>3 · Schadensbeschreibung (komplett)</span></div>
-      <div class="trwert mono" id="trDesc" style="white-space:pre-wrap;max-height:220px;overflow:auto;"></div>
+      <div class="trwert mono" id="trDesc" style="white-space:pre-wrap;"></div>
       <button class="trcopy" id="trDescCopy" type="button">📋 Kopieren</button>
     </div>
 
@@ -142,7 +143,7 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
 <div id="toast"></div>
 <script>
 'use strict';
-var APP_VERSION='MERGE V7';
+var APP_VERSION='MERGE V9';
 
 // Offline-Fähigkeit: gleicher Service Worker wie Delta/KIB/Karten (sw.js liegt schon
 // im GitHub-Ordner und speichert alles Geladene automatisch, network-first). Nach dem
@@ -161,6 +162,20 @@ function g(id){return document.getElementById(id);}
 function toast(m){var t=g('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 g('verBadge').textContent=APP_VERSION;
 document.title='Brückenprüfung [MERGE]';
+
+// Vollbild (V9, Wunsch Andreas): Browser-Leisten verdecken am Tablet zu viel.
+// ⛶ schaltet echtes Vollbild ein/aus; Wischen vom oberen Rand beendet es ebenfalls.
+(function(){
+  var btn=g('fsBtn');
+  if(!btn)return;
+  if(!document.documentElement.requestFullscreen){btn.style.display='none';return;}
+  function upd(){btn.textContent=document.fullscreenElement?'🗗':'⛶';btn.title=document.fullscreenElement?'Vollbild beenden':'Vollbild';}
+  btn.onclick=function(){
+    if(document.fullscreenElement){document.exitFullscreen().catch(function(){});}
+    else{document.documentElement.requestFullscreen().catch(function(){toast('Vollbild nicht möglich');});}
+  };
+  document.addEventListener('fullscreenchange',upd);
+})();
 
 // Dark mode — gleiche Bedienung wie in Delta, eigener Speicherschlüssel (bpm),
 // damit sich die Apps auf derselben GitHub-Pages-Adresse nicht in die Quere kommen.
@@ -1355,7 +1370,7 @@ function renderTransfer(){
     w.style.cssText='display:inline-block;margin:0 8px 8px 0;text-align:center;';
     if(dta){
       var img=document.createElement('img');
-      img.src=dta;img.style.cssText='width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;';
+      img.src=dta;img.style.cssText='width:132px;height:99px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;';
       w.appendChild(img);
     } else {
       w.textContent='⚠️ Foto ohne Bilddaten';
