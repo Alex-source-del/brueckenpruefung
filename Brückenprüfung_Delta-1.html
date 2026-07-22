@@ -3759,7 +3759,9 @@ function updateHeadingLineInDesc(){
   if(!heading)return;
   var lines=ta.value.split('\n');
   lines[0]=heading;
-  ta.value=lines.join('\n');
+  // V26: im Mehr-Träger-Modus zusätzlich die letzte Abschnittszeile mit dem
+  // Querträgerfeld-Feld abgleichen (live sichtbar beim Tippen)
+  ta.value=syncQtfLastSection(lines.join('\n'));
   autoGrowMDesc();
   updateLivePreview();
 }
@@ -7097,6 +7099,9 @@ function buildFormDesc(){
     if(kopfTeil)desc=kopfTeil+(desc?'\n'+desc:'');
   }
   if(locHeading)desc=desc?locHeading+'\n'+desc:locHeading;
+  // V26: im Mehr-Träger-Modus bekommt der zuletzt offene Abschnitt das Querträgerfeld
+  // aus dem Eingabefeld zuverlässig mit (idempotent, frühere Abschnitte unangetastet)
+  desc=syncQtfLastSection(desc);
   if(!desc)return '';
   // Juli 2026: idempotent — eine schon vorhandene Sicherheits-Zeile wird ersetzt statt ergänzt
   desc=desc.split('\n').filter(function(z){
@@ -7244,6 +7249,39 @@ function saveS(keepOpen){
 
 function saveAndNext(){saveS(true);}
 
+// V26 (Andreas): Querträgerfeld auch im Mehr-Träger-Modus — die verallgemeinerte
+// Überschrift trägt es nicht mehr, deshalb wandert die Nr. in die jeweilige
+// Abschnittszeile ("Längsträger 7, Querträgerfeld 3:"). Beim Sprung zum nächsten
+// Träger wird das Feld geleert (Wunsch A: jeder Träger bekommt sein eigenes Feld).
+function qtfMultiAktiv(){
+  var base=ugrBase(S.ugr||'')||S.ugr;
+  if(QTF_BAUTEILE.indexOf(base)===-1)return false;
+  var row=g('mBauteilRefRow');
+  return !!(row&&row.style.display!=='none'&&g('mBauteilRef'));
+}
+function qtfFeldWert(){
+  return qtfMultiAktiv()?g('mBauteilRef').value.trim().replace(/\./g,','):'';
+}
+// Schreibt den aktuellen Querträgerfeld-Wert idempotent in die LETZTE Abschnittszeile
+// des Mehr-Träger-Modus (eingefrorene frühere Abschnitte bleiben wortwörtlich stehen).
+function syncQtfLastSection(text){
+  if(!S.traegerMulti||!qtfMultiAktiv()||!text)return text;
+  var base=ugrBase(S.ugr)||S.ugr;
+  var lines=text.split('\n');
+  for(var i=lines.length-1;i>=0;i--){
+    var l=lines[i].trim();
+    if(!/:$/.test(l))continue;
+    var core=l.slice(0,-1);
+    if(core===base||core.indexOf(base+' ')===0){
+      core=core.replace(/,\s*Querträgerfeld\s+[^:]*$/,'');
+      var v=qtfFeldWert();
+      lines[i]=core+(v?', Querträgerfeld '+v:'')+':';
+      return lines.join('\n');
+    }
+  }
+  return text;
+}
+
 // V11 (Andreas): Träger für Träger IM SELBEN Schaden durcharbeiten — wie "Nächstes
 // Lager". Beim ersten Tippen wird die Überschrift verallgemeinert (ohne Nr.) und der
 // bisherige Text als Abschnitt "<Träger> <Nr>:" eingefroren; danach beginnt der
@@ -7266,7 +7304,9 @@ function traegerWeiter(){
     // Überschrift verallgemeinern, bisherige Zeilen als ersten Abschnitt einfrieren
     var lines=ta.value.split('\n');
     var body=lines.slice(1).join('\n').replace(/^\n+/,'');
-    ta.value=buildTextLocationHeading()+'\n'+base+' '+cur+':'+(body?'\n'+body:'');
+    // V26: Querträgerfeld des ersten Trägers in dessen Abschnittszeile übernehmen
+    var qtf0=qtfFeldWert();
+    ta.value=buildTextLocationHeading()+'\n'+base+' '+cur+(qtf0?', Querträgerfeld '+qtf0:'')+':'+(body?'\n'+body:'');
   } else {
     var full=buildFormDesc();
     if(full)ta.value=full;
@@ -7274,6 +7314,8 @@ function traegerWeiter(){
   // V21 (Andreas): Leerzeile vor jedem neuen Abschnitt — Absätze statt Textblock.
   ta.value=ta.value.replace(/\s+$/,'')+'\n\n'+base+' '+next+':';
   if(nrEl)nrEl.value=String(next);
+  // V26 (Wunsch A): Querträgerfeld je Träger neu eintragen — Feld leeren
+  if(qtfMultiAktiv())g('mBauteilRef').value='';
   updateVerortungDisplay();updateLivePreview();
   autoGrowMDesc();
   toast(base+' '+next+' — Schäden erfassen');
@@ -7973,7 +8015,7 @@ if('serviceWorker' in navigator){
 // Bei jedem Update auf GitHub Pages hier hochzählen — dann ist auf dem
 // Tablet sofort erkennbar, ob der Service Worker schon den neuen Stand
 // ausliefert.
-var APP_VERSION='Delta V25';
+var APP_VERSION='Delta V26';
 var APP_STAND='20.07.2026';
 try{var vb=g('verBadge');if(vb)vb.textContent=APP_VERSION.toUpperCase();}catch(e){}
 
