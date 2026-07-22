@@ -36,6 +36,15 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
 .err.show{display:block;}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.trfeld{border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:8px;background:var(--s2);}
+.trhead{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--soft);margin-bottom:4px;}
+.trlen{color:var(--acc);}
+.trwert{font-size:13px;line-height:1.5;word-break:break-word;}
+.mono{font-family:"Cascadia Mono","Consolas",monospace;}
+.trcopy{margin-top:6px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
+#trDoneBtn.done{background:#2e7d32;}
+.m2chip{flex:1;border:1.5px solid var(--line);background:var(--sur);color:var(--ink);border-radius:8px;padding:9px 8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+.m2chip.sel{border-color:var(--acc);background:var(--accs);color:var(--acc);}
 .step{display:none;}
 .step.on{display:block;}
 </style>
@@ -62,7 +71,9 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
     <h2>Geladene Sicherung</h2>
     <div class="kv" id="infoKv"></div>
     <div class="badges" id="infoBadges"></div>
-    <button class="big" id="btnRun" type="button" style="margin-top:14px;">🔀 Sortieren + Zusammenfassen</button>
+    <button class="big" id="btnRun" type="button" style="margin-top:14px;">🔀 Sortieren</button>
+    <button class="big soft" id="btnMerge2" type="button" style="margin-top:8px;">🔗 Zweite Sicherung dazuladen (zusammenführen)</button>
+    <input type="file" id="fileInput2" accept=".json,application/json" style="display:none;">
     <button class="big soft" id="btnReset1" type="button" style="margin-top:8px;">Andere Datei laden</button>
   </div>
 
@@ -74,14 +85,64 @@ main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
     <div class="badges" id="resBadges"></div>
     <button class="big" id="btnDownload" type="button" style="margin-top:14px;">💾 Bereinigte Sicherung herunterladen</button>
     <p class="hint">Die Datei wird in Delta ganz normal über „📂 Wiederherstellen" eingespielt. Schadensnummern zählt Delta danach automatisch neu durch.</p>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="big soft" id="btnDocx" type="button" style="margin:0;">📄 Gutachten mit Bildern</button>
+      <button class="big soft" id="btnDocxOhne" type="button" style="margin:0;">📄 Nur Dokument</button>
+    </div>
+    <button class="big soft" id="btnTransfer" type="button" style="margin-top:8px;">📋 Übertragen-Modus (Bahn-App)</button>
+    <button class="big soft" id="btnFotosAll" type="button" style="margin-top:8px;">💾 Alle Bilder des Gutachtens speichern</button>
     <button class="big soft" id="btnReset2" type="button" style="margin-top:8px;">Neue Datei laden</button>
+  </div>
+
+  <!-- Schritt 3b: Vergleich/Auswahl beim Zusammenführen (nur bei Konflikt/Warnung) -->
+  <div class="card step" id="stepMerge2">
+    <h2>Zwei Sicherungen zusammenführen</h2>
+    <div class="err" id="m2Warn" style="margin-bottom:10px;"></div>
+    <div id="m2Rows"></div>
+    <button class="big" id="m2Go" type="button" style="margin-top:6px;">🔗 Zusammenführen</button>
+    <button class="big soft" id="m2Abbruch" type="button" style="margin-top:8px;">Abbrechen</button>
+  </div>
+
+  <!-- Schritt 4: Übertragen-Modus -->
+  <div class="card step" id="stepTransfer">
+    <h2 id="trProgress"></h2>
+    <p id="trOrt" style="font-size:12.5px;color:var(--soft);font-weight:700;margin-bottom:10px;"></p>
+
+    <div class="trfeld">
+      <div class="trhead"><span>1 · Meldungsbezeichnung</span><span id="trKurzLen" class="trlen"></span></div>
+      <div class="trwert mono" id="trKurz"></div>
+      <button class="trcopy" id="trKurzCopy" type="button">📋 Kopieren</button>
+    </div>
+    <div class="trfeld">
+      <div class="trhead"><span>2 · Verortung im Feld (lfd. Schaden-Nr.)</span></div>
+      <div class="trwert mono" id="trNr"></div>
+      <button class="trcopy" id="trNrCopy" type="button">📋 Kopieren</button>
+    </div>
+    <div class="trfeld">
+      <div class="trhead"><span>3 · Schadensbeschreibung (komplett)</span></div>
+      <div class="trwert mono" id="trDesc" style="white-space:pre-wrap;max-height:220px;overflow:auto;"></div>
+      <button class="trcopy" id="trDescCopy" type="button">📋 Kopieren</button>
+    </div>
+
+    <p id="trFotoHdr" style="font-size:12px;font-weight:700;color:var(--soft);margin:10px 0 6px;">Fotos zum Anhängen:</p>
+    <div id="trFotos"></div>
+    <button class="big soft" id="trSaveFotos" type="button" style="display:none;margin-top:4px;"></button>
+
+    <button class="big" id="trDoneBtn" type="button" style="margin-top:10px;"></button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="big soft" id="trPrev" type="button" style="margin:0;">← Vorheriger</button>
+      <button class="big soft" id="trNext" type="button" style="margin:0;">Nächster →</button>
+    </div>
+    <button class="big soft" id="trAbk" type="button" style="margin-top:8px;">Abkürzungsliste anzeigen</button>
+    <div id="trAbkBox" style="display:none;margin-top:8px;"></div>
+    <button class="big soft" id="trBack" type="button" style="margin-top:8px;">← Zurück zum Ergebnis</button>
   </div>
 
 </main>
 <div id="toast"></div>
 <script>
 'use strict';
-var APP_VERSION='MERGE V2';
+var APP_VERSION='MERGE V7';
 
 // Offline-Fähigkeit: gleicher Service Worker wie Delta/KIB/Karten (sw.js liegt schon
 // im GitHub-Ordner und speichert alles Geladene automatisch, network-first). Nach dem
@@ -272,85 +333,42 @@ function trimEdges(lines){
   while(lines.length&&lines[lines.length-1].trim()==='')lines.pop();
 }
 
-// Kern: ein Bauteil-Array (dat[key+'___'+ugr]) sortieren und zusammenfassen.
-// Rückgabe {arr, mergedFrom, sections, resorted}
+// Kern: ein Bauteil-Array (dat[key+'___'+ugr]) NUR SORTIEREN — seit V6 wird
+// bewusst NICHTS mehr zusammengefasst (Wunsch Andreas: jeder Schaden bleibt
+// eigenständig, damit z. B. Korrosion und Verformung am selben Träger getrennte
+// Meldungen mit eigener Bewertung bleiben). Reihenfolge: Einträge ohne Nummer
+// (allgemeine Aussagen, "Alle") zuerst, danach aufsteigend nach Bauteil-Nummer.
+// Die Schadenstexte selbst werden dabei in keiner Weise verändert.
 function processArray(arr,ugr){
   var base=ugrBase(ugr);
   if(/^Lager: /.test(ugr)||/^Fugen: /.test(ugr)||!base){
-    return {arr:arr,mergedFrom:0,sections:0,resorted:false};
+    return {arr:arr,resorted:false};
   }
   var items=arr.map(function(entry,idx){
     return {entry:entry,parsed:parseEntry(entry,ugr),idx:idx};
   });
-  var mergeable=items.filter(function(it){return !!it.parsed;});
-  var keep=items.filter(function(it){return !it.parsed;});
-  var out,mergedFrom=0,sectionCount=0;
-  if(mergeable.length>=2){
-    // Abschnitte einsammeln; gleiche Nummer -> Inhalte in EINEM Abschnitt vereinen
-    var secMap={},secOrder=[];
-    // Beitragende Einträge nach erster Abschnittsnummer sortieren, damit auch die
-    // Fotos in Abschnittsreihenfolge wandern.
-    mergeable.sort(function(a,b){
-      var fa=a.parsed.sections[0].first,fb=b.parsed.sections[0].first;
-      return fa===fb?a.idx-b.idx:fa-fb;
-    });
-    var fotos=[];
-    mergeable.forEach(function(it){
-      it.parsed.sections.forEach(function(s){
-        if(secMap[s.nr]){
-          // Gleiche Nummer aus zwei Einträgen: Schadenszeilen im selben Abschnitt vereinen
-          secMap[s.nr].lines=secMap[s.nr].lines.concat(s.lines);
-        } else {
-          secMap[s.nr]={nr:s.nr,first:s.first,lines:s.lines.slice()};
-          secOrder.push(secMap[s.nr]);
-        }
-      });
-      (it.entry.fotos||[]).forEach(function(f){fotos.push(f);});
-    });
-    secOrder.sort(function(a,b){return a.first-b.first;});
-    var first=mergeable[0];
-    var text=first.parsed.generalHeading+'\n'+secOrder.map(function(s){
-      return base+' '+s.nr+':'+(s.lines.length?'\n'+s.lines.join('\n'):'');
-    }).join('\n\n'); // V21: Leerzeile (Absatz) zwischen den Abschnitten
-    text=realignMassnahmen(text); // V22: Pfeile pro Absatz ausrichten
-    var mergedEntry={d:text,fotos:fotos,loc:first.parsed.locGeneral||first.entry.loc||'',
-      t:first.entry.t,a:first.entry.a};
-    mergedFrom=mergeable.length;
-    sectionCount=secOrder.length;
-    // Reihenfolge im Array: Einträge ohne Nummer (allgemeine Aussagen) zuerst,
-    // dann der zusammengefasste Schaden.
-    out=keep.map(function(it){return it.entry;}).concat([mergedEntry]);
-  } else {
-    // Nichts zu vereinen — aber nummerierte Einzel-Einträge in Nummernfolge bringen
-    // (Bauteil-Katalog- statt Erfassungsreihenfolge innerhalb des Bauteils).
-    var sorted=items.slice().sort(function(a,b){
-      var na=a.parsed?a.parsed.sections[0].first:-1;
-      var nb=b.parsed?b.parsed.sections[0].first:-1;
-      return na===nb?a.idx-b.idx:na-nb;
-    });
-    out=sorted.map(function(it){return it.entry;});
-  }
-  var resorted=out.length===arr.length&&out.some(function(e,i){return e!==arr[i];});
-  return {arr:out,mergedFrom:mergedFrom,sections:sectionCount,resorted:resorted};
+  var sorted=items.slice().sort(function(a,b){
+    var na=a.parsed?a.parsed.sections[0].first:-1;
+    var nb=b.parsed?b.parsed.sections[0].first:-1;
+    return na===nb?a.idx-b.idx:na-nb;
+  });
+  var out=sorted.map(function(it){return it.entry;});
+  var resorted=out.some(function(e,i){return e!==arr[i];});
+  return {arr:out,resorted:resorted};
 }
 
 // Läuft über das komplette Protokoll. Verändert nur Eintrags-Arrays; Meta-Schlüssel
 // (__t_…, __bwart, __durchgehendW usw.) bleiben unangetastet.
 function processDat(dat,stbs){
-  var report=[],resortedCount=0;
+  var resortedCount=0;
   eachEntryArray(dat,function(fullKey,arr){
     if(arr.length<2)return;
     var parts=fullKey.split('___');
-    var baseKey=parts[0],ugr=parts.slice(1).join('___');
-    var res=processArray(arr,ugr);
+    var res=processArray(arr,parts.slice(1).join('___'));
     dat[fullKey]=res.arr;
-    if(res.mergedFrom>=2){
-      report.push({label:locLabel(baseKey,stbs)+' · '+ugr,mergedFrom:res.mergedFrom,sections:res.sections});
-    } else if(res.resorted){
-      resortedCount++;
-    }
+    if(res.resorted)resortedCount++;
   });
-  return {report:report,resortedCount:resortedCount};
+  return {resortedCount:resortedCount};
 }
 
 // ============================================================
@@ -374,15 +392,10 @@ function outputFilename(kopf){
   function sani(s){return (s||'').replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
   var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
   var locPart=(kopf.str||kopf.km)?('_'+sani(kopf.str||'ohneStrecke')+'_'+sani(kopf.km||'ohneKm')):'';
-  return 'bpdelta_sicherung'+locPart+'_zusammengefasst_'+stamp+'.json';
+  var art=(state&&state._merged)?'_zusammengefuehrt_':'_sortiert_';
+  return 'bpdelta_sicherung'+locPart+art+stamp+'.json';
 }
-function triggerDownload(blob,name){
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){URL.revokeObjectURL(a.href);if(a.parentNode)a.parentNode.removeChild(a);},500);
-}
+// triggerDownload: Delta-Variante (data:-URI, funktioniert auch bei file://) — siehe V3-Modul unten.
 
 // ============================================================
 // ABLAUF (3 Schritte: laden → Übersicht → Ergebnis)
@@ -391,10 +404,11 @@ var state=null;      // {payload,data,dat,stbs,kopf,photos}
 var resultReady=false;
 
 function showStep(id){
-  ['stepLoad','stepInfo','stepResult'].forEach(function(s){g(s).classList.toggle('on',s===id);});
+  ['stepLoad','stepInfo','stepResult','stepTransfer','stepMerge2'].forEach(function(s){g(s).classList.toggle('on',s===id);});
 }
 function resetAll(){
-  state=null;resultReady=false;
+  state=null;state2=null;mergeInfo='';resultReady=false;
+  g('fileInput2').value='';
   g('fileInput').value='';
   g('loadErr').classList.remove('show');
   showStep('stepLoad');
@@ -435,42 +449,1158 @@ function handleLoaded(text){
 }
 function escHtml(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
 
-g('btnRun').onclick=function(){
+function runSortieren(){
   if(!state)return;
-  var before=countAll(state.dat);
   var res=processDat(state.dat,state.stbs);
-  var after=countAll(state.dat);
+  var c=countAll(state.dat);
   var sum='';
-  if(res.report.length){
-    sum='<b>'+res.report.length+'</b> Bauteil(e) zusammengefasst — Schäden: <b>'+before.schaeden+' → '+after.schaeden+'</b>. Alle Bilder ('+after.fotos+') sind mitgewandert.';
-  } else {
-    sum='Nichts zusammenzufassen — jedes Bauteil hat höchstens einen Eintrag je Nummer. Die Sicherung wurde nur sortiert.';
-  }
-  if(res.resortedCount)sum+='<br>'+res.resortedCount+' Bauteil-Liste(n) in Nummernfolge sortiert.';
+  if(mergeInfo)sum+='<b>'+escHtml(mergeInfo)+'</b><br>';
+  if(res.resortedCount)sum+=res.resortedCount+' Bauteil-Liste(n) in Nummernfolge sortiert.';
+  else sum+='Schon in der richtigen Reihenfolge — nichts umzusortieren.';
+  sum+=' Jeder Schaden bleibt eigenständig, kein Text wurde verändert.';
   g('resSummary').innerHTML=sum;
-  var ul=g('resList');ul.innerHTML='';
-  res.report.forEach(function(r){
-    var li=document.createElement('li');
-    li.textContent=r.label+': '+r.mergedFrom+' Einträge → 1 Schaden mit '+r.sections+' Abschnitten';
-    ul.appendChild(li);
-  });
-  g('resBadges').innerHTML='<span class="bdg">Schäden: '+after.schaeden+'</span><span class="bdg soft">Bilder: '+after.fotos+'</span>';
+  g('resList').innerHTML='';
+  g('resBadges').innerHTML='<span class="bdg">Schäden: '+c.schaeden+'</span><span class="bdg soft">Bilder: '+c.fotos+'</span>';
   resultReady=true;
   showStep('stepResult');
-  toast('Fertig ✓');
-};
+}
+g('btnRun').onclick=function(){mergeInfo='';runSortieren();toast('Sortiert ✓');};
 
 g('btnDownload').onclick=function(){
   if(!state||!resultReady)return;
   var json=buildOutput(state);
-  triggerDownload(new Blob([json],{type:'application/json'}),outputFilename(state.kopf||{}));
+  triggerDownload(new Blob([json],{type:'application/json'}),outputFilename(state.kopf||{}),'Sicherung wird heruntergeladen ✓');
   toast('Sicherung wird heruntergeladen…');
 };
+
+// ============================================================
+// GUTACHTEN-EXPORT + ÜBERTRAGEN-MODUS (MERGE V3)
+// Reihenfolge nach Andreas: erst Überbau mit den Öffnungen, dann Pfeiler
+// (falls vorhanden), dann Widerlager 1 (mit Flügel), dann Widerlager 2.
+// Katalog-Listen und Word-Bausteine stammen wortgetreu aus Delta V25.
+// ============================================================
+var OE_B=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Erdung','Oberbau'];
+var OE_WIB=['Schotterwand links','Schotterwand rechts','Kappe links','Kappe rechts','Fahrbahnplatte','Fahrbahnplatte Untersicht','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randweguntersicht links','Randweguntersicht rechts','Walzträgerunterflansch','Erdung','Oberbau'];
+var OE_S=['Fahrbahnplatte','Fahrbahnplatte Untersicht','Fahrbahnplatte Stirn links','Fahrbahnplatte Stirn rechts','Hauptträger links','Hauptträger rechts','Längsträger links','Längsträger rechts','Querträger','Endquerträger 1','Endquerträger 2','Beulsteife an Hauptträger','Längsrippe links','Längsrippe rechts','Querrippe','Fachwerkverband Stahl','Bremsverband','Windverband','Stabbogen links','Stabbogen rechts','Hänger','Längsrinne','Querrinne','Entwässerungstüllen','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Randwegkonsole links','Randwegkonsole rechts','Erdung','Oberbau'];
+var OE_GB=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnwand links','Stirnwand rechts','Abdeckung Stirnwand links','Abdeckung Stirnwand rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Oberbau'];
+var OE_GM=['Gewölbe Untersicht','Kämpfer Widerlager 1','Kämpfer Widerlager 2','Viertelpunktbereich Widerlager 1','Viertelpunktbereich Widerlager 2','Scheitelbereich','Stirnmauer links','Stirnmauer rechts','Abdeckung Stirnmauer links','Abdeckung Stirnmauer rechts','Randweg links','Randweg rechts','Kabeltrog/Kabelkanal links','Kabeltrog/Kabelkanal rechts','Oberbau'];
+var W_UGR_BETON=['Widerlager Vorderansicht','Auflagerbank','Kammerwand hinten','Kammerwand links','Kammerwand rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper links','Übergang zum Bahnkörper rechts','Erdung','Gewässersohle'];
+var W_UGR_MAUERWERK=['Widerlager Vorderansicht','Auflagerbank','Kammermauer hinten','Kammermauer links','Kammermauer rechts','Flügel links','Flügel rechts','Geländer links','Geländer rechts','Böschungsbefestigung','Übergang zum Bahnkörper links','Übergang zum Bahnkörper rechts','Erdung','Gewässersohle'];
+var PF_UGR_MAUERWERK=['Pfeiler'];
+var PF_UGR_BETON=['Pfeiler','Stützenreihe'];
+var PF_UGR_STAHL=['Stützenreihe','Einzelstütze'];
+var FUGEN_TYPES=['Lamellenübergang','Fingerkonstruktion','Wartungsfreier Übergang','Schleppplatte'];
+var OE_S_ALT_BAUTEILE=['Hauptträger','Längsträger','Längsrippe'];
+var LAGER_TYPES=['Rollenlager','Linienkipplager Festlager','Linienkipplager quer verschieblich','Elastomerlager',
+  // Juli 2026 (Andreas): weitere Lagerarten nach Beta-Muster, BWA-Codes aus dem KIB/BWA-Katalog
+  'Topflager','Topf-Gleitlager','Kalottenlager','Kalottengleitlager','Querverschiebliches Rollenlager','Verformungsgleitlager','Punktkippgleitlager'];
+var LAGER_BAUTEILE={
+  'Rollenlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Rolle','Führungsleiste','Gleitplatte','Gleitteil (PTFE)','Typenschild'],
+  'Linienkipplager Festlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Druckstück','Typenschild'],
+  'Linienkipplager quer verschieblich':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Druckstück','Gleitplatte','Gleitteil (PTFE)','Führungskonstruktion','Festhaltekonstruktion','Typenschild'],
+  'Elastomerlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Elastomerkissen','Festhaltekonstruktion','Typenschild'],
+  // Juli 2026: neue Lagerarten — Bauteillisten kuratiert aus den BWA-Baugliedern L30-L38
+  'Topflager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Topf','Topfdeckel','Elastomerkissen (Topf)','Innendichtung','Typenschild'],
+  'Topf-Gleitlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Topf','Topfdeckel','Elastomerkissen (Topf)','Innendichtung','Gleitplatte','Gleitteil (PTFE)','Führungsleiste','Festhaltekonstruktion','Typenschild'],
+  'Kalottenlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Kalotte','Gleitteil (PTFE)','Typenschild'],
+  'Kalottengleitlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Kalotte','Gleitplatte','Gleitteil (PTFE)','Führungsleiste','Festhaltekonstruktion','Typenschild'],
+  'Querverschiebliches Rollenlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Rolle','Führungsleiste','Gleitplatte','Gleitteil (PTFE)','Typenschild'],
+  'Verformungsgleitlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Elastomerkissen','Gleitplatte','Gleitteil (PTFE)','Festhaltekonstruktion','Typenschild'],
+  'Punktkippgleitlager':['Obere Ankerplatte','Untere Ankerplatte','Obere Lagerplatte','Untere Lagerplatte','Lagersockel','Verguss','Verbindungsmittel/Befestigungsmittel','Druckstück','Gleitplatte','Gleitteil (PTFE)','Führungskonstruktion','Typenschild']
+};
+var W_UGR_ALLE=W_UGR_BETON.concat(W_UGR_MAUERWERK).filter(function(v,i,a){return a.indexOf(v)===i;});
+
+function xmlEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function docxPara(text,style){
+  return '<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>':'')+'<w:r><w:t xml:space="preserve">'+xmlEsc(text)+'</w:t></w:r></w:p>';
+}
+function docxImagePara(rId,widthPx,heightPx,caption){
+  var maxCx=5029200; // ~5.5in max width so photos fit the printed page
+  var cx=Math.round((widthPx||900)*9525),cy=Math.round((heightPx||600)*9525);
+  if(cx>maxCx){var sc=maxCx/cx;cx=maxCx;cy=Math.round(cy*sc);}
+  var picId=rId.replace('rId','');
+  var drawing='<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'+
+    '<wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+    '<wp:docPr id="'+picId+'" name="Bild'+picId+'"/>'+
+    '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Bild'+picId+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="'+rId+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+    '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  return drawing+(caption?docxPara(caption,null):'');
+}
+
+
+function PureZip(){
+  this.files=[];
+}
+PureZip.prototype.file=function(name,data,opts){
+  this.files.push({name:name,data:data,opts:opts||{}});
+};
+PureZip.prototype.generateAsync=function(opts){
+  var self=this;
+  return new Promise(function(resolve){
+    var parts=[];
+    var centralDir=[];
+    var offset=0;
+    self.files.forEach(function(f){
+      var nameBytes=strToBytes(f.name);
+      var dataBytes=f.opts.base64?base64ToBytes(f.data):strToBytes(f.data);
+      var crc=crc32(dataBytes);
+      var localHeader=makeLocalHeader(nameBytes,dataBytes,crc);
+      centralDir.push({nameBytes:nameBytes,dataBytes:dataBytes,crc:crc,offset:offset});
+      parts.push(localHeader);
+      parts.push(dataBytes);
+      offset+=localHeader.length+dataBytes.length;
+    });
+    var cdStart=offset;
+    centralDir.forEach(function(e){
+      parts.push(makeCentralDir(e.nameBytes,e.dataBytes,e.crc,e.offset));
+    });
+    var cdEnd=offset;
+    centralDir.forEach(function(e){
+      cdEnd+=46+e.nameBytes.length;
+    });
+    parts.push(makeEndRecord(centralDir.length,cdEnd-offset,cdStart));
+    resolve(new Blob(parts.map(function(p){return p instanceof Uint8Array?p:new Uint8Array(p);}),{type:'application/zip'}));
+  });
+};
+function strToBytes(s){
+  var bytes=[];
+  for(var i=0;i<s.length;i++){
+    var c=s.codePointAt(i);
+    if(c>0xFFFF)i++; // consumed a surrogate pair
+    if(c<0x80){
+      bytes.push(c);
+    } else if(c<0x800){
+      bytes.push(0xc0|(c>>6), 0x80|(c&0x3f));
+    } else if(c<0x10000){
+      bytes.push(0xe0|(c>>12), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    } else {
+      bytes.push(0xf0|(c>>18), 0x80|((c>>12)&0x3f), 0x80|((c>>6)&0x3f), 0x80|(c&0x3f));
+    }
+  }
+  return new Uint8Array(bytes);
+}
+function base64ToBytes(b64){
+  var bin=atob(b64);
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return bytes;
+}
+function crc32(data){
+  var table=crc32.table||(function(){var t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=((c&1)?0xedb88320:0)^(c>>>1);t[n]=c;}return crc32.table=t;})();
+  var crc=0xffffffff;
+  for(var i=0;i<data.length;i++)crc=(crc>>>8)^table[(crc^data[i])&0xff];
+  return (crc^0xffffffff)>>>0;
+}
+function u16(n){return [n&0xff,(n>>8)&0xff];}
+function u32(n){return [n&0xff,(n>>8)&0xff,(n>>16)&0xff,(n>>24)&0xff];}
+function makeLocalHeader(name,data,crc){
+  var h=[0x50,0x4b,0x03,0x04,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+  h=h.concat(u32(crc));
+  h=h.concat(u32(data.length));
+  h=h.concat(u32(data.length));
+  h=h.concat(u16(name.length));
+  h=h.concat([0x00,0x00]);
+  return new Uint8Array(h.concat(Array.from(name)));
+}
+function makeCentralDir(name,data,crc,offset){
+  var h=[0x50,0x4b,0x01,0x02,0x14,0x00,0x14,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00];
+  h=h.concat(u32(crc));
+  h=h.concat(u32(data.length));
+  h=h.concat(u32(data.length));
+  h=h.concat(u16(name.length));
+  h=h.concat([0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]);
+  h=h.concat(u32(offset));
+  return new Uint8Array(h.concat(Array.from(name)));
+}
+function makeEndRecord(count,cdSize,cdOffset){
+  var h=[0x50,0x4b,0x05,0x06,0x00,0x00,0x00,0x00];
+  h=h.concat(u16(count));
+  h=h.concat(u16(count));
+  h=h.concat(u32(cdSize));
+  h=h.concat(u32(cdOffset));
+  h=h.concat([0x00,0x00]);
+  return new Uint8Array(h);
+}
+
+// Download all photos as ZIP
+function fotoDateiname(loc){
+  // Ortsbezeichnung (Wasserzeichen-Text) in einen gültigen Dateinamen umwandeln.
+  // Umlaute bleiben erhalten; unerlaubte Zeichen werden ersetzt.
+  if(!loc)return '';
+  return String(loc)
+    .replace(/\s*[·|]\s*/g,'_')          // Trennpunkte/Striche zwischen Ortsteilen -> _
+    .replace(/[\/\\:*?"<>#%&{}$!@+=`~;,]/g,'-') // in Dateinamen unerlaubte/heikle Zeichen -> -
+    .replace(/\s+/g,'-')                  // Leerzeichen -> -
+    .replace(/-{2,}/g,'-')                // Mehrfach-Striche zusammenfassen
+    .replace(/_{2,}/g,'_')
+    .replace(/^[-_]+|[-_]+$/g,'')         // Rand-Striche entfernen
+    .slice(0,120);                        // Länge begrenzen
+}
+function downloadFotos(){
+  var zip=new PureZip();
+  var count=0;
+  function processFotoBlist(blist){
+    blist.forEach(function(b){
+      b.u.forEach(function(u){
+        (dat[b.k+'___'+u]||[]).forEach(function(it){
+          (it.fotos||[]).forEach(function(foto){
+            count++;
+            var ext=foto.data.indexOf('jpeg')>-1||foto.data.indexOf('jpg')>-1?'jpg':'png';
+            var b64=foto.data.split(',')[1];
+            var nr=foto.nr||count;
+            var nrStr=(nr<10?'0':'')+nr;
+            var locPart=fotoDateiname(foto.loc);
+            zip.file('Foto_'+nrStr+(locPart?'_'+locPart:'')+'.'+ext, b64, {base64:true});
+          });
+        });
+      });
+    });
+  }
+  if(sigMode())processFotoBlist(sigBases());
+  if(isDurchgehendW()){
+    processFotoBlist([{k:'wg_w1',u:getUgr('wg_w1')},{k:'wg_w2',u:getUgr('wg_w2')}]);
+  }
+  stbs.forEach(function(stb){
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',u:getUgr('stb'+stb.id+'_w1')},{k:'stb'+stb.id+'_w2',u:getUgr('stb'+stb.id+'_w2')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      var extraU=['Geländer links','Geländer rechts'].concat(OE_S_ALT_BAUTEILE);
+      LAGER_TYPES.forEach(function(t){extraU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){extraU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){extraU.push('Fugen: '+t);});
+      blist.push({k:ok,u:getUgr(ok).concat(extraU)});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,u:getUgr('stb'+stb.id+'_pf'+i)});
+    }
+    processFotoBlist(blist);
+  });
+  if(!count){toast('Keine Fotos vorhanden');return;}
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    triggerDownload(blob,'Fotos_Pruefprotokoll.zip',count+' Fotos heruntergeladen ✓');
+  });
+}
+
+
+
+function xmlEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function docxPara(text,style){
+  return '<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>':'')+'<w:r><w:t xml:space="preserve">'+xmlEsc(text)+'</w:t></w:r></w:p>';
+}
+function docxImagePara(rId,widthPx,heightPx,caption){
+  var maxCx=5029200; // ~5.5in max width so photos fit the printed page
+  var cx=Math.round((widthPx||900)*9525),cy=Math.round((heightPx||600)*9525);
+  if(cx>maxCx){var sc=maxCx/cx;cx=maxCx;cy=Math.round(cy*sc);}
+  var picId=rId.replace('rId','');
+  var drawing='<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'+
+    '<wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+    '<wp:docPr id="'+picId+'" name="Bild'+picId+'"/>'+
+    '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Bild'+picId+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="'+rId+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+    '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  return drawing+(caption?docxPara(caption,null):'');
+}
+
+function doExport(includeImages){
+  if(includeImages===undefined)includeImages=true;
+  var str=g('f_str').value||'—',km=g('f_km').value||'—',br=g('f_br').value||'—',dt=g('f_dat').value||'—',pr=g('f_pr').value||'—';
+  var missing=[];
+  if(!g('f_str').value)missing.push('Strecke');
+  if(!g('f_km').value)missing.push('Kilometer');
+  if(!g('f_br').value)missing.push('Brückenname');
+  if(!g('f_pr').value)missing.push('Prüfer');
+  if(missing.length&&!confirm('Folgende Angaben fehlen noch: '+missing.join(', ')+'.\nTrotzdem exportieren?'))return;
+
+  var body='';
+  body+=docxPara(sigMode()?(sigIsBruecke()?'Prüfprotokoll Signalbrücke':'Prüfprotokoll Signalausleger'):'Brückenprüfungsprotokoll','Title');
+  body+=docxPara('Strecke: '+str+'    Kilometer: '+km,null);
+  body+=docxPara('Brücke: '+br,null);
+  body+=docxPara('Datum: '+dt+'    Prüfer: '+pr,null);
+
+  var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],mediaFiles=[],relCounter=1;
+
+  // V24 (Andreas): Laufende Schadensnummer auch im Word-Bericht — dieselbe Zahl wie
+  // das "Schaden Nr."-Badge in der App (Quelle: collectAllSchaeden(), bauwerksweit).
+  var nrMap={};
+  collectAllSchaeden().forEach(function(e){nrMap[e.key+'___'+e.ugr+'#'+e.idx]=e.num;});
+
+  function exportBauteilBlock(b){
+    var allU=b.u.slice();
+    if(b.extra){
+      allU.push('Geländer links','Geländer rechts');
+      OE_S_ALT_BAUTEILE.forEach(function(nm){allU.push(nm);});
+      LAGER_TYPES.forEach(function(t){allU.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){allU.push('Lager: '+t+' - '+teil);});});
+      FUGEN_TYPES.forEach(function(t){allU.push('Fugen: '+t);});
+    }
+    var hasItems=false;
+    allU.forEach(function(u){if((dat[b.k+'___'+u]||[]).length)hasItems=true;});
+    if(!hasItems)return;
+    body+=docxPara(b.l,'Heading2');
+    allU.forEach(function(u){
+      var items=dat[b.k+'___'+u]||[];
+      if(!items.length)return;
+      body+=docxPara(u,'Heading3');
+      items.forEach(function(it,itIx){
+        var nrEx=nrMap[b.k+'___'+u+'#'+itIx];
+        if(nrEx!=null)body+=docxPara('Schaden Nr. '+nrEx,'SchNr');
+        var lines=(it.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+        lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
+        if(includeImages){
+          (it.fotos||[]).forEach(function(foto){
+            relCounter++;
+            var rId='rId'+relCounter;
+            var mediaName='image'+relCounter+'.jpg';
+            var b64=(foto.data.split(',')[1])||'';
+            mediaFiles.push({name:mediaName,base64:b64});
+            rels.push({id:rId,target:'media/'+mediaName,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
+            body+=docxImagePara(rId,foto.w,foto.h,foto.loc||('Foto '+(foto.nr||'')));
+          });
+        } else if((it.fotos||[]).length){
+          body+=docxPara('📷 '+it.fotos.length+' Foto(s) vorhanden (nicht im Dokument, siehe separater Bilder-Export)',null);
+        }
+      });
+    });
+  }
+
+  if(sigMode()){
+    body+=docxPara(sigIsBruecke()
+      ?('Signalbrücke (BWA 333, '+(sigbAlt()?'Altbauart':'nach Richtzeichnung')+')')
+      :('Signalausleger (BWA 334, '+(sigBauart()==='alt'?'Altbauart':'nach Richtzeichnung')+')'),'Heading1');
+    sigBases().forEach(function(b){exportBauteilBlock({k:b.k,l:b.l,u:b.u});});
+  }
+
+  if(isDurchgehendW()){
+    body+=docxPara('Widerlager (durchgehend, für alle STB)','Heading1');
+    exportBauteilBlock({k:'wg_w1',l:'Widerlager 1',u:getUgr('wg_w1')});
+    exportBauteilBlock({k:'wg_w2',l:'Widerlager 2',u:getUgr('wg_w2')});
+  }
+
+  stbs.forEach(function(stb,si){
+    body+=docxPara('STB '+(si+1),'Heading1');
+    var blist=isDurchgehendW()?[]:[{k:'stb'+stb.id+'_w1',l:'Widerlager 1',u:getUgr('stb'+stb.id+'_w1')}];
+    for(var i=1;i<=stb.oeff;i++){
+      var ok='stb'+stb.id+'_oe'+i;
+      blist.push({k:ok,l:'Öffnung '+i,u:getUgr(ok),extra:true});
+      if(i<stb.oeff)blist.push({k:'stb'+stb.id+'_pf'+i,l:pfLongLabel('stb'+stb.id+'_pf'+i,i),u:getUgr('stb'+stb.id+'_pf'+i)});
+    }
+    if(!isDurchgehendW())blist.push({k:'stb'+stb.id+'_w2',l:'Widerlager 2',u:getUgr('stb'+stb.id+'_w2')});
+
+    blist.forEach(function(b){exportBauteilBlock(b);});
+  });
+
+  body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
+
+  var documentXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '+
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<w:body>'+body+'</w:body></w:document>';
+
+  var contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="jpg" ContentType="image/jpeg"/>'+
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+    '</Types>';
+
+  var rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+    '</Relationships>';
+
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="'+r.type+'" Target="'+r.target+'"/>';}).join('')+
+    '</Relationships>';
+
+  var stylesXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="444444"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="SchNr"><w:name w:val="Schaden Nr"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="120" w:after="40"/></w:pPr><w:rPr><w:b/><w:sz w:val="20"/></w:rPr></w:style>'+
+    '</w:styles>';
+
+  var zip=new PureZip();
+  zip.file('[Content_Types].xml',contentTypes);
+  zip.file('_rels/.rels',rootRels);
+  zip.file('word/document.xml',documentXml);
+  zip.file('word/styles.xml',stylesXml);
+  zip.file('word/_rels/document.xml.rels',docRels);
+  mediaFiles.forEach(function(m){zip.file('word/media/'+m.name,m.base64,{base64:true});});
+
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var docxBlob=new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    var filename='Pruefprotokoll_'+str+'_'+km+'_'+dt+(includeImages?'':'_ohneBilder')+'.docx';
+    var file;
+    try{ file=new File([docxBlob],filename,{type:docxBlob.type}); }catch(e){ file=null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).then(function(){
+        toast('Protokoll geteilt ✓');
+      }).catch(function(err){
+        // User cancelled the share sheet, or it failed — fall back to a normal download
+        if(err && err.name==='AbortError')return;
+        triggerDownload(docxBlob,filename,'Protokoll wird heruntergeladen ✓');
+      });
+    } else {
+      triggerDownload(docxBlob,filename,'Protokoll wird heruntergeladen ✓');
+    }
+  }).catch(function(){
+    toast('Export fehlgeschlagen — bitte erneut versuchen');
+  });
+}
+
+function triggerDownload(blob,filename,successMsg){
+  // data:-URI statt blob:-URI verwenden — funktioniert zuverlässig auch dann, wenn die
+  // App als lokale Datei (file://) geöffnet wurde, wo Chrome blob:-Downloads aus
+  // Sicherheitsgründen sonst kommentarlos blockiert.
+  var reader=new FileReader();
+  reader.onload=function(){
+    var a=document.createElement('a');
+    a.href=reader.result;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast(successMsg||'Herunterladen gestartet ✓');
+  };
+  reader.onerror=function(){
+    toast('Download fehlgeschlagen — bitte erneut versuchen');
+  };
+  reader.readAsDataURL(blob);
+}
+
+
+
+
+// getUgr-Nachbau (ohne Signal-Bauwerke — deren Schlüssel laufen über den
+// Auffangkorb "Weitere Bauteile", damit nichts verloren geht).
+function getUgrM(dat,k){
+  if(k==='wg_w1'||k==='wg_w2')return W_UGR_ALLE;
+  var t=dat['__t_'+k]||'';
+  if(/_w[12]$/.test(k))return t==='Mauerwerk'?W_UGR_MAUERWERK:W_UGR_BETON;
+  if(/_pf\d+$/.test(k))return t==='Stahl'?PF_UGR_STAHL:(t==='Beton'?PF_UGR_BETON:PF_UGR_MAUERWERK);
+  if(t==='Stahl')return OE_S;
+  if(t==='WIB')return OE_WIB;
+  if(t==='Gew.Beton')return OE_GB;
+  if(t==='Gew.Mauerwk')return OE_GM;
+  return OE_B;
+}
+// Vollständige Bauteil-Reihenfolge je Ort: Katalogliste + Zusatzlisten wie in
+// Deltas collectAllSchaeden (Geländer, Alt-Bauteile, Lager, Fugen) + Auffangkorb
+// für alles, was in dat unter diesem Ort liegt, aber in keiner Liste steht.
+function ugrOrderFor(dat,baseKey){
+  var list=getUgrM(dat,baseKey).slice();
+  if(/_oe\d+$/.test(baseKey)){
+    list.push('Geländer links','Geländer rechts');
+    OE_S_ALT_BAUTEILE.forEach(function(nm){list.push(nm);});
+    LAGER_TYPES.forEach(function(t){list.push('Lager: '+t);(LAGER_BAUTEILE[t]||[]).forEach(function(teil){list.push('Lager: '+t+' - '+teil);});});
+    FUGEN_TYPES.forEach(function(t){list.push('Fugen: '+t);});
+  }
+  var seen={},ordered=[];
+  list.forEach(function(u){if(!seen[u]){seen[u]=1;ordered.push(u);}});
+  // Auffangkorb: unbekannte Bauteilnamen in Ablage-Reihenfolge hinten anhängen
+  Object.keys(dat).forEach(function(fk){
+    if(fk.indexOf(baseKey+'___')!==0)return;
+    var u=fk.substring(baseKey.length+3);
+    if(!seen[u]&&Array.isArray(dat[fk])&&dat[fk].length){seen[u]=1;ordered.push(u);}
+  });
+  return ordered;
+}
+
+// Sammelt alle Schäden in Gutachten-Reihenfolge. Rückgabe:
+// {chapters:[{title,blocks:[{locLabel,ugr,items:[{entry,num,baseKey}]}]}], total, fotos}
+function collectGutachten(state){
+  var dat=state.dat,stbs=state.stbs||[];
+  var durchgehend=!!dat['__durchgehendW'];
+  var usedKeys={};
+  function blockList(baseKeys){
+    var blocks=[];
+    baseKeys.forEach(function(bk){
+      usedKeys[bk.key]=1;
+      ugrOrderFor(dat,bk.key).forEach(function(u){
+        var arr=dat[bk.key+'___'+u];
+        if(!Array.isArray(arr)||!arr.length)return;
+        blocks.push({locLabel:bk.label,ugr:u,baseKey:bk.key,
+          items:arr.map(function(e){return {entry:e,baseKey:bk.key};})});
+      });
+    });
+    return blocks;
+  }
+  var chapters=[];
+  // 1. Überbau: je STB alle Öffnungen
+  var oeKeys=[];
+  stbs.forEach(function(stb,si){
+    for(var i=1;i<=stb.oeff;i++)oeKeys.push({key:'stb'+stb.id+'_oe'+i,label:'STB '+(si+1)+', Öffnung '+i});
+  });
+  chapters.push({title:'Überbau',blocks:blockList(oeKeys)});
+  // 2. Pfeiler (nur falls Einträge vorhanden)
+  var pfKeys=[];
+  stbs.forEach(function(stb,si){
+    for(var i=1;i<stb.oeff;i++)pfKeys.push({key:'stb'+stb.id+'_pf'+i,label:'STB '+(si+1)+', '+(dat['__t_stb'+stb.id+'_pf'+i]==='Stahl'?'Stützenreihe ':'Pfeiler ')+i});
+  });
+  var pfBlocks=blockList(pfKeys);
+  if(pfBlocks.length)chapters.push({title:'Pfeiler',blocks:pfBlocks});
+  // 3./4. Widerlager 1 und 2 (mit Flügel — die stehen als Bauteile im Widerlager-Katalog)
+  [1,2].forEach(function(w){
+    var wKeys=[];
+    if(durchgehend)wKeys.push({key:'wg_w'+w,label:'Widerlager '+w+' (durchgehend)'});
+    else stbs.forEach(function(stb,si){wKeys.push({key:'stb'+stb.id+'_w'+w,label:'STB '+(si+1)+', Widerlager '+w});});
+    chapters.push({title:'Widerlager '+w,blocks:blockList(wKeys)});
+  });
+  // 5. Auffangkorb: alles, was oben nicht erfasst wurde (z.B. Signal-Bauteile)
+  var restBlocks=[];
+  Object.keys(dat).forEach(function(fk){
+    if(fk.indexOf('___')===-1||!Array.isArray(dat[fk])||!dat[fk].length)return;
+    var bk=fk.split('___')[0];
+    if(usedKeys[bk])return;
+    var u=fk.substring(bk.length+3);
+    restBlocks.push({locLabel:locLabel(bk,stbs),ugr:u,baseKey:bk,
+      items:dat[fk].map(function(e){return {entry:e,baseKey:bk};})});
+  });
+  if(restBlocks.length)chapters.push({title:'Weitere Bauteile',blocks:restBlocks});
+  // Leere Kapitel entfernen, fortlaufende Schaden-Nr. vergeben
+  chapters=chapters.filter(function(c){return c.blocks.length;});
+  var num=0,fotoCount=0;
+  chapters.forEach(function(c){c.blocks.forEach(function(b){b.items.forEach(function(it){
+    it.num=++num;fotoCount+=(it.entry.fotos||[]).length;
+  });});});
+  return {chapters:chapters,total:num,fotos:fotoCount};
+}
+
+// ------------------------------------------------------------
+// KURZTEXT (Meldungsbezeichnung, max. 40 Zeichen) + Abkürzungsliste
+// ------------------------------------------------------------
+var ABK=[ // [lang, kurz] — Reihenfolge wichtig: längere Begriffe zuerst ersetzen
+  ['Fahrbahnplatte Untersicht','FBP-US'],['Fahrbahnplatte Stirn','FBP-St'],['Fahrbahnplatte','FBP'],
+  ['Widerlager Vorderansicht','VA'],['Widerlager','W'],
+  ['Endquerträger','EQT'],['Hauptträger','HTR'],['Querträger','QTR'],['Längsträger','LTR'],
+  ['Längsrippe','LRI'],['Querrippe','QRI'],['Beulsteife','BST'],
+  ['Walzträgerunterflansch','WTU'],['Fachwerkverband Stahl','FWV'],['Bremsverband','BRV'],['Windverband','WIV'],
+  ['Stabbogen','SBO'],['Hänger','HÄN'],['Längsrinne','LRN'],['Querrinne','QRN'],['Entwässerungstüllen','ENT'],
+  ['Randweguntersicht','RW-US'],['Randwegkonsole','RWK'],['Randweg','RW'],
+  ['Kabeltrog/Kabelkanal','KTR'],['Schotterwand','SWD'],['Kappe','KAP'],
+  ['Auflagerbank','AUFB'],['Kammerwand','KW'],['Kammermauer','KM'],['Flügel','FLG'],['Geländer','GEL'],
+  ['Böschungsbefestigung','BÖB'],['Übergang zum Bahnkörper','ÜBK'],['Gewässersohle','GWS'],
+  ['Gewölbe Untersicht','GEW-US'],['Viertelpunktbereich','VPB'],['Scheitelbereich','SBE'],['Kämpfer','KÄ'],
+  ['Stirnwand','STW'],['Stirnmauer','STM'],['Abdeckung','ABD'],
+  ['Stützenreihe','SR'],['Einzelstütze','EST'],['Pfeiler','PF'],
+  ['Erdung','ERD'],['Oberbau','OB'],['Lager: ','LG '],['Fugen: ','FU '],
+  ['Betonabplatzung','BA'],['freiliegende Bewehrung','FB'],['freiliegender Bewehrung','FB'],
+  [' links',' Li'],[' rechts',' Re'],[' und ','+'],['Maßnahme:','']
+];
+var ABK_ORT=[['Öffnung','Ö'],['Widerlager','W'],['Streckenteilbauwerk','STB']];
+function abbrev(s){
+  var out=String(s||'');
+  ABK.forEach(function(p){out=out.split(p[0]).join(p[1]);});
+  return out.replace(/\s+/g,' ').replace(/\s*,\s*/g,',').trim();
+}
+// Kurztext im Bahn-Stil: "STB1,Ö2,HTR 1-4,Anrostung" — hart auf 40 Zeichen begrenzt.
+function buildKurztext(item,stbs){
+  var bk=item.baseKey,parts=[];
+  var m=bk.match(/^stb(\d+)_oe(\d+)$/);
+  var stbNr=null;
+  if(m){stbNr=stbPos(stbs,parseInt(m[1],10));parts.push('STB'+stbNr,'Ö'+m[2]);}
+  else if((m=bk.match(/^stb(\d+)_w([12])$/))){stbNr=stbPos(stbs,parseInt(m[1],10));parts.push('STB'+stbNr,'W'+m[2]);}
+  else if((m=bk.match(/^stb(\d+)_pf(\d+)$/))){stbNr=stbPos(stbs,parseInt(m[1],10));parts.push('STB'+stbNr,'PF'+m[2]);}
+  else if((m=bk.match(/^wg_w([12])$/))){parts.push('W'+m[1]);}
+  else parts.push(bk);
+  // Bauteil aus der Überschrift (mit Nr.), sonst aus dem ugr-Namen
+  var d=(item.entry.d||'');
+  var heading=d.split('\n')[0]||'';
+  var hParts=heading.split(',').map(function(s){return s.trim();});
+  var bauteil=hParts.length>=3?hParts.slice(2).join(','):(hParts[hParts.length-1]||'');
+  // Materialtyp am Ende der Überschrift (Stahl/Beton/…) für den Kurztext weglassen
+  bauteil=bauteil.replace(/,(Stahl|Beton|WIB|Mauerwerk|Gewölbe Beton|Gewölbe Mauerwerk)$/,'');
+  if(!bauteil)bauteil=heading;
+  parts.push(abbrev(bauteil));
+  // Befund: erste Schadenszeile ohne "- ", ohne Maßnahme, ohne Maß-Klammern
+  var befund='';
+  var lines=d.split('\n').slice(1);
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim();
+    if(l.indexOf('- ')===0){befund=l.slice(2).split('》》')[0].replace(/\([^)]*\)/g,'').trim();break;}
+  }
+  if(befund)parts.push(abbrev(befund));
+  var txt=parts.join(',').replace(/,+/g,',').replace(/,$/,'');
+  // Kürzen bis max. 40: erst Befund-Wörter von hinten weg, dann hart abschneiden
+  while(txt.length>40&&befund){
+    var w=befund.trim().split(' ');
+    if(w.length<=1){befund='';txt=parts.slice(0,parts.length-1).join(',');break;}
+    w.pop();befund=w.join(' ');
+    txt=parts.slice(0,parts.length-1).concat([abbrev(befund)]).join(',');
+  }
+  if(txt.length>40)txt=txt.slice(0,40);
+  return txt.replace(/[\s,]+$/,'');
+}
+// Abkürzungsliste für Anzeige und Word-Kapitel (alphabetisch nach Kurzform)
+function abkListe(){
+  var rows=[['STB','Streckenteilbauwerk'],['Ö','Öffnung'],['W','Widerlager'],['PF','Pfeiler']];
+  ABK.forEach(function(p){
+    var kurz=p[1].trim(),lang=p[0].trim();
+    if(!kurz||kurz===lang||kurz.length>=lang.length)return;
+    rows.push([kurz,lang]);
+  });
+  var seen={};
+  rows=rows.filter(function(r){if(seen[r[0]])return false;seen[r[0]]=1;return true;});
+  rows.sort(function(a,b){return a[0].localeCompare(b[0],'de');});
+  return rows;
+}
+
+// ------------------------------------------------------------
+// WORD-GUTACHTEN
+// ------------------------------------------------------------
+function fotoData(state,f){return f.data||(f.fid?(state.photos||{})[f.fid]:null)||null;}
+
+// Foto-Raster wie im DB-Gutachten: Tabelle mit bis zu 2 Bildern je Zeile,
+// Bildunterschrift (Wasserzeichen-Ort) direkt unter jedem Bild.
+function docxFotoGrid(fotos,addMedia){
+  if(!fotos.length)return '';
+  var CELL_CX=2700000; // ~7,1 cm je Zelle bei 2 Spalten
+  var xml='<w:tbl><w:tblPr><w:tblW w:w="9072" w:type="dxa"/><w:tblBorders>'+
+    '<w:top w:val="single" w:sz="4" w:color="BBBBBB"/><w:bottom w:val="single" w:sz="4" w:color="BBBBBB"/>'+
+    '<w:left w:val="single" w:sz="4" w:color="BBBBBB"/><w:right w:val="single" w:sz="4" w:color="BBBBBB"/>'+
+    '<w:insideH w:val="single" w:sz="4" w:color="BBBBBB"/><w:insideV w:val="single" w:sz="4" w:color="BBBBBB"/>'+
+    '</w:tblBorders></w:tblPr>';
+  for(var i=0;i<fotos.length;i+=2){
+    xml+='<w:tr>';
+    for(var c=0;c<2;c++){
+      var f=fotos[i+c];
+      xml+='<w:tc><w:tcPr><w:tcW w:w="4536" w:type="dxa"/></w:tcPr>';
+      if(f){
+        var rId=addMedia(f.b64);
+        var cx=Math.round((f.w||900)*9525),cy=Math.round((f.h||600)*9525);
+        if(cx>CELL_CX){var sc=CELL_CX/cx;cx=CELL_CX;cy=Math.round(cy*sc);}
+        var picId=rId.replace('rId','');
+        xml+='<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'+
+          '<wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+          '<wp:docPr id="'+picId+'" name="Bild'+picId+'"/>'+
+          '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+          '<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Bild'+picId+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+          '<pic:blipFill><a:blip r:embed="'+rId+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+          '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+          '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+        xml+=docxPara(f.caption||'',null);
+      } else {
+        xml+='<w:p/>';
+      }
+      xml+='</w:tc>';
+    }
+    xml+='</w:tr>';
+  }
+  xml+='</w:tbl><w:p/>';
+  return xml;
+}
+function docxKvTable(rows){
+  var xml='<w:tbl><w:tblPr><w:tblW w:w="9072" w:type="dxa"/><w:tblBorders>'+
+    '<w:top w:val="single" w:sz="4" w:color="888888"/><w:bottom w:val="single" w:sz="4" w:color="888888"/>'+
+    '<w:left w:val="single" w:sz="4" w:color="888888"/><w:right w:val="single" w:sz="4" w:color="888888"/>'+
+    '<w:insideH w:val="single" w:sz="4" w:color="888888"/><w:insideV w:val="single" w:sz="4" w:color="888888"/>'+
+    '</w:tblBorders></w:tblPr>';
+  rows.forEach(function(r){
+    xml+='<w:tr>'+
+      '<w:tc><w:tcPr><w:tcW w:w="2800" w:type="dxa"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">'+xmlEsc(r[0])+'</w:t></w:r></w:p></w:tc>'+
+      '<w:tc><w:tcPr><w:tcW w:w="6272" w:type="dxa"/></w:tcPr>'+docxPara(r[1],null)+'</w:tc>'+
+      '</w:tr>';
+  });
+  xml+='</w:tbl><w:p/>';
+  return xml;
+}
+
+function exportGutachten(state,includeImages){
+  var g0=collectGutachten(state);
+  var k=state.kopf||{};
+  var str=k.str||'—',km=k.km||'—',br=k.br||'—',dt=k.dat||'—',pr=k.pr||'—';
+  var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}],
+      mediaFiles=[],relCounter=1;
+  function addMedia(b64){
+    relCounter++;
+    var rId='rId'+relCounter,name='image'+relCounter+'.jpg';
+    mediaFiles.push({name:name,base64:b64});
+    rels.push({id:rId,target:'media/'+name,type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'});
+    return rId;
+  }
+  var body='';
+  // ---- Deckblatt (Aufbau wie DB-Begutachtung) ----
+  body+=docxPara('Begutachtung','Title');
+  body+=docxPara(br,'Heading1');
+  body+=docxKvTable([
+    ['Strecke',str],['Kilometer',km],['Brücke',br],['Inspektionsdatum',dt],['Prüfer',pr],
+    ['Bauwerk',(state.stbs||[]).length?state.stbs.map(function(s,i){return 'STB '+(i+1)+' ('+s.oeff+' Öffnungen)';}).join(', '):'—'],
+    ['Schäden',String(g0.total)],['Bilder',String(g0.fotos)]
+  ]);
+  var skippedFotos=0;
+  if(includeImages){
+    // Erstes verfügbares Foto als Titelbild
+    var titel=null;
+    g0.chapters.some(function(c){return c.blocks.some(function(b){return b.items.some(function(it){
+      var f=(it.entry.fotos||[])[0];
+      if(f){var dta=fotoData(state,f);if(dta){titel={b64:(dta.split(',')[1]||''),w:f.w,h:f.h};return true;}}
+      return false;
+    });});});
+    if(titel)body+=docxImagePara(addMedia(titel.b64),titel.w,titel.h,'');
+  }
+  // ---- Schadensliste in Andreas-Reihenfolge ----
+  g0.chapters.forEach(function(c){
+    body+=docxPara(c.title,'Heading1');
+    var lastLoc=null;
+    c.blocks.forEach(function(b){
+      if(b.locLabel!==lastLoc){body+=docxPara(b.locLabel,'Heading2');lastLoc=b.locLabel;}
+      body+=docxPara(b.ugr,'Heading3');
+      b.items.forEach(function(it){
+        body+=docxPara('Schaden Nr. '+it.num,'SchNr');
+        body+=docxPara('Bahn-App: '+buildKurztext(it,state.stbs),'BahnKurz');
+        var lines=(it.entry.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+        lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
+        var fotos=(it.entry.fotos||[]);
+        if(includeImages&&fotos.length){
+          var grid=[];
+          fotos.forEach(function(f){
+            var dta=fotoData(state,f);
+            if(!dta){skippedFotos++;return;}
+            grid.push({b64:(dta.split(',')[1]||''),w:f.w,h:f.h,caption:(f.loc||'')+(f.nr?' (Foto '+f.nr+')':'')});
+          });
+          body+=docxFotoGrid(grid,addMedia);
+        }
+        // "Nur Dokument": bewusst KEIN Hinweis auf separat exportierte Bilder
+        // im Schadenstext (Wunsch Andreas, 22.07.2026).
+      });
+    });
+  });
+  // ---- Abkürzungsverzeichnis ----
+  body+=docxPara('Abkürzungsverzeichnis','Heading1');
+  body+=docxKvTable(abkListe());
+  body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
+
+  var documentXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '+
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<w:body>'+body+'</w:body></w:document>';
+  var contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="jpg" ContentType="image/jpeg"/>'+
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+    '</Types>';
+  var rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+    '</Relationships>';
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="'+r.type+'" Target="'+r.target+'"/>';}).join('')+
+    '</Relationships>';
+  var stylesXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="444444"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="SchNr"><w:name w:val="Schaden Nr"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="120" w:after="40"/></w:pPr><w:rPr><w:b/><w:sz w:val="20"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="BahnKurz"><w:name w:val="Bahn Kurztext"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="40"/></w:pPr><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="555555"/></w:rPr></w:style>'+
+    '</w:styles>';
+
+  var zip=new PureZip();
+  zip.file('[Content_Types].xml',contentTypes);
+  zip.file('_rels/.rels',rootRels);
+  zip.file('word/document.xml',documentXml);
+  zip.file('word/styles.xml',stylesXml);
+  zip.file('word/_rels/document.xml.rels',docRels);
+  mediaFiles.forEach(function(m){zip.file('word/media/'+m.name,m.base64,{base64:true});});
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var docxBlob=new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    function sani(s){return String(s).replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
+    var filename='Gutachten_'+sani(str)+'_'+sani(km)+'_'+sani(dt)+(includeImages?'':'_ohneBilder')+'.docx';
+    if(skippedFotos)toast('⚠️ '+skippedFotos+' Foto(s) ohne Bilddaten übersprungen');
+    var file;
+    try{ file=new File([docxBlob],filename,{type:docxBlob.type}); }catch(e){ file=null; }
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:filename}).then(function(){
+        toast('Gutachten geteilt ✓');
+      }).catch(function(err){
+        if(err && err.name==='AbortError')return;
+        triggerDownload(docxBlob,filename,'Gutachten wird heruntergeladen ✓');
+      });
+    } else {
+      triggerDownload(docxBlob,filename,'Gutachten wird heruntergeladen ✓');
+    }
+  }).catch(function(){
+    toast('Export fehlgeschlagen — bitte erneut versuchen');
+  });
+}
+
+// ------------------------------------------------------------
+// ÜBERTRAGEN-MODUS (Kopierhilfe für die Bahn-App)
+// Drei Kopierfelder je Schaden, in der Klick-Reihenfolge der Bahn-App:
+// 1. Meldungsbezeichnung (Kurztext ≤40) · 2. Verortung im Feld (lfd. Nr.)
+// 3. Schadensbeschreibung (kompletter Text inkl. Maßnahmen) — dazu die Fotos.
+// ------------------------------------------------------------
+
+// ------------------------------------------------------------
+// FOTO-SPEICHERN (seit V7 wieder UNVERÄNDERT im Original)
+// Wunsch Andreas 22.07.2026: Nicht jedes Bild zeigt denselben Schaden — deshalb
+// wird NICHTS mehr ins Bild gemalt. Gespeichert wird das Foto exakt so, wie es
+// aus Delta kommt (Wasserzeichen unten). Die Schadens-Kurzbeschreibung trägt
+// Andreas selbst in der Bahn-App ein. Nur der DATEINAME hilft bei der Zuordnung
+// (beginnt mit der Schadensnummer). Nicht wieder einbauen ohne ausdrücklichen Auftrag.
+// ------------------------------------------------------------
+var transferItems=[],transferIdx=0,transferDone={},lastCopied='';
+function flatItems(state){
+  var out=[];
+  collectGutachten(state).chapters.forEach(function(c){c.blocks.forEach(function(b){b.items.forEach(function(it){
+    out.push({num:it.num,entry:it.entry,baseKey:it.baseKey,locLabel:b.locLabel,ugr:b.ugr,kapitel:c.title});
+  });});});
+  return out;
+}
+function copyText(text,label){
+  lastCopied=text;
+  function ok(){toast(label+' kopiert ✓');}
+  function fail(){
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=text;ta.style.cssText='position:fixed;left:-9999px;';
+      document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok();
+    }catch(e){toast('⚠️ Kopieren fehlgeschlagen');}
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok).catch(fail);
+  } else fail();
+}
+function bahnFotoName(num,f,fallbackIdx){
+  function sani(s){return String(s||'').replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
+  return 'SchNr.'+num+'_Foto'+(f.nr||fallbackIdx)+'_'+sani(f.loc||'')+'.jpg';
+}
+function saveFotoQueue(jobs,done){
+  var gespeichert=0,uebersprungen=0;
+  (function next(i){
+    if(i>=jobs.length){
+      if(done)done(gespeichert,uebersprungen);
+      else toast(gespeichert+' Bild(er) gespeichert ✓'+(uebersprungen?' — '+uebersprungen+' ohne Bilddaten übersprungen':''));
+      return;
+    }
+    var j=jobs[i];
+    var dta=fotoData(state,j.f);
+    if(!dta){uebersprungen++;next(i+1);return;}
+    var b64=dta.split(',')[1]||'';
+    triggerDownload(new Blob([base64ToBytes(b64)],{type:'image/jpeg'}),bahnFotoName(j.num,j.f,j.idx),null);
+    gespeichert++;
+    setTimeout(function(){next(i+1);},350);
+  })(0);
+}
+function jobsForItem(it){
+  return (it.entry.fotos||[]).map(function(f,fi){return {f:f,num:it.num,idx:fi+1};});
+}
+function saveAlleFotosSchaden(){
+  var it=transferItems[transferIdx];
+  var jobs=jobsForItem(it);
+  if(!jobs.length){toast('Dieser Schaden hat keine Fotos');return;}
+  toast(jobs.length+' Foto(s) werden gespeichert…');
+  saveFotoQueue(jobs);
+}
+function saveAlleFotosGutachten(){
+  if(!state)return;
+  var jobs=[];
+  flatItems(state).forEach(function(it){jobs=jobs.concat(jobsForItem(it));});
+  if(!jobs.length){toast('Keine Fotos im Gutachten');return;}
+  toast(jobs.length+' Bilder werden gespeichert — bitte warten…');
+  saveFotoQueue(jobs);
+}
+
+function openTransfer(){
+  if(!state)return;
+  transferItems=flatItems(state);
+  if(!transferItems.length){toast('Keine Schäden vorhanden');return;}
+  if(transferIdx>=transferItems.length)transferIdx=0;
+  renderTransfer();
+  showStep('stepTransfer');
+}
+function renderTransfer(){
+  var it=transferItems[transferIdx];
+  var doneCount=Object.keys(transferDone).length;
+  g('trProgress').textContent='Schaden '+(transferIdx+1)+' von '+transferItems.length+' · erledigt: '+doneCount;
+  g('trOrt').textContent=it.kapitel+' · '+it.locLabel+' · '+it.ugr;
+  var kurz=buildKurztext(it,state.stbs);
+  g('trKurz').textContent=kurz;
+  g('trKurzLen').textContent=kurz.length+'/40';
+  g('trNr').textContent=String(it.num);
+  g('trDesc').textContent=it.entry.d||'';
+  g('trDoneBtn').textContent=transferDone[it.num]?'✓ Erledigt':'Als erledigt markieren';
+  g('trDoneBtn').classList.toggle('done',!!transferDone[it.num]);
+  // Fotos
+  var box=g('trFotos');box.innerHTML='';
+  var fotos=it.entry.fotos||[];
+  fotos.forEach(function(f){
+    var dta=fotoData(state,f);
+    var w=document.createElement('div');
+    w.style.cssText='display:inline-block;margin:0 8px 8px 0;text-align:center;';
+    if(dta){
+      var img=document.createElement('img');
+      img.src=dta;img.style.cssText='width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;';
+      w.appendChild(img);
+    } else {
+      w.textContent='⚠️ Foto ohne Bilddaten';
+      w.style.cssText+='font-size:11px;color:var(--faint);';
+    }
+    box.appendChild(w);
+  });
+  var saveBtn=g('trSaveFotos');
+  saveBtn.style.display=fotos.length?'block':'none';
+  saveBtn.textContent='💾 Alle Fotos speichern ('+fotos.length+')';
+  g('trFotoHdr').style.display=fotos.length?'block':'none';
+}
+function transferNext(step){
+  transferIdx=Math.min(Math.max(transferIdx+step,0),transferItems.length-1);
+  renderTransfer();
+}
+function transferDoneToggle(){
+  var it=transferItems[transferIdx];
+  if(transferDone[it.num])delete transferDone[it.num];
+  else{
+    transferDone[it.num]=true;
+    if(transferIdx<transferItems.length-1){transferIdx++;}
+  }
+  renderTransfer();
+}
+function renderAbkListe(){
+  var box=g('trAbkBox');
+  if(box.innerHTML){box.style.display=box.style.display==='none'?'block':'none';return;}
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  abkListe().forEach(function(r){
+    html+='<tr><td style="border-bottom:1px solid var(--line);padding:3px 8px;font-weight:700;white-space:nowrap;">'+escHtml(r[0])+'</td>'+
+      '<td style="border-bottom:1px solid var(--line);padding:3px 8px;">'+escHtml(r[1])+'</td></tr>';
+  });
+  html+='</table>';
+  box.innerHTML=html;
+  box.style.display='block';
+}
+
+
+g('btnDocx').onclick=function(){if(state&&resultReady)exportGutachten(state,true);};
+g('btnDocxOhne').onclick=function(){if(state&&resultReady)exportGutachten(state,false);};
+g('btnTransfer').onclick=openTransfer;
+g('btnFotosAll').onclick=function(){if(state&&resultReady)saveAlleFotosGutachten();};
+g('trSaveFotos').onclick=saveAlleFotosSchaden;
+g('trKurzCopy').onclick=function(){copyText(g('trKurz').textContent,'Meldungsbezeichnung');};
+g('trNrCopy').onclick=function(){copyText(g('trNr').textContent,'Verortung');};
+g('trDescCopy').onclick=function(){copyText(g('trDesc').textContent,'Schadensbeschreibung');};
+g('trPrev').onclick=function(){transferNext(-1);};
+g('trNext').onclick=function(){transferNext(1);};
+g('trDoneBtn').onclick=transferDoneToggle;
+g('trAbk').onclick=renderAbkListe;
+g('trBack').onclick=function(){showStep('stepResult');};
+
+// ============================================================
+// ZUSAMMENFÜHREN ZWEIER SICHERUNGEN (MERGE V6, Betriebsart 2)
+// Normalfall vollautomatisch: Hat je STB nur EINE Datei Schäden (z. B. Andreas
+// STB 1, Kollege STB 2), wählt die App selbst und führt ohne Rückfrage zusammen.
+// Nur wenn BEIDE Dateien im selben STB Schäden haben (Konflikt) oder die
+// Strukturen nicht zusammenpassen, wird der Vergleichs-/Auswahl-Schritt gezeigt.
+// Zuordnung der STBs erfolgt über die POSITION (STB 1, STB 2, …), nicht über die
+// interne id — B-Schlüssel werden beim Übernehmen auf die A-ids umgeschrieben,
+// damit die zusammengeführte Datei zur Struktur aus Datei A passt.
+// ============================================================
+var state2=null;      // Datei B (Kollege)
+var mergeInfo='';     // Zusammenfassungszeile fürs Ergebnis
+
+function stbSchadenFotoCount(st,stbId){
+  var s=0,f=0,prefix='stb'+stbId+'_';
+  eachEntryArray(st.dat,function(fk,arr){
+    if(fk.indexOf(prefix)!==0)return;
+    s+=arr.length;
+    arr.forEach(function(it){f+=(it.fotos||[]).length;});
+  });
+  return {s:s,f:f};
+}
+function wgSchadenCount(st){
+  var s=0;
+  eachEntryArray(st.dat,function(fk,arr){if(fk.indexOf('wg_w')===0)s+=arr.length;});
+  return s;
+}
+// Struktur- und Kopf-Abgleich. Rückgabe {warnings:[], fatal:bool}
+function compareStates(A,B){
+  var w=[],fatal=false;
+  var kA=A.kopf||{},kB=B.kopf||{};
+  if((kA.str||'')!==(kB.str||'')||(kA.km||'')!==(kB.km||''))
+    w.push('Strecke/Kilometer unterscheiden sich ('+(kA.str||'—')+' / '+(kA.km||'—')+' gegenüber '+(kB.str||'—')+' / '+(kB.km||'—')+') — gleiche Brücke?');
+  if(A.stbs.length!==B.stbs.length){
+    w.push('Unterschiedliche Anzahl STB: Datei 1 hat '+A.stbs.length+', Datei 2 hat '+B.stbs.length+' — Zusammenführen nicht möglich.');
+    fatal=true;
+  } else {
+    A.stbs.forEach(function(st,i){
+      if(st.oeff!==B.stbs[i].oeff)
+        w.push('STB '+(i+1)+': unterschiedliche Öffnungen (Datei 1: '+st.oeff+', Datei 2: '+B.stbs[i].oeff+').');
+    });
+  }
+  if(!!A.dat['__durchgehendW']!==!!B.dat['__durchgehendW'])
+    w.push('Einstellung „Widerlager durchgehend" ist unterschiedlich.');
+  return {warnings:w,fatal:fatal};
+}
+// Automatische Wahl je STB-Position: 'A' | 'B' | 'konflikt'
+function autoChoices(A,B){
+  return A.stbs.map(function(st,i){
+    var cA=stbSchadenFotoCount(A,st.id).s,cB=stbSchadenFotoCount(B,B.stbs[i].id).s;
+    if(cA>0&&cB>0)return 'konflikt';
+    return cB>0?'B':'A';
+  });
+}
+function kopiereStbKeys(zielDat,quellDat,quellId,zielId){
+  var pref='stb'+quellId+'_',zpref='stb'+zielId+'_';
+  Object.keys(quellDat).forEach(function(k){
+    if(k.indexOf(pref)===0)zielDat[zpref+k.substring(pref.length)]=quellDat[k];
+    else if(k.indexOf('__t_'+pref)===0)zielDat['__t_'+zpref+k.substring(4+pref.length)]=quellDat[k];
+  });
+}
+function loescheStbKeys(dat,stbId){
+  var pref='stb'+stbId+'_';
+  Object.keys(dat).forEach(function(k){
+    if(k.indexOf(pref)===0||k.indexOf('__t_'+pref)===0)delete dat[k];
+  });
+}
+function doMerge(choices,wgChoice){
+  var A=state,B=state2;
+  // Basis: Datei A komplett (Struktur, Kopf, übrige Datenschlüssel)
+  var dat=JSON.parse(JSON.stringify(A.dat));
+  choices.forEach(function(c,i){
+    if(c!=='B')return;
+    loescheStbKeys(dat,A.stbs[i].id);
+    kopiereStbKeys(dat,B.dat,B.stbs[i].id,A.stbs[i].id);
+  });
+  if(wgChoice==='B'){
+    Object.keys(dat).forEach(function(k){if(k.indexOf('wg_w')===0)delete dat[k];});
+    Object.keys(B.dat).forEach(function(k){if(k.indexOf('wg_w')===0)dat[k]=B.dat[k];});
+  }
+  // Fotos: Ablagen vereinen, dann auf tatsächlich verwendete Bilder eindampfen
+  var photos={};
+  Object.keys(A.photos||{}).forEach(function(fid){photos[fid]=A.photos[fid];});
+  Object.keys(B.photos||{}).forEach(function(fid){if(!(fid in photos))photos[fid]=B.photos[fid];});
+  var benutzt={};
+  eachEntryArray(dat,function(fk,arr){arr.forEach(function(it){(it.fotos||[]).forEach(function(f){if(f.fid)benutzt[f.fid]=1;});});});
+  Object.keys(photos).forEach(function(fid){if(!benutzt[fid])delete photos[fid];});
+  // Kopf: aus Datei A; beide Prüfernamen zusammenführen, wenn unterschiedlich
+  var kopf=JSON.parse(JSON.stringify(A.kopf||{}));
+  var prA=(A.kopf&&A.kopf.pr||'').trim(),prB=(B.kopf&&B.kopf.pr||'').trim();
+  if(prA&&prB&&prA!==prB)kopf.pr=prA+' / '+prB;
+  else if(!prA&&prB)kopf.pr=prB;
+  var data={};
+  Object.keys(A.data).forEach(function(k){data[k]=A.data[k];});
+  data.bpdelta_kopf=JSON.stringify(kopf);
+  // Zwischenstand setzen, dann Foto-Nummern in Gutachten-Reihenfolge neu durchzählen
+  state={payload:A.payload,data:data,dat:dat,stbs:A.stbs,kopf:kopf,photos:photos,_merged:true};
+  var nr=0;
+  flatItems(state).forEach(function(it){(it.entry.fotos||[]).forEach(function(f){f.nr=++nr;});});
+  data.bpdelta_fc=''+nr;
+  state2=null;
+  var quellen=choices.map(function(c,i){return 'STB '+(i+1)+' aus Datei '+(c==='B'?'2':'1');}).join(', ');
+  mergeInfo='Zusammengeführt: '+quellen+(wgChoice==='B'?', durchgehende Widerlager aus Datei 2':'')+' · '+nr+' Fotos neu durchnummeriert.';
+}
+// Ablauf nach dem Laden der zweiten Datei
+var m2Choices=[],m2WgChoice='A';
+function handleZweiteDatei(text){
+  var res=parseBackup(text);
+  if(res.error){toast('⚠️ Datei 2: '+res.error);return;}
+  state2=res;
+  var cmp=compareStates(state,state2);
+  if(cmp.fatal){
+    zeigeMerge2(cmp,null);
+    return;
+  }
+  var choices=autoChoices(state,state2);
+  var wgKonflikt=!!state.dat['__durchgehendW']&&wgSchadenCount(state)>0&&wgSchadenCount(state2)>0;
+  var wgChoice=(!!state.dat['__durchgehendW']&&wgSchadenCount(state2)>0&&wgSchadenCount(state)===0)?'B':'A';
+  if(cmp.warnings.length||choices.indexOf('konflikt')>-1||wgKonflikt){
+    zeigeMerge2(cmp,choices,wgKonflikt,wgChoice);
+    return;
+  }
+  // Eindeutiger Normalfall: automatisch zusammenführen und direkt sortieren
+  doMerge(choices,wgChoice);
+  runSortieren();
+  toast('Automatisch zusammengeführt ✓');
+}
+function zeigeMerge2(cmp,choices,wgKonflikt,wgChoice){
+  var warnBox=g('m2Warn');
+  warnBox.innerHTML=cmp.warnings.map(function(w){return '<div>⚠️ '+escHtml(w)+'</div>';}).join('');
+  warnBox.style.display=cmp.warnings.length?'block':'none';
+  var rows=g('m2Rows');rows.innerHTML='';
+  g('m2Go').style.display=cmp.fatal?'none':'block';
+  if(!cmp.fatal){
+    m2Choices=choices.map(function(c){return c==='konflikt'?'A':c;});
+    m2WgChoice=wgChoice||'A';
+    state.stbs.forEach(function(st,i){
+      var cA=stbSchadenFotoCount(state,st.id),cB=stbSchadenFotoCount(state2,state2.stbs[i].id);
+      rows.appendChild(m2Row('STB '+(i+1),i,cA,cB,choices[i]==='konflikt'));
+    });
+    if(wgKonflikt){
+      var wA={s:wgSchadenCount(state),f:0},wB={s:wgSchadenCount(state2),f:0};
+      rows.appendChild(m2Row('Widerlager (durchgehend)','wg',wA,wB,true));
+    }
+  }
+  showStep('stepMerge2');
+}
+function m2Row(label,pos,cA,cB,konflikt){
+  var row=document.createElement('div');
+  row.className='trfeld';
+  var kurA='Datei 1 ('+cA.s+' Schäden'+(cA.f?', '+cA.f+' Fotos':'')+')';
+  var kurB='Datei 2 ('+cB.s+' Schäden'+(cB.f?', '+cB.f+' Fotos':'')+')';
+  row.innerHTML='<div class="trhead"><span>'+escHtml(label)+(konflikt?' — beide Dateien haben hier Schäden, bitte wählen:':'')+'</span></div>';
+  var wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:8px;';
+  ['A','B'].forEach(function(src){
+    var b=document.createElement('button');
+    b.type='button';b.className='m2chip';
+    b.setAttribute('data-pos',''+pos);b.setAttribute('data-src',src);
+    b.textContent=src==='A'?kurA:kurB;
+    b.onclick=function(){
+      if(pos==='wg')m2WgChoice=src;else m2Choices[pos]=src;
+      Array.prototype.forEach.call(row.querySelectorAll('.m2chip'),function(x){x.classList.toggle('sel',x===b);});
+    };
+    var aktiv=(pos==='wg'?m2WgChoice:m2Choices[pos])===src;
+    if(aktiv)b.classList.add('sel');
+    wrap.appendChild(b);
+  });
+  row.appendChild(wrap);
+  return row;
+}
+
+
+g('btnMerge2').onclick=function(){g('fileInput2').click();};
+g('fileInput2').addEventListener('change',function(){
+  var file=this.files&&this.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){handleZweiteDatei(reader.result);};
+  reader.onerror=function(){toast('⚠️ Datei 2 konnte nicht gelesen werden');};
+  reader.readAsText(file);
+  this.value='';
+});
+g('m2Go').onclick=function(){doMerge(m2Choices,m2WgChoice);runSortieren();toast('Zusammengeführt ✓');};
+g('m2Abbruch').onclick=function(){state2=null;showStep('stepInfo');};
 
 // Für die Browsertests: Kernfunktionen gebündelt erreichbar.
 window.MERGE={parseBackup:parseBackup,processArray:processArray,processDat:processDat,
   realignMassnahmen:realignMassnahmen,parseEntry:parseEntry,buildOutput:buildOutput,
-  countAll:countAll,handleLoaded:handleLoaded,getState:function(){return state;},version:APP_VERSION};
+  countAll:countAll,handleLoaded:handleLoaded,getState:function(){return state;},version:APP_VERSION,
+  collectGutachten:collectGutachten,buildKurztext:buildKurztext,abkListe:abkListe,
+  getLastCopied:function(){return lastCopied;},getTransferIdx:function(){return transferIdx;},
+  compareStates:compareStates,autoChoices:autoChoices,getMergeInfo:function(){return mergeInfo;}};
 </script>
 </body>
 </html>
