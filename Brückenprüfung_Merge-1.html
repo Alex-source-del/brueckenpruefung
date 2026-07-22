@@ -143,7 +143,7 @@ main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
 <div id="toast"></div>
 <script>
 'use strict';
-var APP_VERSION='MERGE V9';
+var APP_VERSION='MERGE V10';
 
 // Offline-Fähigkeit: gleicher Service Worker wie Delta/KIB/Karten (sw.js liegt schon
 // im GitHub-Ordner und speichert alles Geladene automatisch, network-first). Nach dem
@@ -1177,7 +1177,7 @@ function exportGutachten(state,includeImages){
       b.items.forEach(function(it){
         body+=docxPara('Schaden Nr. '+it.num,'SchNr');
         body+=docxPara('Bahn-App: '+buildKurztext(it,state.stbs),'BahnKurz');
-        var lines=(it.entry.d||'').split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
+        var lines=descMitAbk(it.entry.d).split('\n').map(function(p){return p.trim();}).filter(function(p){return p;});
         lines.forEach(function(p){body+=docxPara(p[0]==='-'?p:'- '+p,null);});
         var fotos=(it.entry.fotos||[]);
         if(includeImages&&fotos.length){
@@ -1276,6 +1276,33 @@ function exportGutachten(state,includeImages){
 // Andreas selbst in der Bahn-App ein. Nur der DATEINAME hilft bei der Zuordnung
 // (beginnt mit der Schadensnummer). Nicht wieder einbauen ohne ausdrücklichen Auftrag.
 // ------------------------------------------------------------
+// V10 (Wunsch Andreas): In der Überschriftszeile steht hinter jedem Begriff die
+// Bahn-Abkürzung in Klammern — z. B. "Widerlager 1 (W), Endquerträger 2 (EQT)".
+// Gilt NUR für den Übertragen-Modus (Feld 3) und das Word-Gutachten. Die Sicherung
+// bleibt unverändert, damit die Klammern nie in die Delta-Daten zurückwandern.
+// Je Komma-Abschnitt wird höchstens EINE Abkürzung (längster Treffer) angehängt.
+function annotateHeading(heading){
+  return String(heading||'').split(',').map(function(seg){
+    var st=seg.trim();
+    if(!st||/^STB\b/.test(st))return seg;
+    for(var i=0;i<ABK.length;i++){
+      var lang=ABK[i][0],kurz=(ABK[i][1]||'').trim();
+      if(!kurz||kurz.length>=lang.length)continue;
+      if(/^\s|\s$/.test(lang)||lang.indexOf(':')>-1)continue;
+      if(st.indexOf(lang)>-1){
+        if(seg.indexOf('('+kurz+')')>-1)return seg; // schon vorhanden — nie doppeln
+        return seg+' ('+kurz+')';
+      }
+    }
+    return seg;
+  }).join(',');
+}
+function descMitAbk(d){
+  var lines=String(d||'').split('\n');
+  if(lines.length)lines[0]=annotateHeading(lines[0]);
+  return lines.join('\n');
+}
+
 var transferItems=[],transferIdx=0,transferDone={},lastCopied='';
 function flatItems(state){
   var out=[];
@@ -1358,7 +1385,7 @@ function renderTransfer(){
   g('trKurz').textContent=kurz;
   g('trKurzLen').textContent=kurz.length+'/40';
   g('trNr').textContent=String(it.num);
-  g('trDesc').textContent=it.entry.d||'';
+  g('trDesc').textContent=descMitAbk(it.entry.d);
   g('trDoneBtn').textContent=transferDone[it.num]?'✓ Erledigt':'Als erledigt markieren';
   g('trDoneBtn').classList.toggle('done',!!transferDone[it.num]);
   // Fotos
