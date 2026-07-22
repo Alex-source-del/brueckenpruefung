@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brückenprüfung [MERGE]</title>
+<style>
+/* Design bewusst identisch zur Delta-App (gleiche Farbvariablen), damit sich die
+   Merge-App wie ein Teil derselben Werkzeugfamilie anfühlt. */
+:root{--bg:#f4f6f9;--sur:#fff;--s2:#f0f3f7;--ink:#16202b;--soft:#5b6b7c;--faint:#8a99a8;--line:#e2e8ef;--acc:#0e7c66;--accs:#e3f3ef;--red:#c0392b;--reds:#fdecea;
+  --radius:14px;--radius-sm:10px;--shadow:0 1px 2px rgba(16,32,43,.04),0 8px 24px rgba(16,32,43,.06);--shadow-sm:0 1px 2px rgba(16,32,43,.05);}
+body.dark{--bg:#111518;--sur:#1a2028;--s2:#232c36;--ink:#e8eef4;--soft:#8fa3b3;--faint:#5a6e7e;--line:#2a3540;--acc:#13a386;--accs:#0e2e28;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4);--shadow-sm:0 1px 2px rgba(0,0,0,.3);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+header{background:var(--sur);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:var(--shadow-sm);padding:8px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+.applogo{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--acc),#13a386);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;letter-spacing:.3px;box-shadow:0 4px 12px rgba(14,124,102,.28);}
+header h1{font-size:15px;font-weight:700;flex:1;}
+#verBadge{font-size:10.5px;font-weight:800;color:#fff;background:var(--acc);border-radius:9px;padding:3px 9px;letter-spacing:.4px;}
+.hbtn{border:0;background:var(--s2);color:var(--ink);width:34px;height:34px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;}
+main{max-width:560px;margin:0 auto;padding:14px 12px 40px;}
+.card{background:var(--sur);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;margin-bottom:12px;}
+.card h2{font-size:13px;font-weight:700;color:var(--soft);margin-bottom:10px;}
+.big{display:block;width:100%;padding:14px;border:0;border-radius:var(--radius-sm);background:var(--acc);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.big[disabled]{opacity:.45;cursor:default;}
+.big.soft{background:var(--accs);color:var(--acc);border:1.5px solid var(--acc);}
+.hint{font-size:12px;color:var(--faint);margin-top:8px;line-height:1.5;}
+.kv{font-size:13px;line-height:1.7;}
+.kv b{font-weight:700;}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.bdg{background:var(--acc);color:#fff;border-radius:14px;padding:3px 12px;font-size:12.5px;font-weight:700;}
+.bdg.soft{background:var(--s2);color:var(--ink);}
+.rep{font-size:12.5px;line-height:1.6;}
+.rep li{margin:0 0 6px 16px;}
+.err{background:var(--reds);color:var(--red);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;font-weight:600;margin-top:10px;display:none;}
+.err.show{display:block;}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.step{display:none;}
+.step.on{display:block;}
+</style>
+</head>
+<body>
+<header>
+  <div class="applogo">BP</div>
+  <h1>Brückenprüfung – Zusammenführung</h1>
+  <span id="verBadge"></span>
+  <button class="hbtn" id="darkBtn" type="button">☀️</button>
+</header>
+<main>
+
+  <!-- Schritt 1: Datei laden -->
+  <div class="card step on" id="stepLoad">
+    <button class="big" id="btnLoad" type="button">📂 Delta-Sicherung laden</button>
+    <input type="file" id="fileInput" accept=".json,application/json" style="display:none;">
+    <p class="hint">Die Sicherungsdatei (bpdelta_sicherung…json) aus der Delta-App auswählen. Sie wird hier nur gelesen — auf diesem Gerät wird nichts gespeichert.</p>
+    <div class="err" id="loadErr"></div>
+  </div>
+
+  <!-- Schritt 2: Übersicht -->
+  <div class="card step" id="stepInfo">
+    <h2>Geladene Sicherung</h2>
+    <div class="kv" id="infoKv"></div>
+    <div class="badges" id="infoBadges"></div>
+    <button class="big" id="btnRun" type="button" style="margin-top:14px;">🔀 Sortieren + Zusammenfassen</button>
+    <button class="big soft" id="btnReset1" type="button" style="margin-top:8px;">Andere Datei laden</button>
+  </div>
+
+  <!-- Schritt 3: Ergebnis -->
+  <div class="card step" id="stepResult">
+    <h2>Ergebnis</h2>
+    <div class="kv" id="resSummary"></div>
+    <ul class="rep" id="resList" style="margin-top:8px;"></ul>
+    <div class="badges" id="resBadges"></div>
+    <button class="big" id="btnDownload" type="button" style="margin-top:14px;">💾 Bereinigte Sicherung herunterladen</button>
+    <p class="hint">Die Datei wird in Delta ganz normal über „📂 Wiederherstellen" eingespielt. Schadensnummern zählt Delta danach automatisch neu durch.</p>
+    <button class="big soft" id="btnReset2" type="button" style="margin-top:8px;">Neue Datei laden</button>
+  </div>
+
+</main>
+<div id="toast"></div>
+<script>
+'use strict';
+var APP_VERSION='MERGE V2';
+
+// Offline-Fähigkeit: gleicher Service Worker wie Delta/KIB/Karten (sw.js liegt schon
+// im GitHub-Ordner und speichert alles Geladene automatisch, network-first). Nach dem
+// ERSTEN Öffnen mit Netz ist die Merge-App dauerhaft auch ohne Netz aufrufbar.
+// Nur wirksam über http/https (GitHub Pages) — bei lokal geöffneter Datei ohne Effekt.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+// ============================================================
+// GRUNDGERÜST / UI-HILFEN
+// ============================================================
+function g(id){return document.getElementById(id);}
+function toast(m){var t=g('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+g('verBadge').textContent=APP_VERSION;
+document.title='Brückenprüfung [MERGE]';
+
+// Dark mode — gleiche Bedienung wie in Delta, eigener Speicherschlüssel (bpm),
+// damit sich die Apps auf derselben GitHub-Pages-Adresse nicht in die Quere kommen.
+(function(){
+  var btn=g('darkBtn');
+  function apply(d){document.body.classList.toggle('dark',d);if(btn)btn.textContent=d?'🌙':'☀️';try{localStorage.setItem('bpm_dark',d?'1':'0');}catch(e){}}
+  try{apply(localStorage.getItem('bpm_dark')==='1');}catch(e){}
+  if(btn)btn.onclick=function(){apply(!document.body.classList.contains('dark'));};
+})();
+
+// ============================================================
+// SICHERUNG EINLESEN
+// Delta-Sicherungen gibt es in zwei Formatständen: neu (kompakt, {meta,data,photos},
+// Fotos separat unter photos) und alt (eingerückt, teils Bilddaten direkt in
+// bpdelta_dat, teils sogar ohne meta-Hülle). Erkennung wie in Delta selbst NICHT über
+// meta.tool (alte Sicherungen tragen dort eine falsche Kennung), sondern über die
+// bpdelta_*-Schlüssel in den Daten.
+// ============================================================
+function parseBackup(text){
+  var payload;
+  try{payload=JSON.parse(text);}catch(e){return {error:'Datei konnte nicht gelesen werden (kein gültiges JSON).'};}
+  if(!payload||typeof payload!=='object')return {error:'Datei konnte nicht gelesen werden (kein gültiges JSON).'};
+  var data=payload.data||payload;
+  var hasDeltaKeys=Object.keys(data||{}).some(function(k){return k.indexOf('bpdelta_')===0&&data[k]!=null;});
+  if(!hasDeltaKeys)return {error:'Das ist keine Delta-Sicherung — es fehlen die Delta-Speicherschlüssel (bpdelta_…). Bitte eine Datei „bpdelta_sicherung…json" aus der Delta-App wählen.'};
+  var dat={},stbsArr=[],kopf={};
+  try{if(data.bpdelta_dat)dat=JSON.parse(data.bpdelta_dat)||{};}catch(e){return {error:'Der Protokoll-Inhalt der Sicherung ist beschädigt und konnte nicht gelesen werden.'};}
+  try{if(data.bpdelta_stbs)stbsArr=JSON.parse(data.bpdelta_stbs)||[];}catch(e){}
+  try{if(data.bpdelta_kopf)kopf=JSON.parse(data.bpdelta_kopf)||{};}catch(e){}
+  return {payload:payload,data:data,dat:dat,stbs:stbsArr,kopf:kopf,photos:payload.photos||{}};
+}
+
+// ============================================================
+// ZÄHLUNG / BESCHRIFTUNG
+// ============================================================
+// Nur echte Eintrags-Arrays durchlaufen — dat enthält daneben Meta-Schlüssel wie
+// '__durchgehendW' oder '__t_…' (gleiche Vorsicht wie collectAllFotoObjs in Delta).
+function eachEntryArray(dat,fn){
+  Object.keys(dat||{}).forEach(function(fullKey){
+    var arr=dat[fullKey];
+    if(!Array.isArray(arr))return;
+    if(fullKey.indexOf('___')===-1)return;
+    fn(fullKey,arr);
+  });
+}
+function countAll(dat){
+  var sch=0,fotos=0;
+  eachEntryArray(dat,function(k,arr){
+    sch+=arr.length;
+    arr.forEach(function(it){fotos+=(it.fotos||[]).length;});
+  });
+  return {schaeden:sch,fotos:fotos};
+}
+function stbPos(stbs,id){
+  for(var i=0;i<stbs.length;i++){if(stbs[i].id===id)return i+1;}
+  return id;
+}
+// Klartext-Ort für die Ergebnisliste (bewusst schlicht; Signal-Bauteile erscheinen
+// unter ihrem Schlüsselkürzel, das reicht für die Kontrolle).
+function locLabel(baseKey,stbs){
+  var m=baseKey.match(/^stb(\d+)_oe(\d+)$/);
+  if(m)return 'STB '+stbPos(stbs,parseInt(m[1],10))+', Öffnung '+m[2];
+  m=baseKey.match(/^stb(\d+)_w([12])$/);
+  if(m)return 'STB '+stbPos(stbs,parseInt(m[1],10))+', Widerlager '+m[2];
+  m=baseKey.match(/^stb(\d+)_pf(\d+)$/);
+  if(m)return 'STB '+stbPos(stbs,parseInt(m[1],10))+', Pfeiler/Stützenreihe '+m[2];
+  m=baseKey.match(/^wg_w([12])$/);
+  if(m)return 'Widerlager '+m[1]+' (durchgehend)';
+  if(baseKey.indexOf('sig_')===0)return 'Signal-Bauteil ('+baseKey+')';
+  return baseKey;
+}
+
+// ============================================================
+// SORTIEREN + ZUSAMMENFASSEN
+// ============================================================
+function ugrBase(u){return (u||'').replace(/ (links|rechts)$/,'');}
+function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+
+// Maßnahmen-Pfeile "》》" auf eine gemeinsame Spalte ausrichten — exakt die
+// V22-Regel aus Delta: PRO ABSATZ (Blöcke zwischen Leerzeilen), Mindestabstand 3
+// Zeichen, kein Spalten-Deckel. So sieht der zusammengefasste Text genauso aus,
+// als wäre er direkt in Delta mit "Nächster Träger" erfasst worden.
+function realignMassnahmen(text){
+  var GAP=3;
+  var lines=text.split('\n');
+  var parsed=lines.map(function(line){
+    var idx=line.indexOf('》》');
+    if(idx===-1)return null;
+    return {content:line.slice(0,idx).replace(/\s+$/,''),suffix:line.slice(idx+2).replace(/^\s*/,'')};
+  });
+  var i=0;
+  while(i<lines.length){
+    if(lines[i].trim()===''){i++;continue;}
+    var start=i;
+    while(i<lines.length&&lines[i].trim()!=='')i++;
+    var maxLen=0;
+    for(var k=start;k<i;k++){
+      if(parsed[k]&&parsed[k].content.length>maxLen)maxLen=parsed[k].content.length;
+    }
+    if(!maxLen)continue;
+    var target=maxLen+GAP;
+    for(var k2=start;k2<i;k2++){
+      if(parsed[k2]){
+        lines[k2]=parsed[k2].content+' '.repeat(target-parsed[k2].content.length)+'》》 '+parsed[k2].suffix;
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
+// Zerlegt einen Eintrag in Abschnitte. Rückgabe:
+//   null  -> Eintrag bleibt unangetastet (nicht zusammenfassbar)
+//   sonst -> {heading, generalHeading, sections:[{nr:'1'|'1,3', first:1, lines:[…]}], locGeneral}
+// Zusammenfassbar sind Einträge mit Bauteil-Nummer in der Überschrift
+// ("STB 1, Öffnung 1, Hauptträger 2, Stahl") sowie bereits mehrteilige Einträge im
+// V11-Format (allgemeine Überschrift + Abschnittszeilen "Hauptträger 1:").
+// Bewusst ausgenommen (bleiben 1:1 erhalten):
+//  - "Beide"-Kombieinträge (links und rechts, eigene Abschnittsstruktur)
+//  - Doppel-Nr-Bauteile ("Beulsteife 3 an Hauptträger 2") — zwei Nummernachsen
+//  - "Alle"-Einträge und Einträge ohne Nummer
+//  - Lager/Fugen (eigene Masken- und Messwertstruktur)
+function parseEntry(entry,ugr){
+  var base=ugrBase(ugr);
+  if(!base)return null;
+  if(entry.beide)return null;
+  if(/ links und rechts/.test(entry.loc||''))return null;
+  var d=entry.d||'';
+  var lines=d.split('\n');
+  if(lines.length<1||!lines[0].trim())return null;
+  var heading=lines[0];
+  var bodyLines=lines.slice(1);
+  var eb=escRe(base);
+  // Doppel-Nr-Muster in der Überschrift -> nicht anfassen
+  if(new RegExp(eb+'\\s+\\d[\\d,\\s]*\\s+an\\s').test(heading))return null;
+  var secRe=new RegExp('^'+eb+'\\s+(\\d+(?:,\\d+)*):\\s*$');
+  var hasSecLines=bodyLines.some(function(l){return secRe.test(l.trim());});
+  if(hasSecLines){
+    // Bereits im V11-Mehrfachformat: Überschrift ist schon allgemein.
+    var sections=[],cur=null,pre=false;
+    for(var i=0;i<bodyLines.length;i++){
+      var l=bodyLines[i];
+      var m=l.trim().match(secRe);
+      if(m){
+        cur={nr:m[1],first:parseInt(m[1].split(',')[0],10),lines:[]};
+        sections.push(cur);
+      } else if(cur){
+        cur.lines.push(l);
+      } else if(l.trim()!==''){
+        pre=true; // Freitext VOR dem ersten Abschnitt — unerwartet, lieber nicht anfassen
+      }
+    }
+    if(pre||!sections.length)return null;
+    sections.forEach(function(s){trimEdges(s.lines);});
+    return {heading:heading,generalHeading:heading,sections:sections,locGeneral:entry.loc||''};
+  }
+  // Einzel-Eintrag mit Nummer in der Überschrift?
+  var nrRe=new RegExp('(^|[\\s,])'+eb+'\\s+(\\d+(?:,\\d+)*)(?=$|[\\s,(])');
+  var hm=heading.match(nrRe);
+  if(!hm)return null;
+  var nr=hm[2];
+  var generalHeading=heading.replace(new RegExp('('+eb+')\\s+'+escRe(nr)),'$1');
+  var locGeneral=(entry.loc||'').replace(new RegExp('('+eb+')\\s+'+escRe(nr)),'$1');
+  var content=bodyLines.slice();
+  trimEdges(content);
+  return {heading:heading,generalHeading:generalHeading,
+    sections:[{nr:nr,first:parseInt(nr.split(',')[0],10),lines:content}],locGeneral:locGeneral};
+}
+function trimEdges(lines){
+  while(lines.length&&lines[0].trim()==='')lines.shift();
+  while(lines.length&&lines[lines.length-1].trim()==='')lines.pop();
+}
+
+// Kern: ein Bauteil-Array (dat[key+'___'+ugr]) sortieren und zusammenfassen.
+// Rückgabe {arr, mergedFrom, sections, resorted}
+function processArray(arr,ugr){
+  var base=ugrBase(ugr);
+  if(/^Lager: /.test(ugr)||/^Fugen: /.test(ugr)||!base){
+    return {arr:arr,mergedFrom:0,sections:0,resorted:false};
+  }
+  var items=arr.map(function(entry,idx){
+    return {entry:entry,parsed:parseEntry(entry,ugr),idx:idx};
+  });
+  var mergeable=items.filter(function(it){return !!it.parsed;});
+  var keep=items.filter(function(it){return !it.parsed;});
+  var out,mergedFrom=0,sectionCount=0;
+  if(mergeable.length>=2){
+    // Abschnitte einsammeln; gleiche Nummer -> Inhalte in EINEM Abschnitt vereinen
+    var secMap={},secOrder=[];
+    // Beitragende Einträge nach erster Abschnittsnummer sortieren, damit auch die
+    // Fotos in Abschnittsreihenfolge wandern.
+    mergeable.sort(function(a,b){
+      var fa=a.parsed.sections[0].first,fb=b.parsed.sections[0].first;
+      return fa===fb?a.idx-b.idx:fa-fb;
+    });
+    var fotos=[];
+    mergeable.forEach(function(it){
+      it.parsed.sections.forEach(function(s){
+        if(secMap[s.nr]){
+          // Gleiche Nummer aus zwei Einträgen: Schadenszeilen im selben Abschnitt vereinen
+          secMap[s.nr].lines=secMap[s.nr].lines.concat(s.lines);
+        } else {
+          secMap[s.nr]={nr:s.nr,first:s.first,lines:s.lines.slice()};
+          secOrder.push(secMap[s.nr]);
+        }
+      });
+      (it.entry.fotos||[]).forEach(function(f){fotos.push(f);});
+    });
+    secOrder.sort(function(a,b){return a.first-b.first;});
+    var first=mergeable[0];
+    var text=first.parsed.generalHeading+'\n'+secOrder.map(function(s){
+      return base+' '+s.nr+':'+(s.lines.length?'\n'+s.lines.join('\n'):'');
+    }).join('\n\n'); // V21: Leerzeile (Absatz) zwischen den Abschnitten
+    text=realignMassnahmen(text); // V22: Pfeile pro Absatz ausrichten
+    var mergedEntry={d:text,fotos:fotos,loc:first.parsed.locGeneral||first.entry.loc||'',
+      t:first.entry.t,a:first.entry.a};
+    mergedFrom=mergeable.length;
+    sectionCount=secOrder.length;
+    // Reihenfolge im Array: Einträge ohne Nummer (allgemeine Aussagen) zuerst,
+    // dann der zusammengefasste Schaden.
+    out=keep.map(function(it){return it.entry;}).concat([mergedEntry]);
+  } else {
+    // Nichts zu vereinen — aber nummerierte Einzel-Einträge in Nummernfolge bringen
+    // (Bauteil-Katalog- statt Erfassungsreihenfolge innerhalb des Bauteils).
+    var sorted=items.slice().sort(function(a,b){
+      var na=a.parsed?a.parsed.sections[0].first:-1;
+      var nb=b.parsed?b.parsed.sections[0].first:-1;
+      return na===nb?a.idx-b.idx:na-nb;
+    });
+    out=sorted.map(function(it){return it.entry;});
+  }
+  var resorted=out.length===arr.length&&out.some(function(e,i){return e!==arr[i];});
+  return {arr:out,mergedFrom:mergedFrom,sections:sectionCount,resorted:resorted};
+}
+
+// Läuft über das komplette Protokoll. Verändert nur Eintrags-Arrays; Meta-Schlüssel
+// (__t_…, __bwart, __durchgehendW usw.) bleiben unangetastet.
+function processDat(dat,stbs){
+  var report=[],resortedCount=0;
+  eachEntryArray(dat,function(fullKey,arr){
+    if(arr.length<2)return;
+    var parts=fullKey.split('___');
+    var baseKey=parts[0],ugr=parts.slice(1).join('___');
+    var res=processArray(arr,ugr);
+    dat[fullKey]=res.arr;
+    if(res.mergedFrom>=2){
+      report.push({label:locLabel(baseKey,stbs)+' · '+ugr,mergedFrom:res.mergedFrom,sections:res.sections});
+    } else if(res.resorted){
+      resortedCount++;
+    }
+  });
+  return {report:report,resortedCount:resortedCount};
+}
+
+// ============================================================
+// AUSGABE — Sicherungsdatei im Delta-Format (kompakt), unverändert über
+// „Wiederherstellen" einspielbar. Alle übrigen Datenschlüssel (stbs, kopf,
+// Zähler, Sperren) und die Foto-Ablage werden 1:1 durchgereicht.
+// ============================================================
+function buildOutput(state){
+  var srcMeta=(state.payload&&state.payload.meta)||{};
+  var data={};
+  Object.keys(state.data).forEach(function(k){data[k]=state.data[k];});
+  data.bpdelta_dat=JSON.stringify(state.dat);
+  var payload={
+    meta:{tool:'brueckenpruefung-delta',version:srcMeta.version||'',exported:new Date().toISOString(),bearbeitet:APP_VERSION},
+    data:data,
+    photos:state.photos||{}
+  };
+  return JSON.stringify(payload);
+}
+function outputFilename(kopf){
+  function sani(s){return (s||'').replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
+  var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'').replace(/(\d{8})(\d{4})/,'$1_$2');
+  var locPart=(kopf.str||kopf.km)?('_'+sani(kopf.str||'ohneStrecke')+'_'+sani(kopf.km||'ohneKm')):'';
+  return 'bpdelta_sicherung'+locPart+'_zusammengefasst_'+stamp+'.json';
+}
+function triggerDownload(blob,name){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);if(a.parentNode)a.parentNode.removeChild(a);},500);
+}
+
+// ============================================================
+// ABLAUF (3 Schritte: laden → Übersicht → Ergebnis)
+// ============================================================
+var state=null;      // {payload,data,dat,stbs,kopf,photos}
+var resultReady=false;
+
+function showStep(id){
+  ['stepLoad','stepInfo','stepResult'].forEach(function(s){g(s).classList.toggle('on',s===id);});
+}
+function resetAll(){
+  state=null;resultReady=false;
+  g('fileInput').value='';
+  g('loadErr').classList.remove('show');
+  showStep('stepLoad');
+}
+g('btnLoad').onclick=function(){g('fileInput').click();};
+g('btnReset1').onclick=resetAll;
+g('btnReset2').onclick=resetAll;
+
+g('fileInput').addEventListener('change',function(){
+  var file=this.files&&this.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){handleLoaded(reader.result);};
+  reader.onerror=function(){showLoadError('Datei konnte nicht gelesen werden.');};
+  reader.readAsText(file);
+});
+function showLoadError(msg){
+  var e=g('loadErr');e.textContent='⚠️ '+msg;e.classList.add('show');
+  showStep('stepLoad');
+}
+function handleLoaded(text){
+  var res=parseBackup(text);
+  if(res.error){showLoadError(res.error);return;}
+  g('loadErr').classList.remove('show');
+  state=res;
+  var c=countAll(state.dat);
+  var k=state.kopf||{};
+  var kv='';
+  if(k.br)kv+='<b>Brücke:</b> '+escHtml(k.br)+'<br>';
+  if(k.str||k.km)kv+='<b>Strecke:</b> '+escHtml(k.str||'—')+' &nbsp; <b>km:</b> '+escHtml(k.km||'—')+'<br>';
+  if(k.dat||k.pr)kv+='<b>Datum:</b> '+escHtml(k.dat||'—')+' &nbsp; <b>Prüfer:</b> '+escHtml(k.pr||'—')+'<br>';
+  var stbTxt=state.stbs.length?state.stbs.map(function(s,i){return 'STB '+(i+1)+' ('+s.oeff+' Öffn.)';}).join(', '):'—';
+  kv+='<b>Bauwerk:</b> '+escHtml(stbTxt);
+  g('infoKv').innerHTML=kv;
+  g('infoBadges').innerHTML='<span class="bdg">Schäden: '+c.schaeden+'</span><span class="bdg soft">Bilder: '+c.fotos+'</span>';
+  showStep('stepInfo');
+  toast('Sicherung geladen ✓');
+}
+function escHtml(s){return String(s).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});}
+
+g('btnRun').onclick=function(){
+  if(!state)return;
+  var before=countAll(state.dat);
+  var res=processDat(state.dat,state.stbs);
+  var after=countAll(state.dat);
+  var sum='';
+  if(res.report.length){
+    sum='<b>'+res.report.length+'</b> Bauteil(e) zusammengefasst — Schäden: <b>'+before.schaeden+' → '+after.schaeden+'</b>. Alle Bilder ('+after.fotos+') sind mitgewandert.';
+  } else {
+    sum='Nichts zusammenzufassen — jedes Bauteil hat höchstens einen Eintrag je Nummer. Die Sicherung wurde nur sortiert.';
+  }
+  if(res.resortedCount)sum+='<br>'+res.resortedCount+' Bauteil-Liste(n) in Nummernfolge sortiert.';
+  g('resSummary').innerHTML=sum;
+  var ul=g('resList');ul.innerHTML='';
+  res.report.forEach(function(r){
+    var li=document.createElement('li');
+    li.textContent=r.label+': '+r.mergedFrom+' Einträge → 1 Schaden mit '+r.sections+' Abschnitten';
+    ul.appendChild(li);
+  });
+  g('resBadges').innerHTML='<span class="bdg">Schäden: '+after.schaeden+'</span><span class="bdg soft">Bilder: '+after.fotos+'</span>';
+  resultReady=true;
+  showStep('stepResult');
+  toast('Fertig ✓');
+};
+
+g('btnDownload').onclick=function(){
+  if(!state||!resultReady)return;
+  var json=buildOutput(state);
+  triggerDownload(new Blob([json],{type:'application/json'}),outputFilename(state.kopf||{}));
+  toast('Sicherung wird heruntergeladen…');
+};
+
+// Für die Browsertests: Kernfunktionen gebündelt erreichbar.
+window.MERGE={parseBackup:parseBackup,processArray:processArray,processDat:processDat,
+  realignMassnahmen:realignMassnahmen,parseEntry:parseEntry,buildOutput:buildOutput,
+  countAll:countAll,handleLoaded:handleLoaded,getState:function(){return state;},version:APP_VERSION};
+</script>
+</body>
+</html>
