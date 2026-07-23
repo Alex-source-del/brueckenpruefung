@@ -42,7 +42,15 @@ main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
 .trwert{font-size:15px;line-height:1.55;word-break:break-word;}
 .mono{font-family:"Cascadia Mono","Consolas",monospace;}
 .trcopy{margin-top:6px;border:1.5px solid var(--acc);background:var(--accs);color:var(--acc);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
-#trDoneBtn.done{background:#2e7d32;}
+.trblock{border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;background:var(--sur);}
+.trblock.done{opacity:.45;filter:grayscale(.6);}
+.trblockhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.trblockhead b{font-size:16px;}
+.trblockhead span{font-size:12.5px;color:var(--soft);font-weight:700;flex:1;}
+.trminibtn{border:1.5px solid var(--line);background:var(--s2);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.trminibtn.gruen{border-color:#2e7d32;color:#2e7d32;background:transparent;}
+.trblock.done .trminibtn.gruen{background:#2e7d32;color:#fff;}
+.tredit{width:100%;min-height:140px;font-family:"Cascadia Mono","Consolas",monospace;font-size:14px;border:1.5px solid var(--acc);border-radius:var(--radius-sm);padding:10px;background:var(--sur);color:var(--ink);box-sizing:border-box;}
 .m2chip{flex:1;border:1.5px solid var(--line);background:var(--sur);color:var(--ink);border-radius:8px;padding:9px 8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
 .m2chip.sel{border-color:var(--acc);background:var(--accs);color:var(--acc);}
 .step{display:none;}
@@ -90,6 +98,7 @@ main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
       <button class="big soft" id="btnDocx" type="button" style="margin:0;">📄 Gutachten mit Bildern</button>
       <button class="big soft" id="btnDocxOhne" type="button" style="margin:0;">📄 Nur Dokument</button>
     </div>
+    <button class="big soft" id="btnKopier" type="button" style="margin-top:8px;">📄 Kopier-Dokument (Bahn-App)</button>
     <button class="big soft" id="btnTransfer" type="button" style="margin-top:8px;">📋 Übertragen-Modus (Bahn-App)</button>
     <button class="big soft" id="btnFotosAll" type="button" style="margin-top:8px;">💾 Alle Bilder des Gutachtens speichern</button>
     <button class="big soft" id="btnReset2" type="button" style="margin-top:8px;">Neue Datei laden</button>
@@ -104,36 +113,10 @@ main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
     <button class="big soft" id="m2Abbruch" type="button" style="margin-top:8px;">Abbrechen</button>
   </div>
 
-  <!-- Schritt 4: Übertragen-Modus -->
+  <!-- Schritt 4: Übertragen-Modus — seit V12 EINE große Liste aller Schäden -->
   <div class="card step" id="stepTransfer">
     <h2 id="trProgress"></h2>
-    <p id="trOrt" style="font-size:12.5px;color:var(--soft);font-weight:700;margin-bottom:10px;"></p>
-
-    <div class="trfeld">
-      <div class="trhead"><span>1 · Meldungsbezeichnung</span><span id="trKurzLen" class="trlen"></span></div>
-      <div class="trwert mono" id="trKurz"></div>
-      <button class="trcopy" id="trKurzCopy" type="button">📋 Kopieren</button>
-    </div>
-    <div class="trfeld">
-      <div class="trhead"><span>2 · Verortung im Feld (lfd. Schaden-Nr.)</span></div>
-      <div class="trwert mono" id="trNr"></div>
-      <button class="trcopy" id="trNrCopy" type="button">📋 Kopieren</button>
-    </div>
-    <div class="trfeld">
-      <div class="trhead"><span>3 · Schadensbeschreibung (komplett)</span></div>
-      <div class="trwert mono" id="trDesc" style="white-space:pre-wrap;"></div>
-      <button class="trcopy" id="trDescCopy" type="button">📋 Kopieren</button>
-    </div>
-
-    <p id="trFotoHdr" style="font-size:12px;font-weight:700;color:var(--soft);margin:10px 0 6px;">Fotos zum Anhängen:</p>
-    <div id="trFotos"></div>
-    <button class="big soft" id="trSaveFotos" type="button" style="display:none;margin-top:4px;"></button>
-
-    <button class="big" id="trDoneBtn" type="button" style="margin-top:10px;"></button>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="big soft" id="trPrev" type="button" style="margin:0;">← Vorheriger</button>
-      <button class="big soft" id="trNext" type="button" style="margin:0;">Nächster →</button>
-    </div>
+    <div id="trList"></div>
     <button class="big soft" id="trAbk" type="button" style="margin-top:8px;">Abkürzungsliste anzeigen</button>
     <div id="trAbkBox" style="display:none;margin-top:8px;"></div>
     <button class="big soft" id="trBack" type="button" style="margin-top:8px;">← Zurück zum Ergebnis</button>
@@ -143,7 +126,7 @@ main{max-width:900px;margin:0 auto;padding:16px 14px 48px;}
 <div id="toast"></div>
 <script>
 'use strict';
-var APP_VERSION='MERGE V10';
+var APP_VERSION='MERGE V12';
 
 // Offline-Fähigkeit: gleicher Service Worker wie Delta/KIB/Karten (sw.js liegt schon
 // im GitHub-Ordner und speichert alles Geladene automatisch, network-first). Nach dem
@@ -1261,6 +1244,67 @@ function exportGutachten(state,includeImages){
   });
 }
 
+function exportKopierdokument(state){
+  var g0=collectGutachten(state);
+  var k=state.kopf||{};
+  var rels=[{id:'rId1',target:'styles.xml',type:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'}];
+  var body='';
+  body+=docxPara('Kopier-Dokument für die Bahn-App','Title');
+  body+=docxPara((k.br||'')+' · Strecke '+(k.str||'—')+' · km '+(k.km||'—')+' · '+(k.dat||''),'BahnKurz');
+  g0.chapters.forEach(function(c){
+    c.blocks.forEach(function(b){
+      b.items.forEach(function(it){
+        body+=docxPara('Schaden Nr. '+it.num,'SchNr');
+        body+=docxPara(c.title+' · '+b.locLabel+' · '+b.ugr,'BahnKurz');
+        body+=docxPara('Verortung im Feld:','BahnKurz');
+        body+=docxPara(String(it.num),null);
+        body+=docxPara('Meldungsbezeichnung:','BahnKurz');
+        body+=docxPara(buildKurztext(it,state.stbs),null);
+        body+=docxPara('Schadensbeschreibung:','BahnKurz');
+        descMitAbk(it.entry.d).split('\n').forEach(function(line){body+=docxPara(line,null);});
+        body+=docxPara('',null);
+      });
+    });
+  });
+  body+='<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417"/></w:sectPr>';
+  var documentXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    '<w:body>'+body+'</w:body></w:document>';
+  var contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+    '</Types>';
+  var rootRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+    '</Relationships>';
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="'+r.type+'" Target="'+r.target+'"/>';}).join('')+
+    '</Relationships>';
+  var stylesXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="200"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="SchNr"><w:name w:val="Schaden Nr"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="220" w:after="40"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="0E7C66"/></w:rPr></w:style>'+
+    '<w:style w:type="paragraph" w:styleId="BahnKurz"><w:name w:val="Bahn Kurztext"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="60" w:after="20"/></w:pPr><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="777777"/></w:rPr></w:style>'+
+    '</w:styles>';
+  var zip=new PureZip();
+  zip.file('[Content_Types].xml',contentTypes);
+  zip.file('_rels/.rels',rootRels);
+  zip.file('word/document.xml',documentXml);
+  zip.file('word/styles.xml',stylesXml);
+  zip.file('word/_rels/document.xml.rels',docRels);
+  zip.generateAsync({type:'blob'}).then(function(blob){
+    var docxBlob=new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    function sani(s){return String(s).replace(/[\/\\?%*:|"<>]/g,'').replace(/\s+/g,'-');}
+    triggerDownload(docxBlob,'Kopierdokument_'+sani(k.str||'ohneStrecke')+'_'+sani(k.km||'ohneKm')+'.docx','Kopier-Dokument wird heruntergeladen ✓');
+  }).catch(function(){toast('Export fehlgeschlagen — bitte erneut versuchen');});
+}
+
 // ------------------------------------------------------------
 // ÜBERTRAGEN-MODUS (Kopierhilfe für die Bahn-App)
 // Drei Kopierfelder je Schaden, in der Klick-Reihenfolge der Bahn-App:
@@ -1352,13 +1396,6 @@ function saveFotoQueue(jobs,done){
 function jobsForItem(it){
   return (it.entry.fotos||[]).map(function(f,fi){return {f:f,num:it.num,idx:fi+1};});
 }
-function saveAlleFotosSchaden(){
-  var it=transferItems[transferIdx];
-  var jobs=jobsForItem(it);
-  if(!jobs.length){toast('Dieser Schaden hat keine Fotos');return;}
-  toast(jobs.length+' Foto(s) werden gespeichert…');
-  saveFotoQueue(jobs);
-}
 function saveAlleFotosGutachten(){
   if(!state)return;
   var jobs=[];
@@ -1372,56 +1409,118 @@ function openTransfer(){
   if(!state)return;
   transferItems=flatItems(state);
   if(!transferItems.length){toast('Keine Schäden vorhanden');return;}
-  if(transferIdx>=transferItems.length)transferIdx=0;
-  renderTransfer();
+  renderTransferList();
   showStep('stepTransfer');
 }
-function renderTransfer(){
-  var it=transferItems[transferIdx];
-  var doneCount=Object.keys(transferDone).length;
-  g('trProgress').textContent='Schaden '+(transferIdx+1)+' von '+transferItems.length+' · erledigt: '+doneCount;
-  g('trOrt').textContent=it.kapitel+' · '+it.locLabel+' · '+it.ugr;
+function updProgress(){
+  var done=transferItems.filter(function(it){return transferDone[it.num];}).length;
+  g('trProgress').textContent=done+' von '+transferItems.length+' erledigt';
+}
+function renderTransferList(){
+  var list=g('trList');list.innerHTML='';
+  transferItems.forEach(function(it){list.appendChild(buildBlock(it));});
+  updProgress();
+}
+function feld(nr,titel,wert,mono,extra){
+  var f=document.createElement('div');f.className='trfeld';
+  var head=document.createElement('div');head.className='trhead';
+  var l=document.createElement('span');l.textContent=nr+' · '+titel;head.appendChild(l);
+  if(extra){var r=document.createElement('span');r.className='trlen';r.textContent=extra;head.appendChild(r);}
+  f.appendChild(head);
+  var w=document.createElement('div');w.className='trwert'+(mono?' mono':'');
+  w.style.whiteSpace='pre-wrap';w.textContent=wert;f.appendChild(w);
+  var c=document.createElement('button');c.type='button';c.className='trcopy';c.textContent='📋 Kopieren';
+  c.onclick=function(){copyText(wert,titel);};
+  f.appendChild(c);
+  return f;
+}
+function buildBlock(it){
+  var block=document.createElement('div');
+  block.className='trblock'+(transferDone[it.num]?' done':'');
+  block.setAttribute('data-num',''+it.num);
+  // Kopfzeile: Nummer, Ort, Bearbeiten, Erledigt
+  var head=document.createElement('div');head.className='trblockhead';
+  var b=document.createElement('b');b.textContent='Schaden Nr. '+it.num;head.appendChild(b);
+  var ort=document.createElement('span');ort.textContent=it.kapitel+' · '+it.locLabel+' · '+it.ugr;head.appendChild(ort);
+  var editBtn=document.createElement('button');editBtn.type='button';editBtn.className='trminibtn';editBtn.textContent='✏ Bearbeiten';
+  var doneBtn=document.createElement('button');doneBtn.type='button';doneBtn.className='trminibtn gruen';
+  doneBtn.textContent=transferDone[it.num]?'✓ Erledigt':'Erledigt';
+  doneBtn.onclick=function(){
+    if(transferDone[it.num])delete transferDone[it.num];else transferDone[it.num]=true;
+    block.classList.toggle('done',!!transferDone[it.num]);
+    doneBtn.textContent=transferDone[it.num]?'✓ Erledigt':'Erledigt';
+    updProgress();
+  };
+  head.appendChild(editBtn);head.appendChild(doneBtn);
+  block.appendChild(head);
+  // Inhalt (Felder + Fotos) — eigener Behälter, damit Bearbeiten ihn ersetzen kann
+  var inhalt=document.createElement('div');
+  block.appendChild(inhalt);
+  fuelleInhalt(inhalt,it);
+  // Bearbeiten: Textfeld mit dem ECHTEN Text (ohne Klammer-Abkürzungen)
+  editBtn.onclick=function(){
+    if(block.querySelector('.tredit'))return;
+    inhalt.style.display='none';
+    var box=document.createElement('div');
+    var ta=document.createElement('textarea');ta.className='tredit';ta.value=it.entry.d||'';
+    box.appendChild(ta);
+    var save=document.createElement('button');save.type='button';save.className='trcopy';save.textContent='💾 Speichern';
+    save.style.marginTop='8px';
+    var abbr=document.createElement('button');abbr.type='button';abbr.className='trminibtn';abbr.textContent='Abbrechen';
+    abbr.style.cssText='margin-top:8px;width:100%;';
+    save.onclick=function(){
+      var neu=ta.value.replace(/\r\n?/g,'\n');
+      if(!neu.trim()){toast('⚠️ Text darf nicht leer sein');return;}
+      it.entry.d=neu;
+      box.remove();inhalt.style.display='';
+      inhalt.innerHTML='';fuelleInhalt(inhalt,it);
+      toast('Gespeichert ✓ — gilt überall (Word, Sicherung)');
+    };
+    abbr.onclick=function(){box.remove();inhalt.style.display='';};
+    box.appendChild(save);box.appendChild(abbr);
+    block.appendChild(box);
+  };
+  return block;
+}
+function fuelleInhalt(inhalt,it){
+  // Reihenfolge (Wunsch Andreas, V12): 1 Nummer · 2 Meldungsbezeichnung · 3 Beschreibung
+  inhalt.appendChild(feld('1','Schadensnummer',String(it.num),true));
   var kurz=buildKurztext(it,state.stbs);
-  g('trKurz').textContent=kurz;
-  g('trKurzLen').textContent=kurz.length+'/40';
-  g('trNr').textContent=String(it.num);
-  g('trDesc').textContent=descMitAbk(it.entry.d);
-  g('trDoneBtn').textContent=transferDone[it.num]?'✓ Erledigt':'Als erledigt markieren';
-  g('trDoneBtn').classList.toggle('done',!!transferDone[it.num]);
+  inhalt.appendChild(feld('2','Meldungsbezeichnung',kurz,true,kurz.length+'/40'));
+  inhalt.appendChild(feld('3','Schadensbeschreibung',descMitAbk(it.entry.d),true));
   // Fotos
-  var box=g('trFotos');box.innerHTML='';
   var fotos=it.entry.fotos||[];
-  fotos.forEach(function(f){
-    var dta=fotoData(state,f);
-    var w=document.createElement('div');
-    w.style.cssText='display:inline-block;margin:0 8px 8px 0;text-align:center;';
-    if(dta){
-      var img=document.createElement('img');
-      img.src=dta;img.style.cssText='width:132px;height:99px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;';
-      w.appendChild(img);
-    } else {
-      w.textContent='⚠️ Foto ohne Bilddaten';
-      w.style.cssText+='font-size:11px;color:var(--faint);';
-    }
-    box.appendChild(w);
-  });
-  var saveBtn=g('trSaveFotos');
-  saveBtn.style.display=fotos.length?'block':'none';
-  saveBtn.textContent='💾 Alle Fotos speichern ('+fotos.length+')';
-  g('trFotoHdr').style.display=fotos.length?'block':'none';
-}
-function transferNext(step){
-  transferIdx=Math.min(Math.max(transferIdx+step,0),transferItems.length-1);
-  renderTransfer();
-}
-function transferDoneToggle(){
-  var it=transferItems[transferIdx];
-  if(transferDone[it.num])delete transferDone[it.num];
-  else{
-    transferDone[it.num]=true;
-    if(transferIdx<transferItems.length-1){transferIdx++;}
+  if(fotos.length){
+    var hdr=document.createElement('p');
+    hdr.style.cssText='font-size:12px;font-weight:700;color:var(--soft);margin:10px 0 6px;';
+    hdr.textContent='Fotos zum Anhängen:';
+    inhalt.appendChild(hdr);
+    var fbox=document.createElement('div');
+    fotos.forEach(function(f){
+      var dta=fotoData(state,f);
+      var w=document.createElement('div');
+      w.style.cssText='display:inline-block;margin:0 8px 8px 0;text-align:center;';
+      if(dta){
+        var img=document.createElement('img');
+        img.src=dta;img.style.cssText='width:132px;height:99px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;';
+        w.appendChild(img);
+      } else {
+        w.textContent='⚠️ Foto ohne Bilddaten';
+        w.style.cssText+='font-size:11px;color:var(--faint);';
+      }
+      fbox.appendChild(w);
+    });
+    inhalt.appendChild(fbox);
+    var saveBtn=document.createElement('button');
+    saveBtn.type='button';saveBtn.className='big soft';saveBtn.style.marginTop='4px';
+    saveBtn.textContent='💾 Alle Fotos speichern ('+fotos.length+')';
+    saveBtn.onclick=function(){
+      var jobs=jobsForItem(it);
+      toast(jobs.length+' Foto(s) werden gespeichert…');
+      saveFotoQueue(jobs);
+    };
+    inhalt.appendChild(saveBtn);
   }
-  renderTransfer();
 }
 function renderAbkListe(){
   var box=g('trAbkBox');
@@ -1439,15 +1538,9 @@ function renderAbkListe(){
 
 g('btnDocx').onclick=function(){if(state&&resultReady)exportGutachten(state,true);};
 g('btnDocxOhne').onclick=function(){if(state&&resultReady)exportGutachten(state,false);};
+g('btnKopier').onclick=function(){if(state&&resultReady)exportKopierdokument(state);};
 g('btnTransfer').onclick=openTransfer;
 g('btnFotosAll').onclick=function(){if(state&&resultReady)saveAlleFotosGutachten();};
-g('trSaveFotos').onclick=saveAlleFotosSchaden;
-g('trKurzCopy').onclick=function(){copyText(g('trKurz').textContent,'Meldungsbezeichnung');};
-g('trNrCopy').onclick=function(){copyText(g('trNr').textContent,'Verortung');};
-g('trDescCopy').onclick=function(){copyText(g('trDesc').textContent,'Schadensbeschreibung');};
-g('trPrev').onclick=function(){transferNext(-1);};
-g('trNext').onclick=function(){transferNext(1);};
-g('trDoneBtn').onclick=transferDoneToggle;
 g('trAbk').onclick=renderAbkListe;
 g('trBack').onclick=function(){showStep('stepResult');};
 
@@ -1641,7 +1734,7 @@ window.MERGE={parseBackup:parseBackup,processArray:processArray,processDat:proce
   realignMassnahmen:realignMassnahmen,parseEntry:parseEntry,buildOutput:buildOutput,
   countAll:countAll,handleLoaded:handleLoaded,getState:function(){return state;},version:APP_VERSION,
   collectGutachten:collectGutachten,buildKurztext:buildKurztext,abkListe:abkListe,
-  getLastCopied:function(){return lastCopied;},getTransferIdx:function(){return transferIdx;},
+  getLastCopied:function(){return lastCopied;},
   compareStates:compareStates,autoChoices:autoChoices,getMergeInfo:function(){return mergeInfo;}};
 </script>
 </body>
